@@ -23,15 +23,16 @@ knitr::opts_chunk$set(
 
 library(tidyverse)
 library(kableExtra)
+library(lubridate)
 
 
 kable_df <- function(..., digits=2) {
   kable(...,digits = digits) %>% 
-    kable_styling(full_width = F)
+    kable_styling(full_width = F, latex_options = "hold_position")
 }
 ```
 
-## About this Document
+# About this Document
 
 This document explores some basic quality stats for the Milestone data received on Jan 2020.
 
@@ -41,24 +42,73 @@ load("/Volumes/George_Surgeon_Projects/ACGME_milestone/data/milestone_01_2020.rd
 glimpse(milestone)
 ```
 
-## Data
+# Data
 
-```{r PersonID}
-sum(is.na(milestone$PersonID))
-```
+## Person ID and NPI values missingness
 
 ```{r NPI}
 milestone %>% 
   distinct(NPI, PersonID) %>%
-  summarise(n_tot = n(), missing_npi = sum(is.na(NPI)), perc_missing_npi = missing_npi/n_tot) %>% 
-  kable_df(caption = "NPI")
+  summarise(n_tot_person = n(), missing_npi = sum(is.na(NPI)), perc_missing_npi = missing_npi/n_tot_person,
+            n_missing_personID = sum(is.na(PersonID))) %>% 
+  kable_df(caption = "NPI and PersonID")
+
+# milestone %>% 
+#   filter(is.na(PersonID)) %>% 
+#   glimpse()
+```
+
+## Last4SSN
+
+```{r SSN}
+numbers_only <- function(x) !grepl("\\D", x)
+
+non_numeric_ssn = milestone %>% 
+  filter(!numbers_only(Last4SSN)) %>% 
+  distinct(PersonID, NPI, Last4SSN)
+
+non_numeric_ssn %>% 
+  head() %>% 
+  kable_df(caption = "Example of non_numeric SSN") 
 
 milestone %>% 
-  count(IntResponseValue)
+  filter(nchar(Last4SSN)<4) %>% 
+  distinct(PersonID, NPI, Last4SSN) %>% 
+  kable_df(caption = "one person has less than 4 digits of SSN")
 
-milestone %>% 
-  filter(is.na(PersonID))
 ```
 
 
+## Date
 
+some Dates are not dates
+
+```{r birthdate}
+milestone %>% 
+  distinct(PersonID, NPI, BirthDate) %>% 
+  filter(str_detect(BirthDate, "\\*")) %>% 
+  head()
+```
+
+```{r StartDate}
+milestone %>% 
+  distinct(PersonID, NPI, StartDate) %>% 
+  filter(str_detect(StartDate, "\\*")) %>% 
+  head()
+
+```
+
+```{r DegreeDate}
+milestone %>% 
+  distinct(PersonID, NPI, DegreeDate) %>% 
+  filter(str_detect(DegreeDate, "\\*")) %>% 
+  head()
+```
+
+
+```{r ExpectedCompletionDate}
+milestone %>% 
+  distinct(PersonID, NPI, ExpectedCompletionDate) %>% 
+  filter(str_detect(ExpectedCompletionDate, "\\*")) %>% 
+  head()
+```

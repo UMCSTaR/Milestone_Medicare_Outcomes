@@ -82,7 +82,7 @@
   \postauthor{\par}
       \predate{\centering\large\emph}
   \postdate{\par}
-    \date{2020-01-22}
+    \date{2020-01-29}
 
 \usepackage{booktabs}
 \usepackage{longtable}
@@ -103,7 +103,7 @@
 \maketitle
 
 \hypertarget{about-this-document}{%
-\subsection{About this Document}\label{about-this-document}}
+\section{About this Document}\label{about-this-document}}
 
 This document explores some basic quality stats for the Milestone data
 received on Jan 2020.
@@ -139,21 +139,104 @@ $ ResponseText              <chr> "<p><b><u>Level 2</u></b></p> <p>This resident
 \end{verbatim}
 
 \hypertarget{data}{%
-\subsection{Data}\label{data}}
+\section{Data}\label{data}}
 
-\hypertarget{npi}{%
-\subsubsection{NPI}\label{npi}}
+\hypertarget{person-id-and-npi-values-missingness}{%
+\subsection{Person ID and NPI values
+missingness}\label{person-id-and-npi-values-missingness}}
 
-\begin{table}[H]
+\begin{table}[!h]
+
+\caption{\label{tab:NPI}NPI and PersonID}
 \centering
-\begin{tabular}{r|r|r}
+\begin{tabular}{r|r|r|r}
 \hline
-n\_tot & missing\_npi & perc\_missing\_npi\\
+n\_tot\_person & missing\_npi & perc\_missing\_npi & n\_missing\_personID\\
 \hline
-4744 & 1648 & 0.35\\
+4744 & 1648 & 0.35 & 1\\
 \hline
 \end{tabular}
 \end{table}
+
+\hypertarget{last4ssn}{%
+\subsection{Last4SSN}\label{last4ssn}}
+
+\textbackslash{}begin\{table\}{[}!h{]}
+
+\textbackslash{}caption\{\label{tab:SSN}Example of non\_numeric SSN\}
+\centering
+
+\begin{tabular}{l|l|l}
+\hline
+PersonID & NPI & Last4SSN\\
+\hline
+745648 & 1700129772 & *****7544\\
+\hline
+745655 & 1407290844 & *****7083\\
+\hline
+745674 & 1295178697 & *****5251\\
+\hline
+745677 & NA & *****7922\\
+\hline
+749756 & 1265877781 & *****1161\\
+\hline
+749763 & 1215372768 & *****9640\\
+\hline
+\end{tabular}
+
+\textbackslash{}end\{table\}
+
+\begin{table}[!h]
+
+\caption{\label{tab:SSN}one person has less than 4 digits of SSN}
+\centering
+\begin{tabular}{l|l|l}
+\hline
+PersonID & NPI & Last4SSN\\
+\hline
+982347 & NA & 967\\
+\hline
+\end{tabular}
+\end{table}
+
+\hypertarget{date}{%
+\subsection{Date}\label{date}}
+
+some Dates are not dates
+
+\begin{verbatim}
+# A tibble: 6 x 3
+  PersonID NPI        BirthDate
+  <chr>    <chr>      <chr>    
+1 745648   1700129772 *********
+2 745655   1407290844 *********
+3 745674   1295178697 *********
+4 745677   <NA>       *********
+5 749756   1265877781 *********
+6 749763   1215372768 *********
+\end{verbatim}
+
+\begin{verbatim}
+# A tibble: 0 x 3
+# ... with 3 variables: PersonID <chr>, NPI <chr>, StartDate <chr>
+\end{verbatim}
+
+\begin{verbatim}
+# A tibble: 6 x 3
+  PersonID NPI        DegreeDate
+  <chr>    <chr>      <chr>     
+1 745648   1700129772 ********* 
+2 745655   1407290844 ********* 
+3 745674   1295178697 ********* 
+4 745677   <NA>       ********* 
+5 749756   1265877781 ********* 
+6 749763   1215372768 ********* 
+\end{verbatim}
+
+\begin{verbatim}
+# A tibble: 0 x 3
+# ... with 3 variables: PersonID <chr>, NPI <chr>, ExpectedCompletionDate <chr>
+\end{verbatim}
 
 
 \end{document}
