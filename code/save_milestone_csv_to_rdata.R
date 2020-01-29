@@ -6,3 +6,11 @@ milestone = read_csv("/Volumes/George_Surgeon_Projects/ACGME_milestone/data/Data
                      col_types = cols(.default = "c"))   # read all as charactor
 
 save(milestone, file = "/Volumes/George_Surgeon_Projects/ACGME_milestone/data/milestone_01_2020.rdata")
+
+
+# date
+milestone %>% 
+  select(contains("Date")) %>% 
+  mutate(Birth_year = year(dmy(BirthDate)),
+         Degree_year = year(dmy(DegreeDate)),
+         complete_year = year(mdy(ExpectedCompletionDate)))
