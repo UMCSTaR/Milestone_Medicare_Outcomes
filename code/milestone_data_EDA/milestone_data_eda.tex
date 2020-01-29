@@ -1,0 +1,159 @@
+\documentclass[]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\else % if luatex or xelatex
+  \ifxetex
+    \usepackage{mathspec}
+  \else
+    \usepackage{fontspec}
+  \fi
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\hypersetup{unicode=true,
+            pdftitle={Milestone Data 101},
+            pdfauthor={Xilin Chen},
+            pdfborder={0 0 0},
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{0}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+%%% Use protect on footnotes to avoid problems with footnotes in titles
+\let\rmarkdownfootnote\footnote%
+\def\footnote{\protect\rmarkdownfootnote}
+
+%%% Change title format to be more compact
+\usepackage{titling}
+
+% Create subtitle command for use in maketitle
+\providecommand{\subtitle}[1]{
+  \posttitle{
+    \begin{center}\large#1\end{center}
+    }
+}
+
+\setlength{\droptitle}{-2em}
+
+  \title{Milestone Data 101}
+    \pretitle{\vspace{\droptitle}\centering\huge}
+  \posttitle{\par}
+    \author{Xilin Chen}
+    \preauthor{\centering\large\emph}
+  \postauthor{\par}
+      \predate{\centering\large\emph}
+  \postdate{\par}
+    \date{2020-01-22}
+
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+\usepackage{xcolor}
+
+\begin{document}
+\maketitle
+
+\hypertarget{about-this-document}{%
+\subsection{About this Document}\label{about-this-document}}
+
+This document explores some basic quality stats for the Milestone data
+received on Jan 2020.
+
+\begin{verbatim}
+Observations: 370,347
+Variables: 25
+$ ScheduleWindowDescription <chr> "2014-2015 ACGME Mid-Year Milestone Evaluations", "2014-2015 ACGME Mid-Year Milestone Evaluations", "2014-2015 ACGME Mid-Year Milestone Evaluations", "2014-2015 ACGME Mid-Year Miles...
+$ SurveyDefinitionID        <chr> "85", "85", "85", "85", "85", "85", "85", "85", "85", "85", "85", "85", "85", "85", "85", "85", "85", "85", "85", "85", "85", "85", "85", "85", "85", "85", "85", "85", "85", "85", "...
+$ SurveyName                <chr> "2014-2015 ACGME Milestone Evaluations - Surgery", "2014-2015 ACGME Milestone Evaluations - Surgery", "2014-2015 ACGME Milestone Evaluations - Surgery", "2014-2015 ACGME Milestone E...
+$ AcademicYear              <chr> "2014", "2014", "2014", "2014", "2014", "2014", "2014", "2014", "2014", "2014", "2014", "2014", "2014", "2014", "2014", "2014", "2014", "2014", "2014", "2014", "2014", "2014", "2014...
+$ ProgramId                 <chr> "6665", "6665", "6665", "6665", "6665", "6665", "6665", "6665", "6665", "6665", "6665", "6665", "6665", "6665", "6665", "6665", "6665", "6665", "6665", "6665", "6665", "6665", "6665...
+$ SpecialtyCode             <chr> "440", "440", "440", "440", "440", "440", "440", "440", "440", "440", "440", "440", "440", "440", "440", "440", "440", "440", "440", "440", "440", "440", "440", "440", "440", "440",...
+$ SpecialtyName             <chr> "Surgery", "Surgery", "Surgery", "Surgery", "Surgery", "Surgery", "Surgery", "Surgery", "Surgery", "Surgery", "Surgery", "Surgery", "Surgery", "Surgery", "Surgery", "Surgery", "Surg...
+$ SponsorID                 <chr> "12181", "12181", "12181", "12181", "12181", "12181", "12181", "12181", "12181", "12181", "12181", "12181", "12181", "12181", "12181", "12181", "12181", "12181", "12181", "12181", "...
+$ PersonID                  <chr> "745633", "745633", "745633", "745633", "745633", "745633", "745633", "745633", "745633", "745633", "745633", "745633", "745633", "745633", "745633", "745633", "745648", "745648", "...
+$ NPI                       <chr> "1881039279", "1881039279", "1881039279", "1881039279", "1881039279", "1881039279", "1881039279", "1881039279", "1881039279", "1881039279", "1881039279", "1881039279", "1881039279",...
+$ Last4SSN                  <chr> "7686", "7686", "7686", "7686", "7686", "7686", "7686", "7686", "7686", "7686", "7686", "7686", "7686", "7686", "7686", "7686", "7544", "7544", "7544", "7544", "7544", "7544", "7544...
+$ BirthDate                 <chr> "01JAN1984", "01JAN1984", "01JAN1984", "01JAN1984", "01JAN1984", "01JAN1984", "01JAN1984", "01JAN1984", "01JAN1984", "01JAN1984", "01JAN1984", "01JAN1984", "01JAN1984", "01JAN1984",...
+$ MedicalSchoolID           <chr> "18838", "18838", "18838", "18838", "18838", "18838", "18838", "18838", "18838", "18838", "18838", "18838", "18838", "18838", "18838", "18838", "17697", "17697", "17697", "17697", "...
+$ DegreeDate                <chr> "01JUL2012", "01JUL2012", "01JUL2012", "01JUL2012", "01JUL2012", "01JUL2012", "01JUL2012", "01JUL2012", "01JUL2012", "01JUL2012", "01JUL2012", "01JUL2012", "01JUL2012", "01JUL2012",...
+$ residentyear              <chr> "2", "2", "2", "2", "2", "2", "2", "2", "2", "2", "2", "2", "2", "2", "2", "2", "2", "2", "2", "2", "2", "2", "2", "2", "2", "2", "2", "2", "2", "2", "2", "2", "2", "2", "2", "2", "...
+$ PositionType              <chr> "Categorical", "Categorical", "Categorical", "Categorical", "Categorical", "Categorical", "Categorical", "Categorical", "Categorical", "Categorical", "Categorical", "Categorical", "...
+$ ResidentStatus            <chr> "Active Full time", "Active Full time", "Active Full time", "Active Full time", "Active Full time", "Active Full time", "Active Full time", "Active Full time", "Active Full time", "...
+$ StartDate                 <chr> "07/01/2013", "07/01/2013", "07/01/2013", "07/01/2013", "07/01/2013", "07/01/2013", "07/01/2013", "07/01/2013", "07/01/2013", "07/01/2013", "07/01/2013", "07/01/2013", "07/01/2013",...
+$ ExpectedCompletionDate    <chr> "06/30/2018", "06/30/2018", "06/30/2018", "06/30/2018", "06/30/2018", "06/30/2018", "06/30/2018", "06/30/2018", "06/30/2018", "06/30/2018", "06/30/2018", "06/30/2018", "06/30/2018",...
+$ QuestionID                <chr> "9838", "9840", "9842", "9845", "9847", "9850", "9861", "9853", "9863", "9865", "9856", "9867", "9869", "9859", "9871", "9873", "9838", "9840", "9842", "9845", "9847", "9850", "9861...
+$ QuestionKey               <chr> "comp1_PC_Q1", "comp1_PC_Q2", "comp1_PC_Q3", "comp2_MK_Q1", "comp2_MK_Q2", "comp3_SBP_Q1", "comp3_SBP_Q2", "comp4_PBLI_Q1", "comp4_PBLI_Q2", "comp4_PBLI_Q3", "comp5_PR_Q1", "comp5_P...
+$ ReportCategory            <chr> "Patient Care", "Patient Care", "Patient Care", "Medical Knowledge", "Medical Knowledge", "Systems-Based Practice", "Systems-Based Practice", "Practice-Based Learning and Improvemen...
+$ QuestionText              <chr> "Care For Diseases and Conditions (CDC) - PATIENT CARE (PC1)", "Care For Diseases and Conditions (CDC) - PATIENT CARE (PC2)", "Performance of Operations and Procedures (POP) - PATIE...
+$ IntResponseValue          <chr> "5", "5", "4", "5", "5", "5", "5", "5", "5", "5", "5", "5", "5", "5", "5", "5", "6", "6", "6", "6", "6", "6", "6", "6", "6", "6", "6", "6", "6", "6", "6", "6", "5", "5", "5", "5", "...
+$ ResponseText              <chr> "<p><b><u>Level 2</u></b></p> <p>This resident accurately  diagnoses <i>many</i> \"broad\"  surgical conditions in the  SCORE curriculum and  initiates appropriate management for <i...
+\end{verbatim}
+
+\hypertarget{data}{%
+\subsection{Data}\label{data}}
+
+\hypertarget{npi}{%
+\subsubsection{NPI}\label{npi}}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{r|r|r}
+\hline
+n\_tot & missing\_npi & perc\_missing\_npi\\
+\hline
+4744 & 1648 & 0.35\\
+\hline
+\end{tabular}
+\end{table}
+
+
+\end{document}

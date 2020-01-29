@@ -1,0 +1,64 @@
+---
+title: "Milestone Data 101"
+author: "Xilin Chen"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = F,                                     # code
+  message = F,
+  warning = F,
+  error = F,
+  comment = NA,
+  R.options = list(width = 220),
+  dev.args = list(bg = 'transparent'),          # viz
+  dev = 'png',
+  fig.align = 'center',
+  cache = F
+  # out.width = '100%',
+  # fig.asp = .5,
+)    
+
+library(tidyverse)
+library(kableExtra)
+
+
+kable_df <- function(..., digits=2) {
+  kable(...,digits = digits) %>% 
+    kable_styling(full_width = F)
+}
+```
+
+## About this Document
+
+This document explores some basic quality stats for the Milestone data received on Jan 2020.
+
+```{r data_import, cache=TRUE}
+load("/Volumes/George_Surgeon_Projects/ACGME_milestone/data/milestone_01_2020.rdata")
+
+glimpse(milestone)
+```
+
+## Data
+
+```{r PersonID}
+sum(is.na(milestone$PersonID))
+```
+
+```{r NPI}
+milestone %>% 
+  distinct(NPI, PersonID) %>%
+  summarise(n_tot = n(), missing_npi = sum(is.na(NPI)), perc_missing_npi = missing_npi/n_tot) %>% 
+  kable_df(caption = "NPI")
+
+milestone %>% 
+  count(IntResponseValue)
+
+milestone %>% 
+  filter(is.na(PersonID))
+```
+
+
+
