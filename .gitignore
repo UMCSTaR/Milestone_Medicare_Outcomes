@@ -48,5 +48,8 @@ vignettes/*.pdf
 *.knit.md
 
 *.log
+<<<<<<< master
 
 *.tex
+=======
+>>>>>>> ignore
