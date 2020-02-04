@@ -3,7 +3,7 @@ library(tidyverse)
 library(lubridate)
 
 # load milestone dt ----
-load("/Volumes/George_Surgeon_Projects/ACGME_milestone/data/milestone_01_2020.rdata")
+load("/Volumes/George_Surgeon_Projects/ACGME_milestone/original/milestone_01_2020.rdata")
 
 str(milestone)
 
@@ -54,7 +54,8 @@ milestone_ssn = milestone_ssn %>%
 # check
 milestone %>% 
   filter(PersonID == 739127 | PersonID == 982342) %>% 
-  distinct(NPI, PersonID, ssn)
+  distinct(NPI, PersonID, ssn) %>% 
+  arrange(PersonID)
 
 rm(id_ssn)
 
@@ -86,6 +87,8 @@ milestone %>%
   filter(PersonID == "606844" | PersonID == "800106") %>%
   distinct(PersonID, BirthDate)
 
+rm(milestone_birth)
+
 
 # DegreeDate -------
 milestone_degree_dt = milestone %>% 
@@ -101,6 +104,8 @@ qa %>%
   group_by(PersonID) %>% 
   mutate(n = row_number()) %>% 
   filter(n == 1 , is.na(Degree_date))
+
+rm(qa)
 
 # drop na date
 milestone_degree_dt = milestone_degree_dt %>% 
@@ -126,3 +131,14 @@ milestone_start_date %>%
   add_count(PersonID) %>% 
   filter(n>1) %>% 
   arrange(PersonID)
+
+rm(milestone_start_date)
+
+
+# combine NPI, SSN, Bithdate, Degreedate--------
+milestone_person_info = milestone_npi %>% 
+  left_join(milestone_birthday)  %>% # birthdAT
+  left_join(milestone_ssn) %>% 
+  left_join(milestone_degree_dt)
+
+save(milestone_person_info, file = "/Volumes/George_Surgeon_Projects/ACGME_milestone/milestone_person_info.rdata")
