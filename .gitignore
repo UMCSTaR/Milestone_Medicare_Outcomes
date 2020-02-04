@@ -53,3 +53,5 @@ vignettes/*.pdf
 *.tex
 =======
 >>>>>>> ignore
+
+*.graffle

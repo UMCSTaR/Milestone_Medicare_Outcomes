@@ -8,9 +8,13 @@ milestone = read_csv("/Volumes/George_Surgeon_Projects/ACGME_milestone/data/Data
 
 # date
 milestone = milestone %>% 
-  mutate(Birth_year = year(dmy(BirthDate)),
-         Degree_year = year(dmy(DegreeDate)),
-         complete_year = year(mdy(ExpectedCompletionDate)))
+  mutate(Birth_date = dmy(BirthDate),
+         Degree_date = dmy(DegreeDate),
+         complete_date = mdy(ExpectedCompletionDate))
+
+# ssn
+milestone = milestone%>% 
+  mutate(ssn = str_extract(Last4SSN, "\\d+")) 
 
 save(milestone, file = "/Volumes/George_Surgeon_Projects/ACGME_milestone/data/milestone_01_2020.rdata")
 
