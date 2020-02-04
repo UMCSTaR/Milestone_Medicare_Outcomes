@@ -87,30 +87,42 @@ milestone %>%
   distinct(PersonID, BirthDate)
 
 
+# DegreeDate -------
+milestone_degree_dt = milestone %>% 
+  distinct(PersonID, Degree_date)
+
+# second date is na
+qa = milestone_degree_dt %>% 
+  add_count(PersonID)  %>% 
+  filter(n>1) %>% 
+  arrange(PersonID)
+  
+qa %>% 
+  group_by(PersonID) %>% 
+  mutate(n = row_number()) %>% 
+  filter(n == 1 , is.na(Degree_date))
+
+# drop na date
+milestone_degree_dt = milestone_degree_dt %>% 
+  filter(!is.na(Degree_date))  # n = 4,741
+
+# who don't have degree_date
+setdiff(unique(milestone_npi$PersonID), unique(milestone_degree_dt$PersonID))
+# [1] "606844" "800106"
+
+# check
+milestone %>% 
+  filter(PersonID == 606844 | PersonID == 800106) %>% 
+  distinct(NPI, PersonID, DegreeDate)
 
 
+# start date-----
+milestone_start_date = milestone %>%
+  filter(!is.na(PersonID)) %>% 
+  distinct(PersonID, StartDate) 
 
-
-
-
-# add vars
-milestone_ssn = milestone_ssn %>% 
-  mutate(multi_ssn = ifelse(PersonID %in% id_ssn$PersonID, 1, 0))
-
-rm(id_ssn)
-
-qa_person = milestone_person_level %>% 
+# not unique
+milestone_start_date %>% 
   add_count(PersonID) %>% 
   filter(n>1) %>% 
   arrange(PersonID)
-
-
-qa_person_unique =  milestone %>% 
-  distinct(PersonID, NPI, ssn, Birth_date, Degree_date) %>% 
-  add_count(PersonID) %>% 
-  filter(n>1) %>% 
-  arrange(PersonID) 
-
-qa_person_unique %>% 
-  select(PersonID, ssn, Birth_date, Degree_date)
-
