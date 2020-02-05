@@ -3,7 +3,7 @@
 library(tidyverse)
 library(lubridate)
 
-milestone = read_csv("/Volumes/George_Surgeon_Projects/ACGME_milestone/data/Data-UFA04037 ACGME George Mich DUA PE 4Dec2019_ESHsigned.csv",
+milestone = read_csv("/Volumes/George_Surgeon_Projects/ACGME_milestone/original/ACGME Milestones Data Update 19-UFA04037 2020.02.05.csv",
                      col_types = cols(.default = "c"))   # read all as charactor
 
 # date
@@ -16,5 +16,5 @@ milestone = milestone %>%
 milestone = milestone%>% 
   mutate(ssn = str_extract(Last4SSN, "\\d+")) 
 
-save(milestone, file = "/Volumes/George_Surgeon_Projects/ACGME_milestone/data/milestone_01_2020.rdata")
+save(milestone, file = "/Volumes/George_Surgeon_Projects/ACGME_milestone/original/milestone_02_2020.rdata")
 
