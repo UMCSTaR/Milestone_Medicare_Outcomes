@@ -7,8 +7,9 @@ load("/Volumes/George_Surgeon_Projects/ACGME_milestone/original/milestone_02_202
 
 str(milestone)
 
+# select personal information
 milestone_person_level =  milestone %>% 
-  select(PersonID, NPI, Last4SSN, BirthDate, Birth_date, DegreeDate, Degree_date, PositionType, ResidentStatus, StartDate, ExpectedCompletionDate, complete_date) %>% 
+  select(PersonID, NPI,Birth_date, Degree_date, birth_year, complete_date) %>% 
   distinct()
 
 n_distinct(milestone_person_level$PersonID, na.rm = T)
@@ -68,48 +69,19 @@ id_birth = milestone_birth %>%
   arrange(PersonID) %>% 
   glimpse()
 
-id_birth %>% 
-  group_by(PersonID) %>% 
-  mutate(n = row_number()) %>% 
-  filter(n == 1, is.na(Birth_date)) # all birthdate is not missing for the first record
-
-# check
-milestone %>%
-  filter(PersonID == "606844" | PersonID == "800106") %>%
-  distinct(PersonID, BirthDate)
-
-rm(milestone_birth)
+rm(id_birth)
 
 
 # DegreeDate -------
 milestone_degree_dt = milestone %>% 
+  filter(!is.na(Degree_date)) %>% 
   distinct(PersonID, Degree_date)
 
 # second date is na
-qa = milestone_degree_dt %>% 
+milestone_degree_dt %>% 
   add_count(PersonID)  %>% 
   filter(n>1) %>% 
   arrange(PersonID)
-  
-qa %>% 
-  group_by(PersonID) %>% 
-  mutate(n = row_number()) %>% 
-  filter(n == 1 , is.na(Degree_date))
-
-rm(qa)
-
-# drop na date
-milestone_degree_dt = milestone_degree_dt %>% 
-  filter(!is.na(Degree_date))  # n = 4,741
-
-# who don't have degree_date
-setdiff(unique(milestone_npi$PersonID), unique(milestone_degree_dt$PersonID))
-# [1] "606844" "800106"
-
-# check
-milestone %>% 
-  filter(PersonID == 606844 | PersonID == 800106) %>% 
-  distinct(NPI, PersonID, DegreeDate)
 
 
 # start date-----
@@ -128,7 +100,7 @@ rm(milestone_start_date)
 
 # combine NPI, SSN, Bithdate, Degreedate--------
 milestone_person_info = milestone_npi %>% 
-  left_join(milestone_birthday)  %>% # birthdAT
+  left_join(milestone_birth)  %>% 
   left_join(milestone_ssn) %>% 
   left_join(milestone_degree_dt)
 
