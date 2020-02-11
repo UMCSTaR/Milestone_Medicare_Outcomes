@@ -65,28 +65,28 @@ n_distinct(multi_nppes$PersonID)  #144
 save(multi_nppes, file = "/Volumes/George_Surgeon_Projects/ACGME_milestone/step1_nppes/multi_nppes.rdata")
 
 #  non-match -------
-non_mat_nppes = milestone_person_nppes_match %>% 
+non_matched_nppes = milestone_person_nppes_match %>% 
   filter(is.na(NPI)) 
 
-n_distinct(non_mat_nppes$PersonID)  #1892
-save(non_mat_nppes, file = "/Volumes/George_Surgeon_Projects/ACGME_milestone/step1_nppes/non_match.rdata")
+n_distinct(non_matched_nppes$PersonID)  #1892
+save(non_matched_nppes, file = "/Volumes/George_Surgeon_Projects/ACGME_milestone/step1_nppes/non_match.rdata")
 
 # unique macthed to check against milestone ------
-macthed_nppes = milestone_person_nppes_match %>% 
+matched_nppes = milestone_person_nppes_match %>% 
   filter(!is.na(NPI)) %>% 
   add_count(PersonID) %>% 
   filter(n==1) %>% 
   select(-n)
 
-save(macthed_nppes, file = "/Volumes/George_Surgeon_Projects/ACGME_milestone/step1_nppes/macthed_nppes.rdata")
+save(matched_nppes, file = "/Volumes/George_Surgeon_Projects/ACGME_milestone/step1_nppes/matched_nppes.rdata")
 
 # QA
-macthed_nppes %>% 
+matched_nppes %>% 
   mutate(nppes_miles_npi = ifelse(npi_ms == NPI, "same", "diff")) %>% 
   tidyext::cat_by(nppes_miles_npi)
 # 0.4% miss
 
-npi_diff = milestone_person_nppes_v1 %>% 
+npi_diff = milestone_person_nppes_match %>% 
   filter(!is.na(NPI)) %>% 
   add_count(PersonID) %>% 
   filter(n==1) %>% 
