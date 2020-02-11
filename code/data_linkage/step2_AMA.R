@@ -15,6 +15,7 @@ library(tidyverse)
 load("/Volumes/George_Surgeon_Projects/ACGME_milestone/ama_select.rdata")
 # not unique macth
 load("/Volumes/George_Surgeon_Projects/ACGME_milestone/step1_nppes/multi_nppes.rdata")
+n_distinct(multi_nppes$PersonID) # 144
 
 # ama ----------
 # npi summary for AMA
@@ -25,60 +26,52 @@ ama_select %>%
 # ama rename
 str(ama_select)
 
+# add birth_year and format names, add ama flag
 ama_select = ama_select %>% 
   mutate(last_name_ama = str_to_title(last_name_ama),
          first_name_ama = str_to_title(first_name_ama),
          middle_name_ama =str_to_title(middle_name_ama),
-         birth_year = lubridate::year(BirthDate)) %>% 
+         birth_year = lubridate::year(BirthDate),
+         ama = 1) %>% 
   as_tibble()
+
+str(ama_select)
+
 
 # milestone data -------------
 str(multi_nppes)
 
+# add birth_year and format names
 multi_nppes = multi_nppes %>% 
   mutate(last_name = str_to_title(last_name),
          first_name = str_to_title(first_name),
-         middle_name =str_to_title(middle_name))
+         middle_name =str_to_title(middle_name),
+         NPI = as.character(NPI),
+         birth_year = lubridate::year(Birth_date))
   
-# milestone to AMA
-multi_nppes %>% 
-  left_join(ama_select, by = c("NPI" = "npi"))
+# milestone to AMA by NPI ------
+multi_nppes_ama = multi_nppes %>% 
+  left_join(ama_select, by = c("NPI" = "npi")) %>% 
+  mutate(birth_ms_ama = ifelse(birth_year.x == birth_year.y, 1, 0))        # flag milestone YOB match with ama npi YOB
 
-ama_select %>% 
-  filter(is.na(birth_year))
-
-# matched surgeons
-milestone_person_nppes_ama %>% 
-  summarise(tot = n(),
-            no_ama = sum(is.na(ResearchID)))
-
-milestone_person_nppes_ama %>% 
-  add_count(PersonID) %>% 
-  filter(n>1)
-
-test = milestone_person_nppes_ama %>% 
+# nppes ama matched with YOB
+nppes_ama_npi_matched = multi_nppes_ama %>% 
+  filter(birth_ms_ama == 1) %>% 
   add_count(PersonID) %>% 
   filter(n == 1) %>% 
-  filter(!is.na(NPI), npi != "NA") %>% 
-  mutate(no_match_npi = ifelse(npi == NPI, "macthed", "non-matched")) %>% 
-  count(no_match_npi)
+  select(PersonID, npi_ms, NPI) 
+
+n_distinct(nppes_ama_npi_matched$PersonID) #120
+
+save(nppes_ama_npi_matched, file = "/Volumes/George_Surgeon_Projects/ACGME_milestone/step2_ama/nppes_ama_npi_matched.rdata")
+
+# nppes ama non-match -------
+nppes_ama_npi_no_match = multi_nppes_ama %>% 
+  filter(!PersonID %in% nppes_ama_npi_matched$PersonID) %>% 
+  select(PersonID, npi_ms, NPI, birth_year.x, birth_year.y, contains("name")) 
+
+n_distinct(nppes_ama_npi_no_match$PersonID) #24
+
+save(nppes_ama_npi_no_match, file = "/Volumes/George_Surgeon_Projects/ACGME_milestone/step2_ama/nppes_ama_npi_no_match.rdata")
 
 
-test = milestone_person_nppes_ama %>% 
-  filter(!is.na(`Provider Credential Text`)) %>% 
-  count(`Provider Credential Text`, sort = T) 
-
-
-# medschool ID is different between AMA and Milestone
-milestone_medschool = milestone %>% 
-  filter(!is.na(PersonID)) %>% 
-  distinct(PersonID, MedicalSchoolID)
-
-milestone_ama %>% 
-  left_join(milestone_medschool) %>% 
-  select(PersonID, MedicalSchoolID, MedSchoolID) %>% 
-  mutate(same_id = ifelse(MedSchoolID == MedicalSchoolID, 1, 0)) %>% 
-  count(same_id)
-
-
-str(Physician_Compare_National_Downloadable_File)
