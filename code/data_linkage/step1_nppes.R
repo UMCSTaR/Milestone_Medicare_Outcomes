@@ -104,3 +104,12 @@ qa = npidata_pfile_2020_selected_var %>%
 
 # based on qa, the differences are from the `Provider Credential Text`, and deactive NPI
 # NPI from Milestones are non MD or DO.
+
+# non matched why
+qa = npidata_pfile_2020_selected_var %>% 
+  mutate(NPI = as.character(NPI)) %>% 
+  filter(NPI %in% non_matched_nppes$npi_ms) %>% 
+  glimpse()
+
+# due to NPI deactivation, non-md/do/na, not an individual
+
