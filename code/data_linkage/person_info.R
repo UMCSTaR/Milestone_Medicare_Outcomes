@@ -3,13 +3,16 @@ library(tidyverse)
 library(lubridate)
 
 # load milestone dt ----
+# change here for new data from ACGME
 load("/Volumes/George_Surgeon_Projects/ACGME_milestone/original/milestone_02_2020.rdata")
 
 str(milestone)
 
+n_distinct(milestone$PersonID)
+
 # select personal information
 milestone_person_level =  milestone %>% 
-  select(PersonID, NPI,Birth_date, Degree_date, birth_year, complete_date) %>% 
+  select(PersonID, NPI,Birth_date, Degree_date, birth_year) %>% 
   distinct()
 
 n_distinct(milestone_person_level$PersonID, na.rm = T)
@@ -98,10 +101,9 @@ milestone_start_date %>%
 rm(milestone_start_date)
 
 
-# combine NPI, SSN, Bithdate, Degreedate--------
+# combine NPI, Bithdate, Degreedate--------
 milestone_person_info = milestone_npi %>% 
   left_join(milestone_birth)  %>% 
-  left_join(milestone_ssn) %>% 
   left_join(milestone_degree_dt)
 
 save(milestone_person_info, file = "/Volumes/George_Surgeon_Projects/ACGME_milestone/milestone_person_info.rdata")
