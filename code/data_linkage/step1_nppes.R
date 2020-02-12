@@ -100,6 +100,7 @@ load("/Volumes/George_Surgeon_Projects/Other/NPPES_Data_Dissemination_January_20
 qa = npidata_pfile_2020_selected_var %>% 
   mutate(NPI = as.character(NPI)) %>% 
   filter(NPI %in% npi_ms_diff) %>% 
-  select(NPI, `Provider Credential Text`)
+  glimpse()
 
-# based on qa, the differences are from the `Provider Credential Text`, NPI from Milestones are non MD or DO.
+# based on qa, the differences are from the `Provider Credential Text`, and deactive NPI
+# NPI from Milestones are non MD or DO.
