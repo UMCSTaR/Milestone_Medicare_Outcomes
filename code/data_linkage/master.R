@@ -5,11 +5,14 @@ library(tidyext)
 # load miletone data with names ---------
 # load("/Volumes/George_Surgeon_Projects/ACGME_milestone/milestone_person_nppes.rdata")
 # 2016 - 2019
-load("/Volumes/George_Surgeon_Projects/ACGME_milestone/linkage/milestone_16_18_person.rdata")
+# load("/Volumes/George_Surgeon_Projects/ACGME_milestone/linkage/milestone_16_18_person.rdata")
+#2015 - 2019
+load("/Volumes/George_Surgeon_Projects/ACGME_milestone/linkage/milestone_15_18_person.rdata")
 
-str(milestone_16_18_person)
+str(milestone_15_18_person)
+n_distinct(milestone_15_18_person)
 
-milestone = milestone_16_18_person %>% 
+milestone = milestone_15_18_person %>% 
   rename(first_name = FirstName,
          last_name = LastName,
          middle_name = MiddleName) %>% 
@@ -20,7 +23,7 @@ milestone = milestone_16_18_person %>%
   rename(NPI = NationalProviderID) %>% 
   glimpse()
 
-milestone_16_18_person %>% 
+milestone_15_18_person %>% 
   add_count(PersonID) %>% 
   filter(n>1) %>% 
   glimpse()
@@ -32,6 +35,7 @@ milestone %>%
   filter(is.na(NPI)) %>% 
   distinct(PersonID)
 # 794
+# 2015-2018 = 1,291
 
 # NPPES -------
 load("/Volumes/George_Surgeon_Projects/Other/NPPES_Data_Dissemination_January_2020/npidata_pfile_2020_selected_var_md_do_na.rdata")
@@ -52,12 +56,17 @@ milestone_nppes =  milestone %>%
   glimpse()
 
 
-# no match
+# no match 
+milestone_nppes %>% 
+  distinct(PersonID, NPI.ms, NPI.nppes, md_do_nppes) %>% 
+  filter(!is.na(NPI.nppes)) %>% 
+  distinct(PersonID)
+
 milestone_nppes %>% 
   distinct(PersonID, NPI.ms, NPI.nppes, md_do_nppes) %>% 
   filter(is.na(NPI.ms), is.na(md_do_nppes)) 
-# 32 surgeons can't get matched
-
+# 32 surgeons can't get matched 
+# 2015 - 2018: 79 surgeons can't get matched 
 
 
 # get unique matched personID 
@@ -80,8 +89,8 @@ milestone_nppes %>%
   distinct(PersonID, nppes_unique_match) %>% 
   cat_by(nppes_unique_match)
 
-# 221 didn't get  unique match in NPPES
-# 573 get unique macthed with NPPES
+# 221 didn't get  unique match in NPPES (2015-2018: 403)
+# 573 get unique macthed with NPPES (2015-2018: 888)
 
 rm(personid_nppes_m)
 
@@ -151,15 +160,24 @@ milestone_nppes_ama_abs = milestone_nppes_ama_abs%>%
 
 str(milestone_nppes_ama_abs)
 
+milestone_nppes_ama_abs_15_18 = milestone_nppes_ama_abs %>% 
+  select(-first_name, -last_name, -middle_name.ms)
+
+# added flag data
+save(milestone_nppes_ama_abs_15_18, 
+     file = "/Volumes/George_Surgeon_Projects/ACGME_milestone/linkage/de_name_data/milestone_nppes_ama_abs_15_18.rdata")
+
 # Summary -------
 n_distinct(milestone_nppes_ama_abs$PersonID)
 # 3580
+# 2015-2019: 4721
 
 # unique NPI match ----
 milestone_nppes_ama_abs %>% 
   distinct(PersonID, nppes_unique_match) %>% 
   cat_by(nppes_unique_match)
 # 2417
+# 2015: 3169
 
 nppes_uniq = milestone_nppes_ama_abs %>% 
   filter(nppes_unique_match == 1) %>% 
@@ -187,6 +205,8 @@ yob_yog = milestone_nppes_ama_abs %>%
 str(yob_yog) # unique match using YOG and YOB
 
 # n = 825, all 825 trainees were identified by yob and yog uniquely under multi NPI
+# add 2015: 1090
+
 
 # same yob, diff yog
 milestone_nppes_ama_abs = milestone_nppes_ama_abs %>% 
@@ -203,7 +223,7 @@ yob = milestone_nppes_ama_abs %>%
   glimpse()
 
 n_distinct(yob$PersonID)
-# 39
+# 39 (add 2015: 53)
 
 # diff yob, same yog
 yog = milestone_nppes_ama_abs %>% 
@@ -216,7 +236,7 @@ yog = milestone_nppes_ama_abs %>%
   glimpse()
 
 n_distinct(yog$PersonID)
-# 116
+# 116 (add 2015: 134)
 
   
 # if both abs and AMA have match, we can use names from the 3 data sources to make decision
@@ -253,10 +273,11 @@ no_match_ama_abs = milestone_nppes_ama_abs %>%
   filter(!PersonID %in% yob_yog$PersonID) %>% # 825
   filter(!PersonID %in% yob$PersonID,
          !PersonID %in% yog$PersonID) %>%
-  distinct(PersonID)
+  distinct(PersonID) %>% 
+  glimpse()
 
 
-# use matched info to get NPI for personID
+# use matched info to get NPI for personID -------
 npi_nppes_uniq = nppes_uniq %>% 
   distinct(PersonID, NPI.nppes)
 
@@ -278,20 +299,80 @@ linked_npi %>%
   filter(n>1)
 
 
-
-milestone_linked = milestone %>% 
+# add linked NPI to the original dataset
+milestone_linked_with_name = milestone %>% 
   left_join(linked_npi, by= "PersonID") %>% 
-  select(PersonID, NPI, NPI.nppes, everything())
+  select(PersonID, NPI, NPI.nppes, everything()) 
+
+milestone_linked = milestone_linked_with_name %>% 
+  select(-contains("_name"))
+
+write_csv(milestone_linked, path = "/Volumes/George_Surgeon_Projects/ACGME_milestone/linkage/de_name_data/milestone_linked_15_19.csv")
 
 
+nppes %>% 
+  mutate(NPI = as.character(NPI)) %>% 
+  filter(NPI == "1710134226")
+
+
+# never matched
 milestone_linked %>% 
   filter(is.na(NPI), is.na(NPI.nppes))
+
+milestone_linked = milestone_linked %>% 
+  mutate(npi_linked = ifelse(!is.na(NPI.nppes), NPI.nppes, NPI))
+
+milestone_linked %>% 
+  filter(is.na(npi_linked))
+# 94
+
+# miss match
+miss_match_npi = milestone_linked %>% 
+  filter(NPI != NPI.nppes)
 
 diff_npi_check = milestone_linked %>% 
   filter(NPI != NPI.nppes) %>% 
   left_join(nppes, by = c("NPI")) %>% 
-  select(PersonID, NPI, NPI.nppes, contains("_name"))
+  select(PersonID, NPI, NPI.nppes, contains("_name")) %>% 
+  glimpse()
 
-# 28
+# 38
   
+# QA -----------
+no_match_nppes = milestone_nppes_ama_abs %>% 
+  filter(is.na(md_do_nppes), is.na(NPI.ms)) %>% 
+  distinct(PersonID) %>% 
+  pull(PersonID)
+
+
+
+# STEP2: find non matching NPI with abs ----------
+no_match = milestone_linked_with_name %>% 
+  filter(PersonID %in% no_match_nppes) %>% 
+  glimpse()
+
+# ama
+no_match_ama = no_match %>% 
+  left_join(ama_select, by = c("first_name" = "first_name_ama", "last_name" = "last_name_ama")) %>% 
+  filter(!is.na(ResearchID)) %>% 
+  select(-first_name, -last_name, -middle_name) %>% 
+  glimpse() 
+
+n_distinct(no_match_ama$PersonID)
+
+save(no_match_ama, file = "/Volumes/George_Surgeon_Projects/ACGME_milestone/linkage/de_name_data/no_match_ama.rdata")
+
+# abs
+no_match_abs = no_match %>% 
+  left_join(abs_select, by = c("first_name" = "first_name_abs", "last_name" = "last_name_abs")) %>% 
+  filter(!is.na(abs)) %>% 
+  select(-first_name, -last_name, -middle_name) %>% 
+  glimpse() 
+
+n_distinct(no_match_abs$PersonID)
+
+save(no_match_abs, file = "/Volumes/George_Surgeon_Projects/ACGME_milestone/linkage/de_name_data/no_match_abs.rdata")
+
+
+
 
