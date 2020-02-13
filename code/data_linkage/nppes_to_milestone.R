@@ -1,12 +1,11 @@
 library(tidyverse)
 
-# load milestone data ----
+# load original milestone data from ACGME----
+load("/Volumes/George_Surgeon_Projects/ACGME_milestone/original/milestone_02_2020.rdata")
 
-load("/Volumes/George_Surgeon_Projects/ACGME_milestone/data/milestone_01_2020.rdata")
-
+# What perc of PersonID missing NPI
 milestone_person = milestone %>% 
-  # select(PersonID, NPI, BirthDate, Last4SSN) %>% 
-  select(PersonID, NPI) %>% 
+  select(PersonID, NPI, Birth_date, Degree_date, birth_year) %>% 
   distinct() %>% 
   glimpse()
 
@@ -26,6 +25,10 @@ npidata_pfile_2020_selected_var = npidata_pfile_2020_selected_var %>%
 
 milestone_person_nppes = milestone_person %>% 
   left_join(npidata_pfile_2020_selected_var)
+
+milestone_person_nppes %>% 
+  filter(is.na(first_name), !is.na(NPI)) %>% 
+  glimpse()
 
 save(milestone_person_nppes, file = "/Volumes/George_Surgeon_Projects/ACGME_milestone/milestone_person_nppes.rdata")
 
