@@ -3,20 +3,35 @@ library(lubridate)
 library(tidyext)
 
 # load miletone data with names ---------
-load("/Volumes/George_Surgeon_Projects/ACGME_milestone/milestone_person_nppes.rdata")
+# load("/Volumes/George_Surgeon_Projects/ACGME_milestone/milestone_person_nppes.rdata")
+# 2016 - 2019
+load("/Volumes/George_Surgeon_Projects/ACGME_milestone/linkage/milestone_16_18_person.rdata")
 
-milestone = milestone_person_nppes %>% 
-  select(PersonID, NPI, contains("_name"), Birth_date, Degree_date) %>% 
+str(milestone_16_18_person)
+
+milestone = milestone_16_18_person %>% 
+  rename(first_name = FirstName,
+         last_name = LastName,
+         middle_name = MiddleName) %>% 
+  select(PersonID, NationalProviderID, contains("_name"), Birth_date, Degree_date) %>% 
   mutate_at(vars(contains("_name")), str_to_title)  %>% # format name
-  mutate(middle_initial = str_sub(middle_name, 0, 1),   # middle initial
-         yob.ms = lubridate::year(Birth_date),          # yob
-         degree_year.ms = lubridate::year(Degree_date))
+  mutate(yob.ms = lubridate::year(Birth_date),          # yob
+         degree_year.ms = lubridate::year(Degree_date)) %>% 
+  rename(NPI = NationalProviderID) %>% 
+  glimpse()
+
+milestone_16_18_person %>% 
+  add_count(PersonID) %>% 
+  filter(n>1) %>% 
+  glimpse()
+# 1 person ID dup with same NPI
 
 
-# for test reason, some trainees don't have any data
-# no need for real data
-milestone = milestone %>% 
-  filter(!is.na(first_name))
+# Missing npi
+milestone %>% 
+  filter(is.na(NPI)) %>% 
+  distinct(PersonID)
+# 794
 
 # NPPES -------
 load("/Volumes/George_Surgeon_Projects/Other/NPPES_Data_Dissemination_January_2020/npidata_pfile_2020_selected_var_md_do_na.rdata")
@@ -30,13 +45,20 @@ nppes = nppes %>%
   mutate_at(vars(contains("_name")), str_to_title)   %>% # format name
   mutate(middle_initial = str_sub(middle_name, 0, 1))    # middle initial
 
-# left join
+# left join by first and last name
 milestone_nppes =  milestone %>% 
-  left_join(nppes, by = c("first_name", "middle_name", "last_name"), suffix = c(".ms", ".nppes"))
+#  left_join(nppes, by = c("first_name", "middle_name" = "middle_initial", "last_name"), suffix = c(".ms", ".nppes")) %>% 
+  left_join(nppes, by = c("first_name", "last_name"), suffix = c(".ms", ".nppes")) %>% 
+  glimpse()
 
-# middle initial
-# milestone_nppes_mi =  milestone %>% 
-#   left_join(nppes, by = c("first_name", "middle_initial", "last_name"))
+
+# no match
+milestone_nppes %>% 
+  distinct(PersonID, NPI.ms, NPI.nppes, md_do_nppes) %>% 
+  filter(is.na(NPI.ms), is.na(md_do_nppes)) 
+# 32 surgeons can't get matched
+
+
 
 # get unique matched personID 
 personid_nppes_m = milestone_nppes %>% 
@@ -53,15 +75,22 @@ milestone_nppes %>%
   distinct(PersonID, nppes_unique_match) %>% 
   cat_by(nppes_unique_match)
 
-rm(personid_nppes_m, npidata_pfile_2020_selected_var_md_do_na)
+milestone_nppes %>% 
+  filter(is.na(NPI.ms)) %>% 
+  distinct(PersonID, nppes_unique_match) %>% 
+  cat_by(nppes_unique_match)
+
+# 221 didn't get  unique match in NPPES
+# 573 get unique macthed with NPPES
+
+rm(personid_nppes_m)
 
 # QA
 # no match with NPPES 
 milestone_nppes %>% 
   filter(is.na(NPI.nppes)) %>% 
+  distinct(PersonID) %>% 
   summarise(n_no_match_nppes = n())
-# 30
-
 
 # AMA ------
 # load ama selected vars
@@ -88,8 +117,8 @@ milestone_nppes_ama = milestone_nppes %>%
   mutate(yob_ms_ama = ifelse(yob.ms == yob.ama, 1, 0))        # flag milestone YOB match with ama YOB
 
 milestone_nppes_ama = milestone_nppes_ama %>% 
-  select(PersonID, NPI.ms, NPI.nppes, contains("_name"), yob.ms, yob.ama, yob_ms_ama, degree_year.ms,
-         md_do_nppes, nppes_unique_match, ama)
+  select(PersonID, NPI.ms, NPI.nppes, contains("_name"), yob.ms, yob.ama, degree_year.ms,
+         md_do_nppes, ama, nppes_unique_match, yob_ms_ama)
 
 str(milestone_nppes_ama)
 
@@ -123,17 +152,23 @@ milestone_nppes_ama_abs = milestone_nppes_ama_abs%>%
 str(milestone_nppes_ama_abs)
 
 # Summary -------
-# unique NPI match
+n_distinct(milestone_nppes_ama_abs$PersonID)
+# 3580
+
+# unique NPI match ----
 milestone_nppes_ama_abs %>% 
   distinct(PersonID, nppes_unique_match) %>% 
   cat_by(nppes_unique_match)
+# 2417
 
-# 2838
+nppes_uniq = milestone_nppes_ama_abs %>% 
+  filter(nppes_unique_match == 1) %>% 
+  glimpse()
 
 # nppes_unique_match     N `% of Total`
 # <dbl> <int>        <dbl>
-#   1                   253         8.19
-# 2                    2838        91.8 
+#   1                  1163         32.5
+# 2                    2417         67.5
 
 # uniqe NPI with matched YOB and YOG
 milestone_nppes_ama_abs %>% 
@@ -142,27 +177,16 @@ milestone_nppes_ama_abs %>%
   summarise(tot = n())
   
 
-# yob + yog for multi match
+# yob + yog for multi match ----
 yob_yog = milestone_nppes_ama_abs %>% 
   filter(nppes_unique_match == 0,    # multi match
          yob_ms_ama == 1,
          yog_ms_abs == 1) %>% 
-  select(PersonID, NPI.nppes) %>% 
-  add_count(PersonID) %>% 
-  filter(n ==1) %>% 
-  select(-n)
+  distinct(PersonID, NPI.nppes) 
 
 str(yob_yog) # unique match using YOG and YOB
 
-# n = 172, all 172 trainees were identified by yob and yog uniquely under multi NPI
-
-test = milestone_nppes_ama_abs %>% 
-  filter(nppes_unique_match == 0) %>% 
-  filter(!PersonID %in% yob_yog$PersonID) %>% 
-  add_count(PersonID)
-
-n_distinct(test$PersonID)
-
+# n = 825, all 825 trainees were identified by yob and yog uniquely under multi NPI
 
 # same yob, diff yog
 milestone_nppes_ama_abs = milestone_nppes_ama_abs %>% 
@@ -170,7 +194,7 @@ milestone_nppes_ama_abs = milestone_nppes_ama_abs %>%
   glimpse()
 
 yob = milestone_nppes_ama_abs %>% 
-  filter(nppes_unique_match == 0) %>% 
+  filter(nppes_unique_match == 0, !PersonID %in% yob_yog$PersonID) %>% 
   filter(yob_ms_ama == 1 ,
          yog_ms_abs == 0)  %>% 
   add_count(PersonID) %>% 
@@ -179,11 +203,11 @@ yob = milestone_nppes_ama_abs %>%
   glimpse()
 
 n_distinct(yob$PersonID)
-# 10
+# 39
 
 # diff yob, same yog
 yog = milestone_nppes_ama_abs %>% 
-  filter(nppes_unique_match == 0) %>% 
+  filter(nppes_unique_match == 0, !PersonID %in% yob_yog$PersonID) %>% 
   filter(yob_ms_ama == 0 ,
          yog_ms_abs == 1)  %>% 
   add_count(PersonID) %>% 
@@ -192,14 +216,14 @@ yog = milestone_nppes_ama_abs %>%
   glimpse()
 
 n_distinct(yog$PersonID)
-# 44
+# 116
 
   
-# if both abs and AMA have match, we can use Last name from the 3 data sources to make decision
+# if both abs and AMA have match, we can use names from the 3 data sources to make decision
 multi_yog_yob = inner_join(yob, yog, by = "PersonID") %>% 
   pull(PersonID)
 
-milestone_nppes_ama_abs %>% 
+qa_multi_abs = milestone_nppes_ama_abs %>% 
   filter(PersonID %in% multi_yog_yob) %>% 
   filter(last_name_abs == last_name,
          first_name_abs == first_name) %>% 
@@ -212,4 +236,62 @@ milestone_nppes_ama_abs %>%
   glimpse()
 
 # From the test data, ABS has the more accurate NPI
+
+# if ABS or AMA don't agree, we choose ABS after I cherry picked to check cases
+test = milestone_nppes_ama_abs %>% 
+  filter(PersonID == "383547")
+
+
+# no match by AMA or abs
+milestone_nppes_ama_abs %>% 
+  distinct(PersonID, nppes_unique_match, md_do_nppes) %>% 
+  filter(nppes_unique_match == 0, is.na(md_do_nppes))
+
+no_match_ama_abs = milestone_nppes_ama_abs %>% 
+  filter(nppes_unique_match == 0) %>% 
+  filter(!is.na(md_do_nppes)) %>%  #151
+  filter(!PersonID %in% yob_yog$PersonID) %>% # 825
+  filter(!PersonID %in% yob$PersonID,
+         !PersonID %in% yog$PersonID) %>%
+  distinct(PersonID)
+
+
+# use matched info to get NPI for personID
+npi_nppes_uniq = nppes_uniq %>% 
+  distinct(PersonID, NPI.nppes)
+
+npi_yob_yog = yob_yog %>% 
+  distinct(PersonID, NPI.nppes)
+
+npi_yob = yob %>% 
+  distinct(PersonID, NPI.nppes) %>% 
+  filter(!PersonID %in% multi_yog_yob)  # keep yog 
+
+npi_yog = yog %>% 
+  distinct(PersonID, NPI.nppes) 
+
+linked_npi = rbind(npi_nppes_uniq, npi_yob_yog, npi_yob, npi_yog)
+  
+# check
+linked_npi %>% 
+  add_count(PersonID) %>% 
+  filter(n>1)
+
+
+
+milestone_linked = milestone %>% 
+  left_join(linked_npi, by= "PersonID") %>% 
+  select(PersonID, NPI, NPI.nppes, everything())
+
+
+milestone_linked %>% 
+  filter(is.na(NPI), is.na(NPI.nppes))
+
+diff_npi_check = milestone_linked %>% 
+  filter(NPI != NPI.nppes) %>% 
+  left_join(nppes, by = c("NPI")) %>% 
+  select(PersonID, NPI, NPI.nppes, contains("_name"))
+
+# 28
+  
 

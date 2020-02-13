@@ -107,3 +107,33 @@ milestone_person_info = milestone_npi %>%
   left_join(milestone_degree_dt)
 
 save(milestone_person_info, file = "/Volumes/George_Surgeon_Projects/ACGME_milestone/milestone_person_info.rdata")
+
+
+# 2015 to 2018 with names ------
+# add person info
+milestone_16_18 = readxl::read_xlsx("/Volumes/George_Surgeon_Projects/ACGME_milestone/original/GRADUATES_SURGERY_NAMES_2016_17_18_grads.xlsx")   
+load( "/Volumes/George_Surgeon_Projects/ACGME_milestone/milestone_person_info.rdata")
+
+milestone_16_18_person = milestone_16_18 %>% 
+  mutate(PersonID = as.character(PersonID)) %>% 
+  left_join(milestone_person_info, by = "PersonID") %>% 
+  glimpse()
+
+# check 
+milestone_16_18_person %>% 
+  filter(NationalProviderID != NPI)
+# 0
+
+milestone_16_18 %>% 
+  add_count(PersonID) %>% 
+  filter(n>1)
+# 1 personID dup
+
+save(milestone_16_18_person, file = "/Volumes/George_Surgeon_Projects/ACGME_milestone/linkage/milestone_16_18_person.rdata")
+
+
+
+
+
+
+
