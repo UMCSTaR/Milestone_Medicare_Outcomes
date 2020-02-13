@@ -2,9 +2,22 @@
 library(tidyverse)
 library(lubridate)
 
+# 2015 data -----
+load("/Volumes/George_Surgeon_Projects/ACGME_milestone/original/milestone_2015.rdata")
+
+names(milestone_15_all)
+
+milestone_15_person =  milestone_15_all %>% 
+  select(PersonID, NationalProviderID, FirstName, MiddleName, LastName, Birth_date, Degree_date, birth_year) %>% 
+  distinct()
+
+save(milestone_15_person, file = "/Volumes/George_Surgeon_Projects/ACGME_milestone/milestone_15_person.rdata")
+
 # load milestone dt ----
 # change here for new data from ACGME
 load("/Volumes/George_Surgeon_Projects/ACGME_milestone/original/milestone_02_2020.rdata")
+
+names(milestone)
 
 str(milestone)
 
@@ -109,15 +122,21 @@ milestone_person_info = milestone_npi %>%
 save(milestone_person_info, file = "/Volumes/George_Surgeon_Projects/ACGME_milestone/milestone_person_info.rdata")
 
 
-# 2015 to 2018 with names ------
+# 2016 to 2018 with names ------
 # add person info
 milestone_16_18 = readxl::read_xlsx("/Volumes/George_Surgeon_Projects/ACGME_milestone/original/GRADUATES_SURGERY_NAMES_2016_17_18_grads.xlsx")   
-load( "/Volumes/George_Surgeon_Projects/ACGME_milestone/milestone_person_info.rdata")
+load("/Volumes/George_Surgeon_Projects/ACGME_milestone/milestone_person_info.rdata")
 
 milestone_16_18_person = milestone_16_18 %>% 
   mutate(PersonID = as.character(PersonID)) %>% 
   left_join(milestone_person_info, by = "PersonID") %>% 
   glimpse()
+
+# person ADS but not milestone
+milestone_16_18 %>%   # 3581 grads
+  transmute(PersonID = as.character(PersonID)) %>% 
+  anti_join(milestone_person_info)  # 4743 grads from ACGME with milestone records
+  
 
 # check 
 milestone_16_18_person %>% 
@@ -131,9 +150,25 @@ milestone_16_18 %>%
 
 save(milestone_16_18_person, file = "/Volumes/George_Surgeon_Projects/ACGME_milestone/linkage/milestone_16_18_person.rdata")
 
+# 2015 --------
+load("/Volumes/George_Surgeon_Projects/ACGME_milestone/original/milestone_2015.rdata")
+load("/Volumes/George_Surgeon_Projects/ACGME_milestone/linkage/milestone_16_18_person.rdata")
+
+vars = names(milestone_16_18_person)
+names(milestone_15_all)
+
+milestone_15_all = milestone_15_all %>% 
+  mutate(NPI = NA,
+         multi_NPI = NA) 
+
+milestone_15_person = milestone_15_all %>% 
+  select(vars) %>% 
+  distinct()
+
+milestone_15_18 = rbind(milestone_15_person, milestone_16_18_person)
 
 
+# 4721 = 3580 (2016-2019) + 1141 (2015)
+save(milestone_15_18, file = "/Volumes/George_Surgeon_Projects/ACGME_milestone/linkage/milestone_15_18_person.rdata")
 
-
-
-
+n_distinct(milestone_15_18$PersonID)
