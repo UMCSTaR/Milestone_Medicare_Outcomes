@@ -165,11 +165,11 @@ milestone_15_person = milestone_15_all %>%
   select(vars) %>% 
   distinct()
 
-milestone_15_18 = rbind(milestone_15_person, milestone_16_18_person)
+milestone_15_18_person = rbind(milestone_15_person, milestone_16_18_person)
 
 
 # 4721 = 3581 (2016-2019) (one personID dup) + 1141 (2015)
-save(milestone_15_18, file = "/Volumes/George_Surgeon_Projects/ACGME_milestone/linkage/milestone_15_18_person.rdata")
+save(milestone_15_18_person, file = "/Volumes/George_Surgeon_Projects/ACGME_milestone/linkage/milestone_15_18_person.rdata")
 
-n_distinct(milestone_15_18$PersonID)
+n_distinct(milestone_15_18_person$PersonID)
 #4721
