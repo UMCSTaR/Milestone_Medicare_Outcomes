@@ -9,18 +9,21 @@ milestone_person = read_csv("/Volumes/George_Surgeon_Projects/ACGME_milestone/li
 load("/Volumes/George_Surgeon_Projects/ACGME_milestone/linkage/de_name_data/milestone_nppes_ama_abs_15_18.rdata")
 
 # medicare data
-load("/Volumes/George_Surgeon_Projects/medicare_data/xilin_analytic_file/add_cmb_and_selected_vars/full_analytic_data.rdata")            
+# load("/Volumes/George_Surgeon_Projects/medicare_data/xilin_analytic_file/add_cmb_and_selected_vars/full_analytic_data.rdata")            
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/medicare_gs_pc.rdata")
+
+analytic_data = medicare_gs_pc
 
 
 # match by NPI process -------
 ## 1. unique match -----
-n_distinct(analytic_data$id_physician_npi) # n 37988
+n_distinct(analytic_data$id_physician_npi) # n 37988   #gs pc 6692
 n_distinct(milestone_person$npi.linked)    # n 4628
 
 milestone_medicare = analytic_data %>% 
   inner_join(milestone_person, by = c("id_physician_npi" = "npi.linked"))
 
-n_distinct(milestone_medicare$id_physician_npi) # 676
+n_distinct(milestone_medicare$id_physician_npi) # 676  # gs pc 19
 
 milestone_medicare %>% 
   cat_by(facility_clm_yr)
