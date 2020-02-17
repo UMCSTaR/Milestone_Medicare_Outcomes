@@ -17,6 +17,20 @@ prep_data_for_model <- function(
   #            !is.na(val_yr_practice))     # drop year after graduation NA
   
   
+  # add flg to indicate surgeons at least performed 4 out of 5 procedures
+  # at least 1 case for 4 proc (e) 
+  at_least_one_proc_medicare_surgeons = data %>% 
+    filter(e_proc_grp_lbl != "Ventral Hernia Repair") %>% 
+    group_by(id_physician_npi) %>% 
+    mutate(n_proc_per_surg = n_distinct(e_proc_grp_lbl)) %>% 
+    arrange(id_physician_npi, e_proc_grp_lbl) %>% 
+    ungroup() %>% 
+    filter(n_proc_per_surg == 4) %>% 
+    distinct(id_physician_npi)
+  
+  data = data %>% 
+    mutate(gs_perform_4 = ifelse(id_physician_npi %in% at_least_one_proc_medicare_surgeons$id_physician_npi, 1, 0))
+  
   # make a procedure category for multiple procedure 
   data = data %>% 
     mutate(e_proc_grp_lbl = ifelse(flg_multi_cpt == 1, "multi_procedures", e_proc_grp_lbl))
