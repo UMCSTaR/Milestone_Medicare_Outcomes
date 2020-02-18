@@ -1,0 +1,71 @@
+---
+title: "Milestone Evals"
+author: "Xilin Chen"
+date: "2/18/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = F,                                     # code
+  message = F,
+  warning = F,
+  error = F,
+  comment = NA,
+  R.options = list(width = 220),
+  dev.args = list(bg = 'transparent'),          # viz
+  dev = 'png',
+  fig.align = 'center',
+  cache = F
+  # out.width = '100%',
+  # fig.asp = .5,
+)    
+
+library(tidyverse)
+library(kableExtra)
+library(lubridate)
+library(tidyext)
+
+
+kable_df <- function(..., digits=2) {
+  kable(...,digits = digits) %>% 
+    kable_styling(full_width = F, latex_options = "hold_position")
+}
+```
+
+This Document explore the milestone data for the last year evaluation
+
+```{r load_data}
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_final_year.rdata")
+```
+
+
+# Descriptive of Milestone
+
+Evaluations are from 2015 to 2018, Mile-year and Year-end evals within each year.
+
+```{r evals}
+milestone_final_year %>% 
+  cat_by(eval_peroid) %>% 
+  kable_df()
+
+milestone_final_year %>% 
+  distinct(QuestionKey, ReportCategory, QuestionText) %>% 
+  kable_df(caption = "Evaluation Questions")
+
+```
+
+most of the results are between 7-9
+
+```{r summary}
+milestone_final_year %>% 
+  cat_by(IntResponseValue)
+
+milestone_final_year %>% 
+  cat_by(IntResponseValue) %>% 
+  ggplot(aes(x = IntResponseValue, y = N)) +
+  geom_col() +
+  theme_classic()
+```
+
+

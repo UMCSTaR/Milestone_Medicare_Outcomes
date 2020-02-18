@@ -8,7 +8,7 @@ milestone_person = read_csv("/Volumes/George_Surgeon_Projects/ACGME_milestone/li
 # multiple macthes
 load("/Volumes/George_Surgeon_Projects/ACGME_milestone/linkage/de_name_data/milestone_nppes_ama_abs_15_18.rdata")
 
-# medicare data
+# load medicare data, choose one
 # all medicare only us grads
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/medicare_us.rdata")            
 # only general surgeon
