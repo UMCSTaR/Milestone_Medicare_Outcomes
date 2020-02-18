@@ -9,21 +9,29 @@ milestone_person = read_csv("/Volumes/George_Surgeon_Projects/ACGME_milestone/li
 load("/Volumes/George_Surgeon_Projects/ACGME_milestone/linkage/de_name_data/milestone_nppes_ama_abs_15_18.rdata")
 
 # medicare data
-# load("/Volumes/George_Surgeon_Projects/medicare_data/xilin_analytic_file/add_cmb_and_selected_vars/full_analytic_data.rdata")            
+# all medicare only us grads
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/medicare_us.rdata")            
+# only general surgeon
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/medicare_gs.rdata")
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/medicare_gs_by_abs.rdata")
+# general surgeon partial colectomy
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/medicare_gs_pc.rdata")
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/medicare_gs_pc_abs.rdata")
 
-analytic_data = medicare_gs_pc
 
+analytic_data = medicare_gs
+
+n_distinct(analytic_data$id_physician_npi)
 
 # match by NPI process -------
 ## 1. unique match -----
-n_distinct(analytic_data$id_physician_npi) # n 37988   #gs pc 6692
+n_distinct(analytic_data$id_physician_npi) # n 34705   #gs pc 6692
 n_distinct(milestone_person$npi.linked)    # n 4628
 
 milestone_medicare = analytic_data %>% 
   inner_join(milestone_person, by = c("id_physician_npi" = "npi.linked"))
 
-n_distinct(milestone_medicare$id_physician_npi) # 676  # gs pc 19
+n_distinct(milestone_medicare$id_physician_npi) # 586  # gs pc 19
 
 milestone_medicare %>% 
   cat_by(facility_clm_yr)
@@ -45,7 +53,6 @@ multi = milestone_nppes_ama_abs_15_18 %>%
 
 # check
 n_distinct(multi$PersonID)  # 15
-n_distinct(milestone_multi_npi$PersonID) # 4642
 
 milestone_medicare_muti = analytic_data %>% 
   inner_join(multi, by = c("id_physician_npi" = "npi"))
@@ -57,8 +64,6 @@ milestone_match_with_medicare_person = milestone_medicare_muti %>%
 # 494347   1760771901      
 # 533431   1871693077  
 
-milestone_medicare_muti %>% 
-  count(facility_clm_yr)
 
 
 # 2.2 AMA and ABS with no matches, by names ----------
@@ -74,7 +79,7 @@ ama_medicare_person = analytic_data %>%
   inner_join(npi_ama, by = c("id_physician_npi" = "npi.ama")) %>% 
   distinct(PersonID, id_physician_npi) %>% 
   glimpse()
-# 7
+# 6
 
 # abs 
 npi_abs = no_match_abs %>% 
