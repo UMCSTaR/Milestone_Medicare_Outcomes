@@ -33,16 +33,19 @@ kable_df <- function(..., digits=2) {
 }
 ```
 
-This Document explore the milestone data for the last year evaluation
+This document explores the milestone data for the last year evaluation
 
 ```{r load_data}
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_final_year.rdata")
+
+milestone_final_year = milestone_final_year %>% 
+  mutate(IntResponseValue = ifelse(IntResponseValue == 0, NA, IntResponseValue))
 ```
 
 
 # Descriptive of Milestone
 
-Evaluations are from 2015 to 2018, Mile-year and Year-end evals within each year.
+Evaluations are from 2015 to 2018, Mid-year and Year-end evals within each year. The number of graduates in milestone evals are `r n_distinct(milestone_final_year$PersonID)`
 
 ```{r evals}
 milestone_final_year %>% 
@@ -68,4 +71,11 @@ milestone_final_year %>%
   theme_classic()
 ```
 
+How many residents have <7 evals
+
+```{r low_eval}
+milestone_final_year %>% 
+  filter(IntResponseValue<7) %>% 
+  summarise(n_trainees_less_7 = length(unique(PersonID)))
+```
 
