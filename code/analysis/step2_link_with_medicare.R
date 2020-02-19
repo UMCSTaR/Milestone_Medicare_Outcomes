@@ -9,29 +9,22 @@ milestone_person = read_csv("/Volumes/George_Surgeon_Projects/ACGME_milestone/li
 load("/Volumes/George_Surgeon_Projects/ACGME_milestone/linkage/de_name_data/milestone_nppes_ama_abs_15_18.rdata")
 
 # load medicare data, choose one
-# all medicare only us grads
-load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/medicare_us.rdata")            
-# only general surgeon
-load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/medicare_gs.rdata")
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/medicare_gs_by_abs.rdata")
 # general surgeon partial colectomy
-load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/medicare_gs_pc.rdata")
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/medicare_gs_pc_abs.rdata")
 
 
 analytic_data = medicare_gs
 
-n_distinct(analytic_data$id_physician_npi)
-
 # match by NPI process -------
 ## 1. unique match -----
-n_distinct(analytic_data$id_physician_npi) # n 34705   #gs pc 6692
+n_distinct(analytic_data$id_physician_npi) # n 28944
 n_distinct(milestone_person$npi.linked)    # n 4628
 
 milestone_medicare = analytic_data %>% 
   inner_join(milestone_person, by = c("id_physician_npi" = "npi.linked"))
 
-n_distinct(milestone_medicare$id_physician_npi) # 586  # gs pc 19
+n_distinct(milestone_medicare$id_physician_npi) # 475
 
 milestone_medicare %>% 
   cat_by(facility_clm_yr)
@@ -117,3 +110,17 @@ n_distinct(milestone_medicare$id_physician_npi)
 
 save(milestone_medicare, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare.rdata")
 
+# only keep partial colectomy ------
+milestone_medicare_pc = milestone_medicare %>% 
+  filter(e_proc_grp_lbl == "Partial Colectomy")
+
+n_distinct(milestone_medicare_pc$id_physician_npi)
+
+# only keep n>=5
+
+milestone_medicare_pc_5 = milestone_medicare_pc %>% 
+  filter(surgeon_volume>=5)
+
+n_distinct(milestone_medicare_pc_5$id_physician_npi)
+
+#208
