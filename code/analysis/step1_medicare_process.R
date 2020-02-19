@@ -1,7 +1,6 @@
 library(tidyverse)
 library(tidyext)
 
-
 # medicare process -------
 
 # medicare data
@@ -14,6 +13,8 @@ analytic_data = prep_data_for_model(analytic_data)
 medicare_us = analytic_data %>% 
   filter(forgein_graduate == 0)
 
+n_distinct(medicare_us$id_physician_npi)
+
 # filter only gs by abs ----
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/abs_fellowship_npi.rdata")
 medicare_gs = medicare_us %>% 
@@ -23,14 +24,7 @@ medicare_gs %>%
   cat_by(e_proc_grp_lbl)
 # Partial Colectomy     686886       65.2  
 
-
-# filter Partial Colectomy ----
-medicare_gs_pc = medicare_gs %>% 
-  filter(e_proc_grp_lbl == "Partial Colectomy")
-
 # define by abs
 save(medicare_gs, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/medicare_gs_by_abs.rdata")
-# pc procedure by ABS
-save(medicare_gs_pc, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/medicare_gs_pc_abs.rdata")
 
 

@@ -8,10 +8,9 @@ milestone_person = read_csv("/Volumes/George_Surgeon_Projects/ACGME_milestone/li
 # multiple macthes
 load("/Volumes/George_Surgeon_Projects/ACGME_milestone/linkage/de_name_data/milestone_nppes_ama_abs_15_18.rdata")
 
-# load medicare data, choose one
+# load medicare data
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/medicare_gs_by_abs.rdata")
 # general surgeon partial colectomy
-load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/medicare_gs_pc_abs.rdata")
 
 
 analytic_data = medicare_gs
@@ -114,9 +113,12 @@ save(milestone_medicare, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_O
 milestone_medicare_pc = milestone_medicare %>% 
   filter(e_proc_grp_lbl == "Partial Colectomy")
 
-n_distinct(milestone_medicare_pc$id_physician_npi)
+n_distinct(milestone_medicare_pc$id_physician_npi) #345
 
-# only keep n>=5
+save(milestone_medicare_pc, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_pc.rdata")
+
+
+# only keep n>=5 --------
 
 milestone_medicare_pc_5 = milestone_medicare_pc %>% 
   filter(surgeon_volume>=5)
@@ -124,3 +126,5 @@ milestone_medicare_pc_5 = milestone_medicare_pc %>%
 n_distinct(milestone_medicare_pc_5$id_physician_npi)
 
 #208
+save(milestone_medicare_pc_5, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_pc_5.rdata")
+
