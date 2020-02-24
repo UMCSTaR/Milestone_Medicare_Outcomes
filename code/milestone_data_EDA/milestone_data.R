@@ -16,7 +16,20 @@ milestone_678 = milestone %>%
 
 # check
 milestone_678 %>% 
-  cat_by(eval_peroid)
+  cat_by(AcademicYear, residentyear) %>% 
+  arrange(AcademicYear, residentyear)
+
+p_2014 = milestone_678 %>% 
+  filter(AcademicYear == 2014) %>% 
+  distinct(PersonID, AcademicYear) 
+
+p_2015 = milestone_678 %>% 
+  filter(AcademicYear == 2015) %>% 
+  distinct(PersonID, AcademicYear)
+
+p_2014_2015 = p_2014 %>% 
+  full_join(p_2015, by = "PersonID") 
+
 
 # combine all year milestone ------
 milestone_5 = milestone_15_all %>% 
@@ -24,8 +37,24 @@ milestone_5 = milestone_15_all %>%
   rename(eval_peroid = ScheduleWindowDescription) %>% 
   glimpse()
 
+# check
+milestone_5 %>% 
+  cat_by(residentyear)
+
+
+milestone5678 = rbind(milestone_678, milestone_5)
+
+academic_year_resident_year = milestone %>% 
+  count(AcademicYear, residentyear) 
+
+write_csv(academic_year_resident_year, path = "data/academic_year_resident_year.csv")
+
 milestone = rbind(milestone_678, milestone_5) %>% 
   filter(PersonID %in% milestone_person$PersonID)
+
+# check
+milestone %>% 
+  cat_by(residentyear)
 
 n_distinct(milestone$PersonID)  #4720
 

@@ -77,5 +77,50 @@ How many residents have <7 evals
 milestone_final_year %>% 
   filter(IntResponseValue<7) %>% 
   summarise(n_trainees_less_7 = length(unique(PersonID)))
+
+test = milestone_final_year %>% 
+  filter(IntResponseValue<7) %>% 
+  cat_by(ReportCategory, IntResponseValue)
+
+low_value_person = milestone_final_year %>% 
+  filter(IntResponseValue <=3) %>% 
+  distinct(PersonID) %>% 
+  pull()
+
+milestone_final_year %>% 
+  filter(!is.na(IntResponseValue)) %>% 
+  distinct(IntResponseValue, ReportCategory) %>% 
+  ggplot(aes(x = IntResponseValue, y = ReportCategory), al) +
+  geom_point()
+
+```
+
+```{r sample_person}
+sample_person = milestone_final_year %>%
+  filter(PersonID == "616007")
+
+sample_person %>% 
+  group_by(eval_peroid, ReportCategory) %>% 
+  mutate(IntResponseValue = as.numeric(IntResponseValue),
+         mean_value = mean(IntResponseValue, na.rm = T)) %>% 
+  distinct(eval_peroid, ReportCategory, mean_value)
+```
+
+
+# Sum Milestone Score
+
+```{r milestone_score}
+test = milestone_final_year %>% 
+  filter(grepl('Year-End', eval_peroid)) %>%   # filter to end-year evaluations
+  group_by(PersonID, ReportCategory) %>% 
+  mutate(IntResponseValue = as.numeric(IntResponseValue),
+         sum_value = sum(IntResponseValue),
+         mean_value = mean(IntResponseValue)) %>% 
+  ungroup() %>% 
+  glimpse()
+
+test2 = test %>% 
+  select(PersonID, ReportCategory, eval_peroid,residentyear, IntResponseValue, sum_value) %>% 
+  filter(PersonID == "745648")
 ```
 

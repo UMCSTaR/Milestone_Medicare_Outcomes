@@ -9,6 +9,8 @@ source("code/functions/prep_medicare_data.R")
 
 analytic_data = prep_data_for_model(analytic_data)
 
+# debugonce(prep_data_for_model)
+
 # filter foreign grads
 medicare_us = analytic_data %>% 
   filter(forgein_graduate == 0)
