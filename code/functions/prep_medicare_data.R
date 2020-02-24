@@ -63,11 +63,11 @@ prep_data_for_model <- function(
   }
   
   
-  # standardize numeric -----------------------------------------------------
-  
+  # standardize numeric  and keep original----------------------------------------------------- 
   data = data %>% 
-    mutate_at(standardize, function(x) scale(x)[,1]) 
-  
+    select(age_at_admit, AHRQ_score) %>% 
+    mutate_at(standardize, .funs = list(scale = function(x) scale(x)[,1]))
+
   
   # onehot categorical ------------------------------------------------------
   
