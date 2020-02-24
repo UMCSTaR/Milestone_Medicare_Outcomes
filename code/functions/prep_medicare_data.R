@@ -65,7 +65,6 @@ prep_data_for_model <- function(
   
   # standardize numeric  and keep original----------------------------------------------------- 
   data = data %>% 
-    select(age_at_admit, AHRQ_score) %>% 
     mutate_at(standardize, .funs = list(scale = function(x) scale(x)[,1]))
 
   
