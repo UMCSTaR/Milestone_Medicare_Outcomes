@@ -1,9 +1,7 @@
 # Goal:  multiple outcomes, milestone ratings
-
 library(tidyverse)
 
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_pc.rdata")
-
 main_data = milestone_medicare_pc
 
 
@@ -11,7 +9,7 @@ main_data = milestone_medicare_pc
 main_data =  main_data %>% 
   mutate(los_gt_75perc = ifelse(val_los > quantile(val_los, probs = 0.75), 1, 0),
   ) %>% 
-  tidyext::row_sums(flg_cmp_po_severe, flg_cmp_po_any, flg_readmit_30d, los_gt_75perc, flg_util_reop,
+  tidyext::row_sums(flg_cmp_po_severe_poa, flg_cmp_po_any_poa, flg_readmit_30d, los_gt_75perc, flg_util_reop,
                     varname = 'flg_any_but_death') %>% 
   mutate(flg_any_but_death = as.integer(flg_any_but_death > 0),
          flg_any_but_death = ifelse(flg_death_30d, NA, flg_any_but_death))
@@ -20,8 +18,8 @@ main_data =  main_data %>%
 # Outcome list ------------------------------------------------------------
 
 outcomes = c(
-  'flg_cmp_po_severe',
-  'flg_cmp_po_any',
+  'flg_cmp_po_severe_poa',
+  'flg_cmp_po_any_poa',
   'flg_readmit_30d',
   'flg_death_30d',
   'flg_util_reop',
@@ -41,18 +39,21 @@ covariates = c(
   'flg_admit_emerg',
   'AHRQ_score',
   'ses_2grp',
-  'cpt_cd',
+  # 'cpt_cd',
   'facility_clm_yr',
   'flg_multi_surgeon',
   'flg_assistant_surgeon',
   'hosp_beds_2grp',
-  'flg_hosp_ICU_hosp',
+  # 'flg_hosp_ICU_hosp',
   'val_hosp_mcday2inptday_ratio',
   'val_hosp_rn2bed_ratio'
 )
 
-# primary = 'qe_ce_cat'
-primary = 'IntResponseValue_mean'
+# choose primary variable -----------
+
+primary = 'IntResponseValue_mean'   # overall mean
+# primary = 'operative_rating_mean'   # operative mean by (PC3, MK2, ICS3)
+# primary = 'prof_rating_mean'        # professionalism bhy (Prof1, Prof 2, Prof3)
 
 # if single proc
 covariates_all = paste0(primary, ' + ', paste0(covariates, collapse = ' + '))
@@ -85,6 +86,7 @@ create_formulas <- function(
     ' + ',
     paste0(covariates, collapse = ' + ')
   )
+  
   
   if (mgcv)
     re = paste0(' + s(', random_effects, ", bs = 're')", collapse = '')
@@ -168,7 +170,8 @@ fs = create_formulas(
   primary_covariate = primary,
   other_covariates = covariates,
   interaction_term = NULL,
-  random_effects = c('id_physician_npi', 'facility_prvnumgrp')
+  # random_effects = c('id_physician_npi', 'facility_prvnumgrp')
+  random_effects = c('id_physician_npi', 'facility_prvnumgrp', 'cpt_cd')
 )
 
 names(fs) = outcomes
@@ -182,71 +185,26 @@ plan(multiprocess(workers = length(outcomes)))
 
 library(furrr)
 
-# ~ 30 sec with nAGQ 0 and calc.derivs FALSE; over ~24 minutes with both off, ~21 with just derivs =F but may still have convergence issues, though no strong differences than without; also checked with tmb
 system.time({
   results <- future_map2(
     fs,
     list(data = main_data),
     run_models,
-    proc = 'Partial Colectomy',
-    method = 'lme4',
-    nAGQ = 0,
-    control = lme4::glmerControl(calc.derivs = FALSE)
-  )
-})
-
-# about 5 min for 5 year, 12 for 10yr
-system.time({
-  results <- future_map2(
-    fs,
-    list(data = main_data),
-    run_models,
-    proc = 'Partial Colectomy',
     method = 'glmmTMB'
   )
 })
-# 
-# results = future_pmap(
-#   formulas,
-#   data,
-#   run_models,
-#   method = 'mgcv',
-#   discrete = TRUE,
-#   nthreads = length(outcomes)
-# )
-
-# Run docs ----------------------------------------------------------------
-
-### PDF
-
-rmds = paste0(
-  'analysis/report/all_outcomes_misc_procs/partial_colectomy/',
-  list.files('analysis/report/all_outcomes_misc_procs/partial_colectomy', pattern = '.Rmd')
-)
-
-rmds = rmds[!grepl(rmds, pattern = 'main_doc|synthesis')]
 
 
-# create docs in parallel
-# library(future)
-# 
-# plan(multiprocess(workers = length(rmds)))
-# 
-# library(furrr)
-# 
-# system.time({
-#   future_map(rmds, rmarkdown::render)
-# })
-# 
-# plan(sequential)
+# save_model
 
-# latex can't handle parallel operations because it will pull from the same-named images whenever compilation takes place. Serial should have no issue.
-
-if (year_since_grad == 5) {
-  map(rmds, rmarkdown::render, output_dir = 'analysis/report/all_outcomes_misc_procs/partial_colectomy/5yr/')
-} else {
-  map(rmds, rmarkdown::render, output_dir = 'analysis/report/all_outcomes_misc_procs/partial_colectomy/10yr/')
+if (primary == 'IntResponseValue_mean') {
+  save(results, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/results_tmb.rdata")
+} else if (primary == 'operative_rating_mean') {
+  save(results, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/operative_results_tmb.rdata") 
+} else if (primary == 'prof_rating_mean') {
+  save(results, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/prof_results_tmb.rdata")
 }
 
-# for testing
-# rmarkdown::render(input = rmds[3], output_dir = 'analysis/report/all_outcomes_misc_procs/partial_colectomy/5yr/')
+
+summary(results$flg_cmp_po_severe_poa)
+
