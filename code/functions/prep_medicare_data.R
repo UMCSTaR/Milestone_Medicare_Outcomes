@@ -91,6 +91,15 @@ prep_data_for_model <- function(
       )
   }
   
+  # add lable for race
+  data = data %>% 
+    mutate(e_race_wbho_lable = ifelse(e_race_wbho == 1, "Non-Hispanic White", NA),
+           e_race_wbho_lable = ifelse(e_race_wbho == 2, "Non-Hispanic Black", e_race_wbho_lable),
+           e_race_wbho_lable = ifelse(e_race_wbho == 3, "Hispanic", e_race_wbho_lable),
+           e_race_wbho_lable = ifelse(e_race_wbho == 4, "Other", e_race_wbho_lable))
+  
+  
+  
   # e_admit_type 1- emergency 2 urgent 3 elective 4 other 9 UK/missing
   # Given that 'other' is indistinguishable from unknown, which was lumped with
   # missing, other will be given NA as well.  It has very few values anyway.  This was checked for appropriate NA
