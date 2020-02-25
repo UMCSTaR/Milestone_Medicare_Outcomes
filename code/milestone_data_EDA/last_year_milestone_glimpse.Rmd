@@ -37,90 +37,56 @@ This document explores the milestone data for the last year evaluation
 
 ```{r load_data}
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_final_year.rdata")
+load("data/person_in_medicare_and_milestone.rdata")
 
-milestone_final_year = milestone_final_year %>% 
-  mutate(IntResponseValue = ifelse(IntResponseValue == 0, NA, IntResponseValue))
+milestone_in_medicare = milestone_final_year %>% 
+  mutate(IntResponseValue = ifelse(IntResponseValue == 0, NA, IntResponseValue)) %>% 
+  filter(grepl("Year-End",eval_peroid),
+         PersonID %in% person_values$PersonID)
 ```
 
 
 # Descriptive of Milestone
 
-Evaluations are from 2015 to 2018, Mid-year and Year-end evals within each year. The number of graduates in milestone evals are `r n_distinct(milestone_final_year$PersonID)`
+Evaluations are from 2015 to 2018, Mid-year and Year-end evals within each year. The number of graduates in milestone evals and also in Medicare are `r n_distinct(milestone_in_medicare$PersonID)`
 
 ```{r evals}
-milestone_final_year %>% 
+milestone_in_medicare %>% 
   cat_by(eval_peroid) %>% 
   kable_df()
-
-milestone_final_year %>% 
-  distinct(QuestionKey, ReportCategory, QuestionText) %>% 
-  kable_df(caption = "Evaluation Questions")
-
-```
-
-most of the results are between 7-9
-
-```{r summary}
-milestone_final_year %>% 
-  cat_by(IntResponseValue)
-
-milestone_final_year %>% 
-  cat_by(IntResponseValue) %>% 
-  ggplot(aes(x = IntResponseValue, y = N)) +
-  geom_col() +
-  theme_classic()
 ```
 
 How many residents have <7 evals
 
 ```{r low_eval}
-milestone_final_year %>% 
+milestone_in_medicare %>% 
   filter(IntResponseValue<7) %>% 
-  summarise(n_trainees_less_7 = length(unique(PersonID)))
+  summarise(n_trainees_less_7 = length(unique(PersonID)),
+            n_tot_trainees = length(unique(milestone_in_medicare$PersonID))) %>% 
+  kable_df()
 
-test = milestone_final_year %>% 
-  filter(IntResponseValue<7) %>% 
-  cat_by(ReportCategory, IntResponseValue)
-
-low_value_person = milestone_final_year %>% 
-  filter(IntResponseValue <=3) %>% 
-  distinct(PersonID) %>% 
-  pull()
-
-milestone_final_year %>% 
+milestone_in_medicare %>% 
   filter(!is.na(IntResponseValue)) %>% 
-  distinct(IntResponseValue, ReportCategory) %>% 
-  ggplot(aes(x = IntResponseValue, y = ReportCategory), al) +
-  geom_point()
+  count(IntResponseValue, ReportCategory) %>% 
+  ggplot(aes(x = IntResponseValue, y = ReportCategory)) +
+  geom_point(aes(size = n), color = "gray50")
+
+
+milestone_in_medicare %>% 
+  filter(QuestionKey %in% c("comp1_PC_Q3", "comp2_MK_Q2", "comp6_ICS_Q3")) %>% 
+  ggplot(aes(x = IntResponseValue)) +
+  stat_count(color = "gray50") +
+  ggtitle("Operative Rating (PC3, MK2, ICS3)")
+
+milestone_in_medicare %>% 
+  filter(ReportCategory == "Professionalism") %>% 
+  ggplot(aes(x = IntResponseValue)) +
+  stat_count(color = "gray50") +
+  ggtitle("Professionalism (Prof1, Prof 2, Prof3)")
 
 ```
 
-```{r sample_person}
-sample_person = milestone_final_year %>%
-  filter(PersonID == "616007")
-
-sample_person %>% 
-  group_by(eval_peroid, ReportCategory) %>% 
-  mutate(IntResponseValue = as.numeric(IntResponseValue),
-         mean_value = mean(IntResponseValue, na.rm = T)) %>% 
-  distinct(eval_peroid, ReportCategory, mean_value)
-```
 
 
-# Sum Milestone Score
 
-```{r milestone_score}
-test = milestone_final_year %>% 
-  filter(grepl('Year-End', eval_peroid)) %>%   # filter to end-year evaluations
-  group_by(PersonID, ReportCategory) %>% 
-  mutate(IntResponseValue = as.numeric(IntResponseValue),
-         sum_value = sum(IntResponseValue),
-         mean_value = mean(IntResponseValue)) %>% 
-  ungroup() %>% 
-  glimpse()
-
-test2 = test %>% 
-  select(PersonID, ReportCategory, eval_peroid,residentyear, IntResponseValue, sum_value) %>% 
-  filter(PersonID == "745648")
-```
 

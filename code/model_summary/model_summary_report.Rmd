@@ -27,28 +27,37 @@ knitr::opts_chunk$set(
 library(tidyverse)
 library(tidyext)
 library(kableExtra)
+library(arsenal)
 library(glmmTMB)
-library(data.table)
-library(lubridate)
 library(mixedup)
+library(ggeffects)
+
 
 kable_df <- function(..., digits=2) {
-  kable(...,digits = digits) %>% 
-    kable_styling(full_width = F, latex_options = "hold_position")
+  kable(...,digits = digits, booktabs = T) %>% 
+    kable_styling(full_width = F, 
+                  latex_options = c("striped", "hold_position"))
 }
+
+source("code/functions/fe.r")
 
 ```
 
-```{r load_data, cache=TRUE}
+```{r load_data}
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_pc.rdata")
 ```
 
-# Whole data Description
+# Description
+
+This document uses the end-year milestone evaluations at the last year of residency from ACGME. Milestone rating for each resident is the mean of all questions.
+
+# Whole Data Description
 
 ```{r data_desc}
 milestone_medicare_pc %>% 
   summarise(n_case = n(),
             n_surgeon = length(unique(id_physician_npi)),
+            n_hosp = length(unique(facility_prvnumgrp)),
             POA_severe_complication_rate = sum(flg_cmp_po_severe_poa)/n_case,
             severe_complication_rate = sum(flg_cmp_po_severe)/n_case,
             POA_any_complication_rate = sum(flg_cmp_po_any_poa)/n_case,
@@ -58,8 +67,36 @@ milestone_medicare_pc %>%
             reop = sum(flg_util_reop)/n_case) %>% 
   t() %>% 
   kable_df(caption = "Medicare Outcomes Description")
-
 ```
+
+
+## Table1 for model variables
+
+```{r table1, results="asis"}
+milestone_medicare_pc = milestone_medicare_pc %>% 
+  mutate(
+    # patient
+    ses_2grp = factor(ses_2grp, labels = c('bot 2 quint', 'top 3 quint')),
+    flg_admit_emerg = factor(flg_admit_emerg, labels = c('Not', 'Emergency')),
+    flg_male = factor(flg_male, labels = c('Female', 'Male')),
+    # case
+    open_colectomy = cpt_cd %in% c(44140:44147, 44160),
+    lap_colectomy  = cpt_cd %in% 44204:44208,
+    colectomy_type = factor(ifelse(cpt_cd %in% c(44140:44147, 44160), 'open', 'lap')),
+    # hosp
+    facility_clm_yr = facility_clm_yr + 2007,
+    hosp_beds_2grp = factor(hosp_beds_2grp, labels = c('<350', '>=350')),
+  )
+
+
+table_one <- tableby( ~ IntResponseValue_mean + flg_male + age_at_admit + factor(e_race_wbho_lable) + AHRQ_score + ses_2grp + colectomy_type + factor(facility_clm_yr) + factor(flg_multi_surgeon) + factor(flg_assistant_surgeon)  + hosp_beds_2grp + val_hosp_mcday2inptday_ratio + val_hosp_rn2bed_ratio, data = milestone_medicare_pc)
+
+mylabels <- list(val_hosp_mcday2inptday_ratio = "medicaid/inpatient days ratio", val_hosp_rn2bed_ratio = "Registered nurse to bed ratios")
+
+summary(table_one, labelTranslations = mylabels)
+```
+
+
 
 ```{r rating_desc}
 milestone_medicare_pc %>% 
@@ -78,32 +115,148 @@ milestone_medicare_pc %>%
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/results_tmb.rdata")
 ```
 
-```{r model }
-model = results$flg_cmp_po_severe_poa
+\newpage
 
 
+# Severe Complication (Excluded POA)
+
+```{r severe_cmp}
+model_severe_cmp = results$flg_cmp_po_severe_poa
+
+fe(model_severe_cmp)
+
+extract_vc(model_severe_cmp, ci_level = 0) %>% 
+    kable_df() 
+
+
+# predicted probability for surgeons
+plot(ggpredict(model_severe_cmp, terms = "IntResponseValue_mean [all]"))
+
+
+ggpredict(model_severe_cmp, terms = "IntResponseValue_mean [quart]") %>% 
+  mutate(quart = c("min", "Q1", "median", "Q3", "max")) %>% 
+  rename(milestone_rating = x) %>% 
+  select(quart, everything(), -group) %>% 
+  kable_df()
 ```
 
 
 
-```{r fe}
-# fe 
-fe = extract_fixed_effects(model) %>% 
-  mutate(OR = exp(value),
-         OR_lower = exp(lower_2.5),
-         OR_upper = exp(upper_97.5)
-         ) %>% 
-  select(-z, -se) %>% 
-  rename(Estimate = value) 
+\newpage
 
-fe %>% 
-  select(term, starts_with('OR'), everything())  %>% 
-  kable_df() %>% 
-  pack_rows('Milestone Rating', 2, 2) %>% 
-  pack_rows('Patient', 3, 9) %>%
-  pack_rows('Case', 10, 12)  %>% 
-  pack_rows('Hospital',13, 15)
+# Any Complication (Exclude POA)
+
+```{r any_cmp}
+model_any_cmp = results$flg_cmp_po_any_poa
+
+fe(model_any_cmp)
+
+extract_vc(model_any_cmp, ci_level = 0) %>% 
+    kable_df() 
+
+# predicted probability for surgeons
+plot(ggpredict(model_any_cmp, terms = "IntResponseValue_mean [all]"))
+
+ggpredict(model_any_cmp, terms = "IntResponseValue_mean [quart]") %>% 
+  mutate(quart = c("min", "Q1", "median", "Q3", "max")) %>% 
+  rename(milestone_rating = x) %>% 
+  select(quart, everything(), -group) %>% 
+  kable_df()
+
+```
+
+\newpage
+
+
+# Readmit 30 days
+
+```{r readmit}
+flg_readmit_30d = results$flg_readmit_30d
+
+fe(flg_readmit_30d)
+
+extract_vc(flg_readmit_30d, ci_level = 0) %>% 
+    kable_df() 
+
+# predicted probability for surgeons
+plot(ggpredict(flg_readmit_30d, terms = "IntResponseValue_mean [all]"))
+
+ggpredict(flg_readmit_30d, terms = "IntResponseValue_mean [quart]") %>% 
+  mutate(quart = c("min", "Q1", "median", "Q3", "max")) %>% 
+  rename(milestone_rating = x) %>% 
+  select(quart, everything(), -group) %>% 
+  kable_df()
 ```
 
 
+\newpage
 
+
+# Death 30 days
+
+```{r death}
+flg_death_30d = results$flg_death_30d
+
+fe(flg_death_30d)
+
+extract_vc(flg_death_30d, ci_level = 0) %>% 
+    kable_df() 
+
+# predicted probability for surgeons
+plot(ggpredict(flg_death_30d, terms = "IntResponseValue_mean [all]"))
+
+ggpredict(flg_death_30d, terms = "IntResponseValue_mean [quart]") %>% 
+  mutate(quart = c("min", "Q1", "median", "Q3", "max")) %>% 
+  rename(milestone_rating = x) %>% 
+  select(quart, everything(), -group) %>% 
+  kable_df()
+```
+
+
+\newpage
+
+
+# Reoperation
+
+```{r reoperation}
+flg_util_reop = results$flg_util_reop
+
+fe(flg_util_reop)
+
+extract_vc(flg_util_reop, ci_level = 0) %>% 
+    kable_df() 
+
+# predicted probability for surgeons
+plot(ggpredict(flg_util_reop, terms = "IntResponseValue_mean [all]"))
+
+ggpredict(flg_util_reop, terms = "IntResponseValue_mean [quart]") %>% 
+  mutate(quart = c("min", "Q1", "median", "Q3", "max")) %>% 
+  rename(milestone_rating = x) %>% 
+  select(quart, everything(), -group) %>% 
+  kable_df()
+
+```
+
+
+\newpage
+
+
+# Any Complication Exclude Death
+
+```{r complication}
+flg_any_but_death = results$flg_any_but_death
+
+fe(flg_any_but_death)
+
+extract_vc(flg_any_but_death, ci_level = 0) %>% 
+    kable_df() 
+
+# predicted probability for surgeons
+plot(ggpredict(flg_any_but_death, terms = "IntResponseValue_mean [all]"))
+
+ggpredict(flg_any_but_death, terms = "IntResponseValue_mean [quart]") %>% 
+  mutate(quart = c("min", "Q1", "median", "Q3", "max")) %>% 
+  rename(milestone_rating = x) %>% 
+  select(quart, everything(), -group) %>% 
+  kable_df()
+```
