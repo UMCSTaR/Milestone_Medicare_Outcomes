@@ -60,3 +60,19 @@ milestone_medicare_pc %>%
 
 ```
 
+# CPT count
+
+```{r CPT}
+milestone_medicare_pc %>% 
+  count(cpt_cd, sort = T) %>% 
+  kable_df()
+```
+
+
+# ICD hospital
+
+```{r icu_hosp}
+milestone_medicare_pc %>% 
+  count(flg_hosp_ICU_hosp, flg_cmp_po_severe_poa)
+```
+

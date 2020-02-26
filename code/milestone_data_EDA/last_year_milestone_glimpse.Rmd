@@ -76,13 +76,16 @@ milestone_in_medicare %>%
   filter(QuestionKey %in% c("comp1_PC_Q3", "comp2_MK_Q2", "comp6_ICS_Q3")) %>% 
   ggplot(aes(x = IntResponseValue)) +
   stat_count(color = "gray50") +
-  ggtitle("Operative Rating (PC3, MK2, ICS3)")
+  ggtitle("Operative Rating (PC3, MK2, ICS3)") +
+  theme_classic()
 
 milestone_in_medicare %>% 
   filter(ReportCategory == "Professionalism") %>% 
   ggplot(aes(x = IntResponseValue)) +
   stat_count(color = "gray50") +
-  ggtitle("Professionalism (Prof1, Prof 2, Prof3)")
+  ggtitle("Professionalism (Prof1, Prof 2, Prof3)") +
+  theme_minimal()
+
 
 ```
 
