@@ -1,11 +1,12 @@
 ---
-title: "Model Summary for Milestone Ratings vs. Medicare Outcomes"
+title: "Model Summary"
 author: "Xilin Chen"
-date: "2/24/2020"
-output: 
-  pdf_document:
-    toc: true
-    toc_depth: 1
+date: "2/26/2020"
+always_allow_html: true
+# output:
+#   pdf_document:
+#     toc: true
+#     toc_depth: 1
 ---
 
 ```{r setup, include=FALSE}
@@ -22,7 +23,7 @@ knitr::opts_chunk$set(
   cache = F
   # out.width = '100%',
   # fig.asp = .5,
-)      
+)
 
 library(tidyverse)
 library(tidyext)
@@ -35,13 +36,17 @@ library(ggeffects)
 
 kable_df <- function(..., digits=2) {
   kable(...,digits = digits, booktabs = T) %>% 
-    kable_styling(full_width = F, 
+    kable_styling(full_width = F,
                   latex_options = c("striped", "hold_position"))
+    # kable_styling(full_width = F)
 }
 
-source("code/functions/fe.r")
+
+
+source("/Users/xilinchen/Documents/Repo/Milestone_Medicare_Outcomes/code/functions/fe.r")
 
 ```
+
 
 ```{r load_data}
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_pc.rdata")
@@ -89,7 +94,7 @@ milestone_medicare_pc = milestone_medicare_pc %>%
   )
 
 
-table_one <- tableby( ~ IntResponseValue_mean + flg_male + age_at_admit + factor(e_race_wbho_lable) + AHRQ_score + ses_2grp + colectomy_type + factor(facility_clm_yr) + factor(flg_multi_surgeon) + factor(flg_assistant_surgeon)  + hosp_beds_2grp + val_hosp_mcday2inptday_ratio + val_hosp_rn2bed_ratio, data = milestone_medicare_pc)
+table_one <- tableby( ~ IntResponseValue_mean + prof_rating_mean + operative_rating_mean + flg_male + age_at_admit + factor(e_race_wbho_lable) + AHRQ_score + ses_2grp + colectomy_type + factor(facility_clm_yr) + factor(flg_multi_surgeon) + factor(flg_assistant_surgeon)  + hosp_beds_2grp + val_hosp_mcday2inptday_ratio + val_hosp_rn2bed_ratio, data = milestone_medicare_pc)
 
 mylabels <- list(val_hosp_mcday2inptday_ratio = "medicaid/inpatient days ratio", val_hosp_rn2bed_ratio = "Registered nurse to bed ratios")
 
@@ -97,23 +102,26 @@ summary(table_one, labelTranslations = mylabels)
 ```
 
 
+\newpage
+
 
 ```{r rating_desc}
-milestone_medicare_pc %>% 
-  ggplot() +
-  geom_bar(aes(x =IntResponseValue_mean)) +
-  theme_classic() +
-  xlab("Mean Milestone Rating")
+# main predictor
+predict_term = extract_fixed_effects(results$flg_cmp_po_severe_poa) %>% 
+  slice(2) %>% 
+  pull(term)
+
 
 milestone_medicare_pc %>% 
-  num_by(IntResponseValue_mean) %>% 
+  ggplot() +
+  geom_bar(aes_string(x = predict_term)) +
+  theme_classic() 
+
+milestone_medicare_pc %>% 
+  num_by(predict_term) %>% 
   kable_df()
 ```
 
-
-```{r load_model, cache=TRUE}
-load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/results_tmb.rdata")
-```
 
 \newpage
 
@@ -130,11 +138,11 @@ extract_vc(model_severe_cmp, ci_level = 0) %>%
 
 
 # predicted probability for surgeons
-plot(ggpredict(model_severe_cmp, terms = "IntResponseValue_mean [all]"))
+plot(ggpredict(model_severe_cmp, terms = predict_term))
 
 
-ggpredict(model_severe_cmp, terms = "IntResponseValue_mean [quart]") %>% 
-  mutate(quart = c("min", "Q1", "median", "Q3", "max")) %>% 
+ggpredict(model_severe_cmp, terms = paste(predict_term, "[quart2]")) %>% 
+  mutate(quart = c("Q1", "median", "Q3")) %>% 
   rename(milestone_rating = x) %>% 
   select(quart, everything(), -group) %>% 
   kable_df()
@@ -151,16 +159,16 @@ model_any_cmp = results$flg_cmp_po_any_poa
 
 fe(model_any_cmp)
 
-extract_vc(model_any_cmp, ci_level = 0) %>% 
-    kable_df() 
+extract_vc(model_any_cmp, ci_level = 0) %>%
+    kable_df()
 
 # predicted probability for surgeons
-plot(ggpredict(model_any_cmp, terms = "IntResponseValue_mean [all]"))
+plot(ggpredict(model_any_cmp, terms = predict_term))
 
-ggpredict(model_any_cmp, terms = "IntResponseValue_mean [quart]") %>% 
-  mutate(quart = c("min", "Q1", "median", "Q3", "max")) %>% 
-  rename(milestone_rating = x) %>% 
-  select(quart, everything(), -group) %>% 
+ggpredict(model_any_cmp, terms = paste(predict_term, "[quart2]")) %>%
+  mutate(quart = c( "Q1", "median", "Q3")) %>%
+  rename(milestone_rating = x) %>%
+  select(quart, everything(), -group) %>%
   kable_df()
 
 ```
@@ -175,16 +183,16 @@ flg_readmit_30d = results$flg_readmit_30d
 
 fe(flg_readmit_30d)
 
-extract_vc(flg_readmit_30d, ci_level = 0) %>% 
-    kable_df() 
+extract_vc(flg_readmit_30d, ci_level = 0) %>%
+    kable_df()
 
 # predicted probability for surgeons
-plot(ggpredict(flg_readmit_30d, terms = "IntResponseValue_mean [all]"))
+plot(ggpredict(flg_readmit_30d, terms = predict_term))
 
-ggpredict(flg_readmit_30d, terms = "IntResponseValue_mean [quart]") %>% 
-  mutate(quart = c("min", "Q1", "median", "Q3", "max")) %>% 
-  rename(milestone_rating = x) %>% 
-  select(quart, everything(), -group) %>% 
+ggpredict(flg_readmit_30d, terms = paste(predict_term, "[quart2]")) %>%
+  mutate(quart = c( "Q1", "median", "Q3")) %>%
+  rename(milestone_rating = x) %>%
+  select(quart, everything(), -group) %>%
   kable_df()
 ```
 
@@ -199,16 +207,16 @@ flg_death_30d = results$flg_death_30d
 
 fe(flg_death_30d)
 
-extract_vc(flg_death_30d, ci_level = 0) %>% 
-    kable_df() 
+extract_vc(flg_death_30d, ci_level = 0) %>%
+    kable_df()
 
 # predicted probability for surgeons
-plot(ggpredict(flg_death_30d, terms = "IntResponseValue_mean [all]"))
+plot(ggpredict(flg_death_30d, terms = predict_term))
 
-ggpredict(flg_death_30d, terms = "IntResponseValue_mean [quart]") %>% 
-  mutate(quart = c("min", "Q1", "median", "Q3", "max")) %>% 
-  rename(milestone_rating = x) %>% 
-  select(quart, everything(), -group) %>% 
+ggpredict(flg_death_30d, terms = paste(predict_term, "[quart2]")) %>%
+  mutate(quart = c( "Q1", "median", "Q3")) %>%
+  rename(milestone_rating = x) %>%
+  select(quart, everything(), -group) %>%
   kable_df()
 ```
 
@@ -223,16 +231,16 @@ flg_util_reop = results$flg_util_reop
 
 fe(flg_util_reop)
 
-extract_vc(flg_util_reop, ci_level = 0) %>% 
-    kable_df() 
+extract_vc(flg_util_reop, ci_level = 0) %>%
+    kable_df()
 
 # predicted probability for surgeons
-plot(ggpredict(flg_util_reop, terms = "IntResponseValue_mean [all]"))
+plot(ggpredict(flg_util_reop, terms = predict_term))
 
-ggpredict(flg_util_reop, terms = "IntResponseValue_mean [quart]") %>% 
-  mutate(quart = c("min", "Q1", "median", "Q3", "max")) %>% 
-  rename(milestone_rating = x) %>% 
-  select(quart, everything(), -group) %>% 
+ggpredict(flg_util_reop, terms = paste(predict_term, "[quart2]")) %>%
+  mutate(quart = c( "Q1", "median", "Q3")) %>%
+  rename(milestone_rating = x) %>%
+  select(quart, everything(), -group) %>%
   kable_df()
 
 ```
@@ -248,15 +256,15 @@ flg_any_but_death = results$flg_any_but_death
 
 fe(flg_any_but_death)
 
-extract_vc(flg_any_but_death, ci_level = 0) %>% 
-    kable_df() 
+extract_vc(flg_any_but_death, ci_level = 0) %>%
+    kable_df()
 
 # predicted probability for surgeons
-plot(ggpredict(flg_any_but_death, terms = "IntResponseValue_mean [all]"))
+plot(ggpredict(flg_any_but_death, terms = predict_term))
 
-ggpredict(flg_any_but_death, terms = "IntResponseValue_mean [quart]") %>% 
-  mutate(quart = c("min", "Q1", "median", "Q3", "max")) %>% 
-  rename(milestone_rating = x) %>% 
-  select(quart, everything(), -group) %>% 
+ggpredict(flg_any_but_death, terms = paste(predict_term, "[quart2]")) %>%
+  mutate(quart = c( "Q1", "median", "Q3")) %>%
+  rename(milestone_rating = x) %>%
+  select(quart, everything(), -group) %>%
   kable_df()
 ```
