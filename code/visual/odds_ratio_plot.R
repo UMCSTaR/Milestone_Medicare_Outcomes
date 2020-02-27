@@ -41,5 +41,5 @@ rbind(mean_rating, prof_rating, operative_mean) %>%
         axis.text.y  = element_text(hjust = 0),
         axis.ticks.y = element_blank()) +
   xlab("Patient Outcomes") 
- 
-                 
+
+ggsave("images/or_bar.png")

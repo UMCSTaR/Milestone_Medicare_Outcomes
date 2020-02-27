@@ -1,4 +1,5 @@
-# Goal:  multiple outcomes, milestone ratings
+# Goal:  multiple outcomes, milestone ratings for
+# milestone rating: overall mean, operative mean, profesisonal mean
 library(tidyverse)
 
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_pc.rdata")
@@ -51,22 +52,13 @@ covariates = c(
 
 # choose primary variable -----------
 
-primary = 'IntResponseValue_mean'   # overall mean
+# primary = 'IntResponseValue_mean'   # overall mean
 # primary = 'operative_rating_mean'   # operative mean by (PC3, MK2, ICS3)
-# primary = 'prof_rating_mean'        # professionalism bhy (Prof1, Prof 2, Prof3)
+primary = 'prof_rating_mean'        # professionalism bhy (Prof1, Prof 2, Prof3)
 
 # if single proc
 covariates_all = paste0(primary, ' + ', paste0(covariates, collapse = ' + '))
 covariates_all
-
-# if no interaction
-# covariates_all = paste0(primary, ' + ', procedures, ' + ', paste0(covariates, collapse = ' + '))
-# covariates_all
-
-# interaction
-# covariates_all = paste0(primary, ' * ', procedures, ' + ', paste0(covariates, collapse = ' + '))
-# covariates_all
-
 
 
 # Model formula -----------------------------------------------------------
@@ -204,7 +196,4 @@ if (primary == 'IntResponseValue_mean') {
 } else if (primary == 'prof_rating_mean') {
   save(results, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/prof_results_tmb.rdata")
 }
-
-
-summary(results$flg_cmp_po_severe_poa)
 
