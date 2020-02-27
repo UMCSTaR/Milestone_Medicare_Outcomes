@@ -43,3 +43,18 @@ rbind(mean_rating, prof_rating, operative_mean) %>%
   xlab("Patient Outcomes") 
 
 ggsave("images/or_bar.png")
+
+
+# correlation betweeen ratings -------
+
+library(PerformanceAnalytics)
+library(data.table)
+
+milestone_medicare_pc = data.table(milestone_medicare_pc)
+
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_pc.rdata")
+
+my_data <- milestone_medicare_pc[, .(IntResponseValue_mean, prof_rating_mean, operative_rating_mean)]
+
+chart.Correlation(my_data, histogram=TRUE) 
+
