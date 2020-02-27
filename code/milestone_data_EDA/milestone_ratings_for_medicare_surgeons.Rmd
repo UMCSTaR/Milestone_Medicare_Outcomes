@@ -1,7 +1,7 @@
 ---
 title: "Milestone Evals"
 author: "Xilin Chen"
-date: "2/18/2020"
+date: '`r Sys.Date()`'
 output: pdf_document
 ---
 
@@ -33,7 +33,8 @@ kable_df <- function(..., digits=2) {
 }
 ```
 
-This document explores the milestone data for the last year evaluation
+This document explores the milestone ratings for the last year evaluation. in the end, we will explore "Which Milestone subcompetencies are rated disproportionately lowest at
+time of graduation?"
 
 ```{r load_data}
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_final_year.rdata")
@@ -52,19 +53,19 @@ Evaluations are from 2015 to 2018, Mid-year and Year-end evals within each year.
 
 ```{r evals}
 milestone_in_medicare %>% 
-  cat_by(eval_peroid) %>% 
-  kable_df()
+  mutate(grad_year = as.numeric(AcademicYear) +1) %>% 
+  distinct(grad_year, PersonID) %>% 
+  cat_by(grad_year) %>% 
+  rename(n_suregons = N) %>% 
+  kable_df(caption = "surgeons included in analysis")
 ```
 
-How many residents have <7 evals
+5 surgeons who graduted after 2016 had medicare billings.
 
-```{r low_eval}
-milestone_in_medicare %>% 
-  filter(IntResponseValue<7) %>% 
-  summarise(n_trainees_less_7 = length(unique(PersonID)),
-            n_tot_trainees = length(unique(milestone_in_medicare$PersonID))) %>% 
-  kable_df()
 
+# Eval distribution by categories
+
+```{r low_eval_distribultion}
 milestone_in_medicare %>% 
   filter(!is.na(IntResponseValue)) %>% 
   count(IntResponseValue, ReportCategory) %>% 
@@ -84,12 +85,36 @@ milestone_in_medicare %>%
   ggplot(aes(x = IntResponseValue)) +
   stat_count(color = "gray50") +
   ggtitle("Professionalism (Prof1, Prof 2, Prof3)") +
-  theme_minimal()
-
+  theme_classic()
 
 ```
 
+# How many residents have <7 evals
 
+```{r low_eval_ppl}
+milestone_in_medicare %>% 
+  filter(IntResponseValue<7) %>% 
+  summarise(n_trainees_less_7 = length(unique(PersonID)),
+            n_tot_trainees = length(unique(milestone_in_medicare$PersonID))) %>% 
+  kable_df()
+```
+
+
+## percentage of having <7 rating in each category
+
+Which Milestone subcompetencies are rated disproportionately lowest at
+time of graduation?
+
+```{r perc_less_7}
+milestone_in_medicare %>% 
+  mutate(low_rating = as.numeric(IntResponseValue)<7) %>% 
+  group_by(ReportCategory) %>% 
+  mutate(perc_low_rating = scales::percent(mean(low_rating, na.rm = TRUE), accuracy = 0.01),
+         n_questions = n()) %>% 
+  distinct(ReportCategory, perc_low_rating, n_questions) %>% 
+  arrange(perc_low_rating) %>% 
+  kable_df(caption  = "percentage of lower ratings (<7) in each question category")
+```
 
 
 
