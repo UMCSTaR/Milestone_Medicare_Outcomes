@@ -3,10 +3,11 @@ title: "Model Summary"
 author: "Xilin Chen"
 date: "2/26/2020"
 always_allow_html: true
-# output:
-#   pdf_document:
-#     toc: true
-#     toc_depth: 1
+output:
+  html_document:
+    toc: true
+    toc_depth: 1
+    toc_float: true
 ---
 
 ```{r setup, include=FALSE}
@@ -44,6 +45,7 @@ kable_df <- function(..., digits=2) {
 
 
 source("/Users/xilinchen/Documents/Repo/Milestone_Medicare_Outcomes/code/functions/fe.r")
+source("/Users/xilinchen/Documents/Repo/Milestone_Medicare_Outcomes/code/functions/predictor_visual_from_model.R")
 
 ```
 
@@ -138,15 +140,12 @@ extract_vc(model_severe_cmp, ci_level = 0) %>%
 
 
 # predicted probability for surgeons
-plot(ggpredict(model_severe_cmp, terms = predict_term))
+model_vis(results$flg_cmp_po_severe_poa)
 
 
-ggpredict(model_severe_cmp, terms = paste(predict_term, "[quart2]")) %>% 
-  mutate(quart = c("Q1", "median", "Q3")) %>% 
-  rename(milestone_rating = x) %>% 
-  select(quart, everything(), -group) %>% 
-  kable_df()
 ```
+
+
 
 
 
@@ -163,13 +162,7 @@ extract_vc(model_any_cmp, ci_level = 0) %>%
     kable_df()
 
 # predicted probability for surgeons
-plot(ggpredict(model_any_cmp, terms = predict_term))
-
-ggpredict(model_any_cmp, terms = paste(predict_term, "[quart2]")) %>%
-  mutate(quart = c( "Q1", "median", "Q3")) %>%
-  rename(milestone_rating = x) %>%
-  select(quart, everything(), -group) %>%
-  kable_df()
+model_vis(results$flg_cmp_po_any_poa)
 
 ```
 
@@ -187,13 +180,7 @@ extract_vc(flg_readmit_30d, ci_level = 0) %>%
     kable_df()
 
 # predicted probability for surgeons
-plot(ggpredict(flg_readmit_30d, terms = predict_term))
-
-ggpredict(flg_readmit_30d, terms = paste(predict_term, "[quart2]")) %>%
-  mutate(quart = c( "Q1", "median", "Q3")) %>%
-  rename(milestone_rating = x) %>%
-  select(quart, everything(), -group) %>%
-  kable_df()
+model_vis(results$flg_readmit_30d)
 ```
 
 
@@ -211,13 +198,8 @@ extract_vc(flg_death_30d, ci_level = 0) %>%
     kable_df()
 
 # predicted probability for surgeons
-plot(ggpredict(flg_death_30d, terms = predict_term))
+model_vis(results$flg_death_30d)
 
-ggpredict(flg_death_30d, terms = paste(predict_term, "[quart2]")) %>%
-  mutate(quart = c( "Q1", "median", "Q3")) %>%
-  rename(milestone_rating = x) %>%
-  select(quart, everything(), -group) %>%
-  kable_df()
 ```
 
 
@@ -235,13 +217,7 @@ extract_vc(flg_util_reop, ci_level = 0) %>%
     kable_df()
 
 # predicted probability for surgeons
-plot(ggpredict(flg_util_reop, terms = predict_term))
-
-ggpredict(flg_util_reop, terms = paste(predict_term, "[quart2]")) %>%
-  mutate(quart = c( "Q1", "median", "Q3")) %>%
-  rename(milestone_rating = x) %>%
-  select(quart, everything(), -group) %>%
-  kable_df()
+model_vis(results$flg_util_reop)
 
 ```
 
@@ -260,11 +236,6 @@ extract_vc(flg_any_but_death, ci_level = 0) %>%
     kable_df()
 
 # predicted probability for surgeons
-plot(ggpredict(flg_any_but_death, terms = predict_term))
+model_vis(results$flg_any_but_death)
 
-ggpredict(flg_any_but_death, terms = paste(predict_term, "[quart2]")) %>%
-  mutate(quart = c( "Q1", "median", "Q3")) %>%
-  rename(milestone_rating = x) %>%
-  select(quart, everything(), -group) %>%
-  kable_df()
 ```

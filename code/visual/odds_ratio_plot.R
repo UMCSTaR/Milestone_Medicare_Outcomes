@@ -18,9 +18,14 @@ load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/operative_res
 operative_mean = map_df(results, extract_fixed_effects, .id = "outcome")  %>% 
   filter(term == "operative_rating_mean")
 
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/low_rating_results_tmb.rdata")
+
+less_than_7 = map_df(results, extract_fixed_effects, .id = "outcome")  %>% 
+  filter(term == "ever_less_7_rating")
+
 # Odds ratio for all outcomes by predictors
 
-rbind(mean_rating, prof_rating, operative_mean) %>% 
+rbind(mean_rating, prof_rating, operative_mean, less_than_7) %>% 
   mutate(OR = exp(value),
          OR_lower = exp(lower_2.5),
          OR_upper = exp(upper_97.5)
@@ -33,9 +38,9 @@ rbind(mean_rating, prof_rating, operative_mean) %>%
                     ymax = OR_upper),
                  .width = .95, 
                  size = 3/4, color = "#990024") +
-  lims(y = c(0.5,2)) +
+  # lims(y = c(0.5,2)) +
   coord_flip() +
-  facet_wrap( ~ term, ncol=3) +
+  facet_wrap( ~ term, ncol=2) +
   theme(panel.grid   = element_blank(),
         panel.grid.major.y = element_line(color = alpha("firebrick4", 1/4), linetype = 3),
         axis.text.y  = element_text(hjust = 0),
