@@ -54,7 +54,8 @@ covariates = c(
 
 # primary = 'IntResponseValue_mean'   # overall mean
 # primary = 'operative_rating_mean'   # operative mean by (PC3, MK2, ICS3)
-primary = 'prof_rating_mean'        # professionalism bhy (Prof1, Prof 2, Prof3)
+# primary = 'prof_rating_mean'        # professionalism bhy (Prof1, Prof 2, Prof3)
+primary = 'ever_less_7_rating'        # ever had less than 7 rating
 
 # if single proc
 covariates_all = paste0(primary, ' + ', paste0(covariates, collapse = ' + '))
@@ -195,5 +196,7 @@ if (primary == 'IntResponseValue_mean') {
   save(results, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/operative_results_tmb.rdata") 
 } else if (primary == 'prof_rating_mean') {
   save(results, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/prof_results_tmb.rdata")
+} else if (primary == "ever_less_7_rating") {
+  save(results, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/low_rating_results_tmb.rdata")
 }
 

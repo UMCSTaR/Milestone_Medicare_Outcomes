@@ -2,14 +2,14 @@ library(tidyverse)
 
 # load data ------
 # mdedicare dt
-load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_pc.rdata")
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/medicare_pc.rdata")
 # milestone data
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_final_year.rdata")
 
 
 # select milstone records for medicare physician -------
 milestone_person_in_medicare = milestone_final_year %>% 
-  filter(PersonID %in% milestone_medicare_pc$PersonID)
+  filter(PersonID %in% medicare_pc$PersonID)
 
 milestone_end_person_in_medicare  = milestone_person_in_medicare %>% 
   filter(grepl("Year-End",eval_peroid))
@@ -56,7 +56,7 @@ operative_rating = milestone_end_person_in_medicare %>%
   ungroup() %>% 
   glimpse()
 
-# mean professionalism
+# mean professionalism------
 prof_rating = milestone_end_person_in_medicare %>% 
   filter(ReportCategory == "Professionalism") %>% 
   group_by(PersonID) %>% 
@@ -65,17 +65,45 @@ prof_rating = milestone_end_person_in_medicare %>%
   ungroup() %>% 
   glimpse()
 
+# ever has low rating ------
+low_rating_person = milestone_end_person_in_medicare %>% 
+  mutate(ever_less_7_rating = as.numeric(IntResponseValue)<7) %>% 
+  filter(ever_less_7_rating == TRUE) %>% 
+  distinct(PersonID, ever_less_7_rating) %>% 
+  pull(PersonID)
+
+low_rating = milestone_end_person_in_medicare %>% 
+  distinct(PersonID) %>% 
+  mutate(ever_less_7_rating = ifelse(PersonID %in% low_rating_person, 1, 0))
+
+
 # person value all
 person_values = person_values %>% 
   left_join(prof_rating) %>% 
-  left_join(operative_rating)
+  left_join(operative_rating) %>% 
+  left_join(low_rating)
 
 # attach score to the medicare -----
 # (inner join loose 7 people who don't have end-year eval)
-milestone_medicare_pc =  milestone_medicare_pc %>% 
+milestone_medicare_pc =  medicare_pc %>% 
   inner_join(person_values, by = "PersonID")
 
 n_distinct(milestone_medicare_pc$PersonID) #338
+
+
+# filter medicare cases after graduation -----------
+gradaution_year = milestone_final_year %>% 
+  distinct(PersonID, AcademicYear) %>% 
+  group_by(PersonID) %>% 
+  top_n(1, AcademicYear) %>% 
+  ungroup() %>% 
+  mutate(grad_year = as.numeric(AcademicYear) +1) %>% 
+  select(- AcademicYear)
+
+
+milestone_medicare_pc = medicare_pc %>% 
+  left_join(gradaution_year) %>% 
+  filter(grad_year<= (facility_clm_yr + 2007))  # facility_clm_yr was standardized to 0
 
 
 save(milestone_medicare_pc, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_pc.rdata")

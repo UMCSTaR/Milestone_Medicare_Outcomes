@@ -110,17 +110,17 @@ n_distinct(milestone_medicare$id_physician_npi)
 save(milestone_medicare, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare.rdata")
 
 # only keep partial colectomy ------
-milestone_medicare_pc = milestone_medicare %>% 
+medicare_pc = milestone_medicare %>% 
   filter(e_proc_grp_lbl == "Partial Colectomy")
 
-n_distinct(milestone_medicare_pc$id_physician_npi) #345
+n_distinct(medicare_pc$id_physician_npi) #345
 
-save(milestone_medicare_pc, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_pc.rdata")
+save(medicare_pc, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/medicare_pc.rdata")
 
 
 # only keep n>=5 --------
 
-milestone_medicare_pc_5 = milestone_medicare_pc %>% 
+milestone_medicare_pc_5 = medicare_pc %>% 
   filter(surgeon_volume>=5)
 
 n_distinct(milestone_medicare_pc_5$id_physician_npi)
