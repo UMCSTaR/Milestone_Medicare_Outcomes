@@ -1,9 +1,10 @@
 model_vis <- function(model) {
   if (predict_term != "ever_less_7_rating") {
       
-      plot(ggpredict(model, terms = predict_term)) %>% 
-      return()
-      
+      pointrange_predict = plot(ggpredict(model, terms = predict_term)) 
+    
+      plot(pointrange_predict)
+
       ggpredict(model, terms = paste(predict_term, "[quart2]")) %>% 
         mutate(quart = c("Q1", "median", "Q3")) %>% 
         rename(milestone_rating = x) %>% 

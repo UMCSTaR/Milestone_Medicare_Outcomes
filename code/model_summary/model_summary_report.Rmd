@@ -96,7 +96,7 @@ milestone_medicare_pc = milestone_medicare_pc %>%
   )
 
 
-table_one <- tableby( ~ IntResponseValue_mean + prof_rating_mean + operative_rating_mean + ever_less_7_rating + flg_male + age_at_admit + factor(e_race_wbho_lable) + AHRQ_score + ses_2grp + colectomy_type + factor(facility_clm_yr) + factor(flg_multi_surgeon) + factor(flg_assistant_surgeon)  + hosp_beds_2grp + val_hosp_mcday2inptday_ratio + val_hosp_rn2bed_ratio, data = milestone_medicare_pc)
+table_one <- tableby( ~ IntResponseValue_mean + prof_rating_mean + operative_rating_mean + factor(ever_less_7_rating) + flg_male + age_at_admit + factor(e_race_wbho_lable) + AHRQ_score + ses_2grp + colectomy_type + factor(facility_clm_yr) + factor(flg_multi_surgeon) + factor(flg_assistant_surgeon)  + hosp_beds_2grp + val_hosp_mcday2inptday_ratio + val_hosp_rn2bed_ratio, data = milestone_medicare_pc)
 
 mylabels <- list(val_hosp_mcday2inptday_ratio = "medicaid/inpatient days ratio", val_hosp_rn2bed_ratio = "Registered nurse to bed ratios")
 
@@ -122,6 +122,43 @@ milestone_medicare_pc %>%
 milestone_medicare_pc %>% 
   num_by(predict_term) %>% 
   kable_df()
+```
+
+
+## observed outcomes 
+
+```{r observed_outcome}
+milestone_medicare_pc %>% 
+  mutate(IntResponseValue_mean = as.integer(IntResponseValue_mean)) %>% 
+  group_by(IntResponseValue_mean) %>% 
+  mutate(n_tot = n()) %>% 
+  mutate_at(vars('flg_cmp_po_severe_poa',
+                 'flg_cmp_po_any_poa',
+                 'flg_readmit_30d',
+                 'flg_death_30d',
+                 'flg_util_reop'), sum) %>% 
+  distinct(IntResponseValue_mean, n_tot, flg_cmp_po_severe_poa,
+           flg_cmp_po_any_poa,
+           flg_readmit_30d,
+           flg_death_30d,
+           flg_util_reop) %>% arrange(IntResponseValue_mean)  %>% 
+  kable_df
+
+
+milestone_medicare_pc %>% 
+  group_by(ever_less_7_rating) %>% 
+  mutate(n_tot = n()) %>% 
+  mutate_at(vars('flg_cmp_po_severe_poa',
+                 'flg_cmp_po_any_poa',
+                 'flg_readmit_30d',
+                 'flg_death_30d',
+                 'flg_util_reop'), sum) %>% 
+  distinct(ever_less_7_rating, n_tot, flg_cmp_po_severe_poa,
+           flg_cmp_po_any_poa,
+           flg_readmit_30d,
+           flg_death_30d,
+           flg_util_reop) %>% arrange(ever_less_7_rating)  %>% 
+  kable_df
 ```
 
 

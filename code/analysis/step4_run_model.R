@@ -34,11 +34,11 @@ outcomes = c(
 
 covariates = c(
   'flg_male',
-  'age_at_admit',
+  'age_at_admit_scale',
   'race_white',
   'race_hisp_other',
   'flg_admit_emerg',
-  'AHRQ_score',
+  'AHRQ_score_scale',
   'ses_2grp',
   # 'cpt_cd',
   'facility_clm_yr',
