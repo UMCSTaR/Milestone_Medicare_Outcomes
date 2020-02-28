@@ -101,7 +101,7 @@ gradaution_year = milestone_final_year %>%
   select(- AcademicYear)
 
 
-milestone_medicare_pc = medicare_pc %>% 
+milestone_medicare_pc = milestone_medicare_pc %>% 
   left_join(gradaution_year) %>% 
   filter(grad_year<= (facility_clm_yr + 2007))  # facility_clm_yr was standardized to 0
 
