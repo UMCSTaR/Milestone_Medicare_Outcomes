@@ -1,9 +1,12 @@
 # Goal:  multiple outcomes, milestone ratings for
 # milestone rating: overall mean, operative mean, profesisonal mean
 library(tidyverse)
+library(furrr)
 
-load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_pc.rdata")
-main_data = milestone_medicare_pc
+
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_ratings.rdata")
+
+main_data = milestone_medicare_ratings
 
 
 # note that the variable name for QE/CE status may change
@@ -55,25 +58,22 @@ covariates = c(
 # primary = 'IntResponseValue_mean'   # overall mean
 # primary = 'operative_rating_mean'   # operative mean by (PC3, MK2, ICS3)
 # primary = 'prof_rating_mean'        # professionalism bhy (Prof1, Prof 2, Prof3)
-primary = 'ever_less_7_rating'        # ever had less than 7 rating
+# primary = 'ever_less_7_rating'        # ever had less than 7 rating
 
-# if single proc
-covariates_all = paste0(primary, ' + ', paste0(covariates, collapse = ' + '))
-covariates_all
 
 
 # Model formula -----------------------------------------------------------
 
 create_formulas <- function(
   y = outcomes,
-  primary_covariate = primary,
+  primary_covariate = 'IntResponseValue_mean',
   other_covariates = covariates,
   random_effects = 'id_physician_npi',
   interaction_term = NULL,
   mgcv = FALSE
 ) {
   covariates_all = paste0(
-    primary, 
+    primary_covariate, 
     ifelse(!is.null(interaction_term),' * ', ''), 
     ifelse(!is.null(interaction_term), interaction_term, ''), 
     ' + ',
@@ -96,7 +96,7 @@ create_formulas <- function(
 
 run_models <- function(
   formula,
-  data,
+  data = main_data,
   method = 'lme4',
   proc = NULL,
   ...
@@ -157,6 +157,17 @@ run_models <- function(
   model
 } 
 
+# Run models --------------------------------------------------
+
+primary = "IntResponseValue_mean"
+procedure = "Partial Colectomy"
+
+procedures = main_data %>% 
+  count(e_proc_grp_lbl) %>% 
+  filter(e_proc_grp_lbl != "multi_procedures") %>% 
+  pull(e_proc_grp_lbl) 
+  
+
 
 fs = create_formulas(
   y = outcomes,
@@ -169,34 +180,13 @@ fs = create_formulas(
 
 names(fs) = outcomes
 
-
-# Run models in parallel --------------------------------------------------
-
-library(future)
-
-plan(multiprocess(workers = length(outcomes)))
-
-library(furrr)
-
-system.time({
-  results <- future_map2(
-    fs,
-    list(data = main_data),
-    run_models,
-    method = 'glmmTMB'
-  )
-})
+results = 
+  pmap(list(formula = fs,
+            proc = procedure,
+            method = 'glmmTMB')
+      ,run_models)
 
 
-# save_model
-
-if (primary == 'IntResponseValue_mean') {
-  save(results, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/results_tmb.rdata")
-} else if (primary == 'operative_rating_mean') {
-  save(results, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/operative_results_tmb.rdata") 
-} else if (primary == 'prof_rating_mean') {
-  save(results, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/prof_results_tmb.rdata")
-} else if (primary == "ever_less_7_rating") {
-  save(results, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/low_rating_results_tmb.rdata")
-}
-
+save(results, file = paste0("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/",
+                            primary, "_",
+                            str_replace(procedure, " ", "_"),".rdata"))
