@@ -159,19 +159,17 @@ run_models <- function(
 
 # Run models --------------------------------------------------
 
-primary = "IntResponseValue_mean"
-procedure = "Partial Colectomy"
-
+primaries = c("IntResponseValue_mean", "prof_rating_mean", "operative_rating_mean",
+            "ever_less_7_rating")
 procedures = main_data %>% 
   count(e_proc_grp_lbl) %>% 
   filter(e_proc_grp_lbl != "multi_procedures") %>% 
   pull(e_proc_grp_lbl) 
   
 
-
 fs = create_formulas(
   y = outcomes,
-  primary_covariate = primary,
+  primary_covariate = primaries,
   other_covariates = covariates,
   interaction_term = NULL,
   # random_effects = c('id_physician_npi', 'facility_prvnumgrp')
@@ -180,13 +178,16 @@ fs = create_formulas(
 
 names(fs) = outcomes
 
+
 results = 
-  pmap(list(formula = fs,
+  pmap(list(formula = fs$flg_cmp_po_severe_poa,
             proc = procedure,
             method = 'glmmTMB')
       ,run_models)
 
+names(results) = paste0("flg_cmp_po_severe_poa","_" , word(procedures, 1))
 
-save(results, file = paste0("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/",
-                            primary, "_",
-                            str_replace(procedure, " ", "_"),".rdata"))
+
+# save(results, file = paste0("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/",
+#                             primary, "_",
+#                             str_replace(procedure, " ", "_"),".rdata"))
