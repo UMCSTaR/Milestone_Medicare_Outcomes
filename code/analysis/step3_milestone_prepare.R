@@ -2,14 +2,15 @@ library(tidyverse)
 
 # load data ------
 # mdedicare dt
-load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/medicare_pc.rdata")
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare.rdata")
+
 # milestone data
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_final_year.rdata")
 
 
 # select milstone records for medicare physician -------
 milestone_person_in_medicare = milestone_final_year %>% 
-  filter(PersonID %in% medicare_pc$PersonID)
+  filter(PersonID %in% milestone_medicare$PersonID)
 
 milestone_end_person_in_medicare  = milestone_person_in_medicare %>% 
   filter(grepl("Year-End",eval_peroid))
@@ -34,13 +35,10 @@ person_values = milestone_end_person_in_medicare %>%
   IntResponseValue_mean = mean(IntResponseValue, na.rm = T)) %>% 
   distinct(PersonID, SponsorID, IntResponseValue_mean) %>% 
   ungroup() %>% 
-  mutate(IntResponseValue_mean_scale = as.numeric(scale(IntResponseValue_mean))) %>% 
   glimpse()
 
-save(person_values, file = "data/person_in_medicare_and_milestone.rdata")
-  
 ggplot(data = person_values) +
-  geom_histogram(aes(x = IntResponseValue_mean_scale)) +
+  geom_histogram(aes(x = IntResponseValue_mean)) +
   theme_classic() +
   ggtitle("Mean Eval Rating for End-year eval among surgeons in Medicare")
 
@@ -85,10 +83,10 @@ person_values = person_values %>%
 
 # attach score to the medicare -----
 # (inner join loose 7 people who don't have end-year eval)
-milestone_medicare_pc =  medicare_pc %>% 
+milestone_medicare_ratings =  milestone_medicare %>% 
   inner_join(person_values, by = "PersonID")
 
-n_distinct(milestone_medicare_pc$PersonID) #338
+n_distinct(milestone_medicare_ratings$PersonID) #338
 
 
 # filter medicare cases after graduation -----------
@@ -101,11 +99,11 @@ gradaution_year = milestone_final_year %>%
   select(- AcademicYear)
 
 
-milestone_medicare_pc = milestone_medicare_pc %>% 
+milestone_medicare_ratings = milestone_medicare_ratings %>% 
   left_join(gradaution_year) %>% 
   filter(grad_year<= (facility_clm_yr + 2007))  # facility_clm_yr was standardized to 0
 
 
-save(milestone_medicare_pc, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_pc.rdata")
+save(milestone_medicare_ratings, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_ratings.rdata")
 
 
