@@ -1,7 +1,7 @@
 # Goal:  multiple outcomes, milestone ratings for
 # milestone rating: overall mean, operative mean, profesisonal mean
 library(tidyverse)
-library(furrr)
+library(purrr)
 
 
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_ratings.rdata")
@@ -63,99 +63,11 @@ covariates = c(
 
 
 # Model formula -----------------------------------------------------------
-
-create_formulas <- function(
-  y = outcomes,
-  primary_covariate = 'IntResponseValue_mean',
-  other_covariates = covariates,
-  random_effects = 'id_physician_npi',
-  interaction_term = NULL,
-  mgcv = FALSE
-) {
-  covariates_all = paste0(
-    primary_covariate, 
-    ifelse(!is.null(interaction_term),' * ', ''), 
-    ifelse(!is.null(interaction_term), interaction_term, ''), 
-    ' + ',
-    paste0(covariates, collapse = ' + ')
-  )
-  
-  
-  if (mgcv)
-    re = paste0(' + s(', random_effects, ", bs = 're')", collapse = '')
-  # " + s(id_physician_npi, bs='re') + s(facility_prvnumgrp, bs = 're')"
-  else 
-    re = paste0(' + (1 | ', random_effects, ')', collapse = '')
-  
-  lapply(y, function(y) paste0(paste0(y, ' ~ '), covariates_all, re))
-}
-
-
+source("code/functions/create_formula.R")
 
 # Model Function ----------------------------------------------------------
+source("code/functions/run_model.R")
 
-run_models <- function(
-  formula,
-  data = main_data,
-  method = 'lme4',
-  proc = NULL,
-  ...
-) {
-  
-  if (!is.null(proc)) data = dplyr::filter(data, e_proc_grp_lbl %in% proc)
-  
-  if (method == 'lme4') {
-    
-    f = as.formula(formula)
-    
-    model = lme4::glmer(
-      formula = f,
-      data = data,
-      family = 'binomial',
-      ...
-    )
-  }
-  
-  if (method == 'glmmTMB') {
-    
-    f = as.formula(formula)
-    
-    model = glmmTMB::glmmTMB(
-      formula = f,
-      data = data,
-      family = 'binomial',
-      ...
-    )
-  }
-  
-  if (method == 'mgcv') {
-    
-    f = as.formula(formula)
-    
-    model = mgcv::bam(
-      formula = f,
-      data = data,
-      family = 'binomial',
-      ...
-    )
-  }
-  
-  if (method == 'brms') {
-    
-    f = as.formula(formula)
-    
-    model = brms::brm(
-      formula = f,
-      data = data,
-      family = 'binomial',
-      cores = 2,  # this will max out total cores used given 6 outcomes
-      verbose = FALSE,
-      ...
-    )
-  }
-  
-  model
-} 
 
 # Run models --------------------------------------------------
 
@@ -179,15 +91,39 @@ fs = create_formulas(
 names(fs) = outcomes
 
 
-results = 
-  pmap(list(formula = fs$flg_cmp_po_severe_poa,
-            proc = procedure,
-            method = 'glmmTMB')
-      ,run_models)
+model_ls = expand.grid(fs = fs,
+            ml = "glmmTMB",
+            proc = procedures) %>% 
+  unnest(fs) 
 
-names(results) = paste0("flg_cmp_po_severe_poa","_" , word(procedures, 1))
+model_name = model_ls %>% 
+  mutate(proc_name = str_sub(proc,1,3)) %>% 
+  mutate(outcome = ifelse(str_detect(fs, "severe"), "severe_cmp", NA),
+         outcome = ifelse(str_detect(fs, "any"), "any_cmp", outcome),
+         outcome = ifelse(str_detect(fs, "readmit"), "readmit", outcome),
+         outcome = ifelse(str_detect(fs, "death"), "death", outcome),
+         outcome = ifelse(str_detect(fs, "reop"), "reop", outcome),
+         outcome = ifelse(str_detect(fs, "los"), "los", outcome),
+         outcome = ifelse(str_detect(fs, "but_death"), "but_death", outcome)
+         ) %>% 
+  mutate(pred = ifelse(str_detect(fs, "IntResponseValue_mean"), "all_mean", NA),
+         pred = ifelse(str_detect(fs, "prof_rating_mean"), "prof", pred),
+         pred = ifelse(str_detect(fs, "operative_rating_mean"), "operative", pred),
+         pred = ifelse(str_detect(fs, "ever_less_7_rating"), "less_7", pred),) %>% 
+  mutate(model_name = paste(proc_name, outcome, pred, sep = "_")) %>% 
+  pull(model_name)
+
+
+results = pmap(list(formula = model_ls$fs,
+                    method = model_ls$ml,
+                    proc = model_ls$proc), run_models)
+
+names(results) = model_name
 
 
 # save(results, file = paste0("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/",
 #                             primary, "_",
 #                             str_replace(procedure, " ", "_"),".rdata"))
+
+
+
