@@ -1,15 +1,15 @@
-# Goal:  multiple outcomes, milestone ratings for
-# milestone rating: overall mean, operative mean, profesisonal mean
+# Goal:  multiple outcomes, multiple procedures, milestone ratings for
+# milestone rating: overall mean, operative mean, profesisonal mean, >7 binary
 library(tidyverse)
 library(purrr)
 
-
+# load data
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_ratings.rdata")
 
 main_data = milestone_medicare_ratings
 
 
-# note that the variable name for QE/CE status may change
+# creat patient outcomes variables
 main_data =  main_data %>% 
   mutate(los_gt_75perc = ifelse(val_los > quantile(val_los, probs = 0.75), 1, 0),
   ) %>% 
@@ -53,14 +53,6 @@ covariates = c(
   'val_hosp_rn2bed_ratio'
 )
 
-# choose primary variable -----------
-
-# primary = 'IntResponseValue_mean'   # overall mean
-# primary = 'operative_rating_mean'   # operative mean by (PC3, MK2, ICS3)
-# primary = 'prof_rating_mean'        # professionalism bhy (Prof1, Prof 2, Prof3)
-# primary = 'ever_less_7_rating'        # ever had less than 7 rating
-
-
 
 # Model formula -----------------------------------------------------------
 source("code/functions/create_formula.R")
@@ -71,14 +63,17 @@ source("code/functions/run_model.R")
 
 # Run models --------------------------------------------------
 
+# milestone ratings
 primaries = c("IntResponseValue_mean", "prof_rating_mean", "operative_rating_mean",
             "ever_less_7_rating")
+
+# 5 majot procedures
 procedures = main_data %>% 
   count(e_proc_grp_lbl) %>% 
   filter(e_proc_grp_lbl != "multi_procedures") %>% 
   pull(e_proc_grp_lbl) 
   
-
+# make model formulas
 fs = create_formulas(
   y = outcomes,
   primary_covariate = primaries,
@@ -90,12 +85,13 @@ fs = create_formulas(
 
 names(fs) = outcomes
 
-
+# make model formula lists with different procedures
 model_ls = expand.grid(fs = fs,
             ml = "glmmTMB",
             proc = procedures) %>% 
   unnest(fs) 
 
+# create model names based on procedure, outcomes and 
 model_name = model_ls %>% 
   mutate(proc_name = str_sub(proc,1,3)) %>% 
   mutate(outcome = ifelse(str_detect(fs, "severe"), "severe_cmp", NA),
@@ -121,9 +117,8 @@ results = pmap(list(formula = model_ls$fs,
 names(results) = model_name
 
 
-# save(results, file = paste0("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/",
-#                             primary, "_",
-#                             str_replace(procedure, " ", "_"),".rdata"))
+save(results, 
+     file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/all_out_proc_rating.rdata")
 
 
 
