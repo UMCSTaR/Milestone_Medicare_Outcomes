@@ -63,17 +63,33 @@ source("code/functions/run_model.R")
 
 # Run models --------------------------------------------------
 
-# milestone ratings
+# milestone ratings --------
 primaries = c("IntResponseValue_mean", "prof_rating_mean", "operative_rating_mean",
             "ever_less_7_rating")
 
-# 5 majot procedures
-procedures = main_data %>% 
-  count(e_proc_grp_lbl) %>% 
-  filter(e_proc_grp_lbl != "multi_procedures") %>% 
-  pull(e_proc_grp_lbl) 
+# procedures ---------------
+# 5 major procedure
+select_proc <- function(proc) {
+  if (proc == "all") {
+  main_data %>% 
+    count(e_proc_grp_lbl) %>% 
+    filter(e_proc_grp_lbl != "multi_procedures") %>% 
+    pull(e_proc_grp_lbl) 
+  } else {
+  proc
+  }
+}
+
+# choose procedure -------
+# "Appendectomy"
+# "Cholecystectomy"
+# "Groin Hernia Repair"
+# "Partial Colectomy"
+# "Ventral Hernia Repair"
+# all: all 5 procedures
+procedure = select_proc("Partial Colectomy")
   
-# make model formulas
+# make model formulas ------------
 fs = create_formulas(
   y = outcomes,
   primary_covariate = primaries,
@@ -86,10 +102,10 @@ fs = create_formulas(
 names(fs) = outcomes
 
 # make model formula lists with different procedures
-model_ls = expand.grid(fs = fs,
-            ml = "glmmTMB",
-            proc = procedures) %>% 
-  unnest(fs) 
+model_ls = expand.grid(fs = fs, 
+              ml = "glmmTMB",
+              proc = procedure) %>% 
+    unnest(fs) 
 
 # create model names based on procedure, outcomes and 
 model_name = model_ls %>% 
@@ -116,9 +132,15 @@ results = pmap(list(formula = model_ls$fs,
 
 names(results) = model_name
 
-
-save(results, 
-     file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/all_out_proc_rating.rdata")
-
-
+# save model ---------
+if (procedure  == "all") {
+  save(results,
+       file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/all_out_proc_rating.rdata")
+} else if (procedure == "Partial Colectomy") {
+  save(results, 
+     file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/pc/rating_model.rdata")
+} else if (procedure == "Cholecystectomy") {
+  save(results, 
+       file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/chole/rating_model.rdata")
+}
 
