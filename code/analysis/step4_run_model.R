@@ -1,5 +1,7 @@
-# Goal:  multiple outcomes, multiple procedures, milestone ratings for
+# Goal:  multiple outcomes, multiple procedures, milestone ratings 
+# create models based on procedures
 # milestone rating: overall mean, operative mean, profesisonal mean, >7 binary
+
 library(tidyverse)
 library(purrr)
 
@@ -87,7 +89,7 @@ select_proc <- function(proc) {
 # "Partial Colectomy"
 # "Ventral Hernia Repair"
 # all: all 5 procedures
-procedure = select_proc("Partial Colectomy")
+procedure = select_proc("Cholecystectomy")
   
 # make model formulas ------------
 fs = create_formulas(
@@ -143,4 +145,5 @@ if (procedure  == "all") {
   save(results, 
        file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/chole/rating_model.rdata")
 }
+
 

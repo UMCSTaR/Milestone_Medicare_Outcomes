@@ -1,14 +1,19 @@
+# Link milestone ratings (which are our main predictors) to medicare cases
+# - attach year-end eval from the last year to medicare
+# - create overall mean, professional eval mean and operative evals mean, >7 rating binary
+# - filter case by graduating year (only count case after graduation)
+
 library(tidyverse)
 
 # load data ------
-# mdedicare dt
+# medicare dt
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare.rdata")
 
 # milestone data
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_final_year.rdata")
 
 
-# select milstone records for medicare physician -------
+# select last milstone records for medicare physician -------
 milestone_person_in_medicare = milestone_final_year %>% 
   filter(PersonID %in% milestone_medicare$PersonID)
 
@@ -16,15 +21,14 @@ milestone_end_person_in_medicare  = milestone_person_in_medicare %>%
   filter(grepl("Year-End",eval_peroid))
 
 # check
-n_distinct(milestone_person_in_medicare$PersonID)  #345
-n_distinct(milestone_end_person_in_medicare$PersonID)  #338
+n_distinct(milestone_person_in_medicare$PersonID)  #484
+n_distinct(milestone_end_person_in_medicare$PersonID)  #476
 
 no_end_eval_person = milestone_person_in_medicare %>% 
   filter(!PersonID %in% milestone_end_person_in_medicare$PersonID) %>% 
   distinct(PersonID) %>% 
   pull()
-# 7 people don't have year-end eval, only mid-year eval
-
+# 8 people don't have year-end eval, only mid-year eval
 
 range(milestone_end_person_in_medicare$IntResponseValue)
 

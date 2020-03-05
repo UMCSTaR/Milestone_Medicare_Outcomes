@@ -2,6 +2,10 @@ library(tidyverse)
 library(tidyext)
 
 # medicare process -------
+# Description: 
+# - load raw medicare analytic dataset
+# - add new variables 
+# - exlude forgein graduate and subspecialty defined by ABS
 
 # medicare data
 load("/Volumes/George_Surgeon_Projects/medicare_data/xilin_analytic_file/add_cmb_and_selected_vars/full_analytic_data.rdata")            

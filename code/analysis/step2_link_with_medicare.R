@@ -1,3 +1,9 @@
+# link Milestone data to medicare
+# description:
+# - unique matched PersonID and Medicare
+# - multiple matched PersonID to Medicare (to get more possible matched)
+# - npi from AMA and ABS to match with Medicare
+
 library(tidyverse)
 library(tidyext)
 
@@ -11,7 +17,6 @@ load("/Volumes/George_Surgeon_Projects/ACGME_milestone/linkage/de_name_data/mile
 # load medicare data
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/medicare_gs_by_abs.rdata")
 # general surgeon partial colectomy
-
 
 analytic_data = medicare_gs
 
@@ -59,6 +64,8 @@ milestone_match_with_medicare_person = milestone_medicare_muti %>%
 
 
 # 2.2 AMA and ABS with no matches, by names ----------
+# these people didn't match by NPPES file using names but matched with AMA or ABS,
+# use the matched NPI from AMA/ABS to match with Medicare
 load("/Volumes/George_Surgeon_Projects/ACGME_milestone/linkage/de_name_data/no_match_ama.rdata")
 load("/Volumes/George_Surgeon_Projects/ACGME_milestone/linkage/de_name_data/no_match_abs.rdata")
 

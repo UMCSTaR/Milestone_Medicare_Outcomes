@@ -82,3 +82,5 @@ map_df(results, extract_fixed_effects, .id = "outcome") %>%
 
 ggsave("code/visual/or_all.png")
 
+
+
