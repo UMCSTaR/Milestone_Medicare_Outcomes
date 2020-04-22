@@ -1,0 +1,74 @@
+---
+title: "Milestone vs. Outcome Recap"
+author: "Xilin Chen"
+date: "4/22/2020"
+output: pdf_document
+---
+
+
+
+# Research Aims
+
+- Aim 1: Determine if **higher Milestone ratings** at completion of general surgery training are associated with better **risk-adjusted patient outcomes** for early-career general surgeons.
+
+- Aim 2: Determine if Milestone ratings at completion of general surgery training can be used to **predict** clinical performance of early-career general surgeons based upon risk-adjusted patient outcomes.
+
+# Research Questions
+
+## RQ1: What is the expected odds ratio of a given risk-adjusted patient complication for each procedure performed on a typical patient by a surgeon within their first *5 years* (18 months?) of practice given a certain *overall (composite) Milestone* rating at time of graduation?
+
+procedure:
+
+- Partial Colectomy
+
+Predictor:
+
+- Overall Milestone Rating (Standardized Mean Score)
+
+complication:
+
+- 30d mortality
+- severe complication
+- 30d readmission
+- 30d reoperation 
+- Any complication
+- Any complication (exclude death)
+
+
+report name: model_results_tmb.html
+
+## RQ2: 
+
+Predictor: Composite Operative Milestone Rating 
+ 
+procedure and complications are the same as Q1
+
+report name: model_operative_results_tmb.html
+
+## RQ3: 
+
+Predictor: Composite Professionalism Milestone Rating 
+
+procedure and complications are the same as Q1
+
+report name: model_prof_results_tmb.html
+
+## RQ4: highest vs. lowest quartile of Milestone ratings at time of graduation
+
+Not done
+
+### RQ4.1: Ever had less than 7 ratings in any evaluation questions (binary ever_less_7_rating)
+
+report name: model_low_rating_results_tmb.html
+
+
+# results summary
+
+```{r or_sum, echo=FALSE, out.width = '100%'}
+knitr::include_graphics("/Users/xilinchen/Documents/Repo/Milestone_Medicare_Outcomes/images/or_bar.png")
+```
+
+
+
+
+
