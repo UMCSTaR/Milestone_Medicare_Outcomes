@@ -22,16 +22,17 @@ analytic_data = medicare_gs
 
 # match by NPI process -------
 ## 1. unique match -----
-n_distinct(analytic_data$id_physician_npi) # n 28944
+n_distinct(analytic_data$id_physician_npi) # n 33760
 n_distinct(milestone_person$npi.linked)    # n 4628
 
 milestone_medicare = analytic_data %>% 
   inner_join(milestone_person, by = c("id_physician_npi" = "npi.linked"))
 
-n_distinct(milestone_medicare$id_physician_npi) # 475
+n_distinct(milestone_medicare$id_physician_npi) # 1083
 
 milestone_medicare %>% 
-  cat_by(facility_clm_yr)
+  cat_by(facility_clm_yr) %>% 
+  mutate(facility_clm_yr = facility_clm_yr +2007)
 
 milestone_medicare_unique = milestone_medicare %>% 
   distinct(PersonID, id_physician_npi) %>% 
@@ -78,7 +79,7 @@ ama_medicare_person = analytic_data %>%
   inner_join(npi_ama, by = c("id_physician_npi" = "npi.ama")) %>% 
   distinct(PersonID, id_physician_npi) %>% 
   glimpse()
-# 6
+# 9
 
 # abs 
 npi_abs = no_match_abs %>% 
@@ -114,13 +115,26 @@ milestone_medicare = analytic_data %>%
 n_distinct(milestone_medicare$id_physician_npi)
 
 
-save(milestone_medicare, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare.rdata")
+# NPI degree
+load("/Volumes/George_Surgeon_Projects/Other/NPPES_Data_Dissemination_January_2020/npi_md_single_spty_gs.rdata")
+
+milestone_medicare =  milestone_medicare %>% 
+  mutate(nppes_gs = ifelse(id_physician_npi %in% npi_md_single_spty_gs$NPI,
+                           "gs","not gs")) 
+
+milestone_medicare_gs = milestone_medicare %>% 
+  filter(nppes_gs == "gs") 
+
+n_distinct(milestone_medicare_gs$id_physician_npi)
+
+save(milestone_medicare_gs, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_gs.rdata")
+
 
 # only keep partial colectomy ------
-medicare_pc = milestone_medicare %>% 
+medicare_pc = milestone_medicare_gs %>% 
   filter(e_proc_grp_lbl == "Partial Colectomy")
 
-n_distinct(medicare_pc$id_physician_npi) #345
+n_distinct(medicare_pc$id_physician_npi) #807
 
 save(medicare_pc, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/medicare_pc.rdata")
 
@@ -132,6 +146,6 @@ milestone_medicare_pc_5 = medicare_pc %>%
 
 n_distinct(milestone_medicare_pc_5$id_physician_npi)
 
-#208
+#429
 save(milestone_medicare_pc_5, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_pc_5.rdata")
 
