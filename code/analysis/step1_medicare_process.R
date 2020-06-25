@@ -5,10 +5,10 @@ library(tidyext)
 # Description: 
 # - load raw medicare analytic dataset
 # - add new variables 
-# - exlude forgein graduate and subspecialty defined by ABS
+# - exclude forgein graduate and subspecialty defined by ABS
 
 # medicare data
-load("/Volumes/George_Surgeon_Projects/medicare_data/xilin_analytic_file/add_cmb_and_selected_vars/full_analytic_data.rdata")            
+analytic_data = data.table::fread("/Volumes/George_Surgeon_Projects/standardized_medicare_data_using_R/analytic/full_data/analytic_selected_vars.csv")            
 source("code/functions/prep_medicare_data.R")
 
 analytic_data = prep_data_for_model(analytic_data)
@@ -22,9 +22,11 @@ medicare_us = analytic_data %>%
 n_distinct(medicare_us$id_physician_npi)
 
 # filter only gs by abs ----
-load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/abs_fellowship_npi.rdata")
 medicare_gs = medicare_us %>% 
-  filter(!id_physician_npi %in% abs_fellowship_npi)
+  filter(fellowship_abs == 0)
+
+n_distinct(medicare_gs$id_physician_npi)
+
 
 medicare_gs %>% 
   cat_by(e_proc_grp_lbl)
