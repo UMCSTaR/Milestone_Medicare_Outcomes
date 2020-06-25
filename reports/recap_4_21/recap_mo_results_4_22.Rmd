@@ -68,7 +68,33 @@ report name: model_low_rating_results_tmb.html
 knitr::include_graphics("/Users/xilinchen/Documents/Repo/Milestone_Medicare_Outcomes/images/or_bar.png")
 ```
 
+# Next Steps (MVP?)
 
+## option1: using the medicare cohort we have
 
+- any more milestone ratings?
+- other procedures?
+- not 5 years year career?
+
+estimate: days
+
+## option2: add 2017 medicare
+
+Solutions:
+- using existing SAS code to add 2017
+
+challenges:
+- data structure checks for 2017 (mapping for 2017)
+- data names and locations has changed
+- potential break of code
+- data QA
+
+estimate: 2 weeks
+
+## option3: add more procedures from medicare
+
+- data mapping procedures
+
+estimate: 3 weeks
 
 
