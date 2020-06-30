@@ -5,7 +5,7 @@ library(tidyext)
 # Description: 
 # - load raw medicare analytic dataset
 # - add new variables 
-# - exclude forgein graduate and subspecialty defined by ABS
+# - exclude foreign graduate and subspecialty defined by ABS
 
 # medicare data
 analytic_data = data.table::fread("/Volumes/George_Surgeon_Projects/standardized_medicare_data_using_R/analytic/full_data/analytic_selected_vars.csv")            

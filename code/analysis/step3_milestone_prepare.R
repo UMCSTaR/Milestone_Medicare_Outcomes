@@ -6,31 +6,35 @@
 library(tidyverse)
 
 # load data ------
-# medicare dt
-load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare.rdata")
+# medicare gs
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_gs.rdata")
 
 # milestone data
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_final_year.rdata")
 
+n_distinct(milestone_medicare_gs$id_physician_npi) #796
 
-# select last milstone records for medicare physician -------
+# select last milestone records for medicare physician -------
 milestone_person_in_medicare = milestone_final_year %>% 
-  filter(PersonID %in% milestone_medicare$PersonID)
+  filter(PersonID %in% milestone_medicare_gs$PersonID)
 
 milestone_end_person_in_medicare  = milestone_person_in_medicare %>% 
   filter(grepl("Year-End",eval_peroid))
 
 # check
-n_distinct(milestone_person_in_medicare$PersonID)  #484
-n_distinct(milestone_end_person_in_medicare$PersonID)  #476
+n_distinct(milestone_person_in_medicare$PersonID)  #796
+n_distinct(milestone_end_person_in_medicare$PersonID)  #786
 
 no_end_eval_person = milestone_person_in_medicare %>% 
   filter(!PersonID %in% milestone_end_person_in_medicare$PersonID) %>% 
   distinct(PersonID) %>% 
   pull()
-# 8 people don't have year-end eval, only mid-year eval
+
+length(no_end_eval_person)
+# 10 people don't have year-end eval, only mid-year eval
 
 range(milestone_end_person_in_medicare$IntResponseValue)
+# 0-9
 
 # mean milestone ratings --------
 person_values = milestone_end_person_in_medicare %>% 
@@ -87,10 +91,10 @@ person_values = person_values %>%
 
 # attach score to the medicare -----
 # (inner join loose 7 people who don't have end-year eval)
-milestone_medicare_ratings =  milestone_medicare %>% 
+milestone_medicare_ratings =  milestone_medicare_gs %>% 
   inner_join(person_values, by = "PersonID")
 
-n_distinct(milestone_medicare_ratings$PersonID) #338
+n_distinct(milestone_medicare_ratings$PersonID) #786
 
 
 # filter medicare cases after graduation -----------
@@ -107,6 +111,7 @@ milestone_medicare_ratings = milestone_medicare_ratings %>%
   left_join(gradaution_year) %>% 
   filter(grad_year<= (facility_clm_yr + 2007))  # facility_clm_yr was standardized to 0
 
+n_distinct(milestone_medicare_ratings$PersonID) #782
 
 save(milestone_medicare_ratings, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_ratings.rdata")
 

@@ -1,6 +1,6 @@
 # Goal:  multiple outcomes, multiple procedures, milestone ratings 
 # create models based on procedures
-# milestone rating: overall mean, operative mean, profesisonal mean, >7 binary
+# milestone rating: overall mean, operative mean, professional mean, >7 binary
 
 library(tidyverse)
 library(purrr)
@@ -10,12 +10,16 @@ load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_
 
 main_data = milestone_medicare_ratings
 
-
-# creat patient outcomes variables
+# create patient outcomes variables
 main_data =  main_data %>% 
   mutate(los_gt_75perc = ifelse(val_los > quantile(val_los, probs = 0.75), 1, 0),
+         flg_cmp_po_any_not_poa = as.numeric(flg_cmp_po_any_not_poa),
+         flg_cmp_po_any_not_poa = as.numeric(flg_cmp_po_any_not_poa),
+         flg_readmit_30d = as.numeric(flg_readmit_30d),
+         los_gt_75perc = as.numeric(los_gt_75perc),
+         flg_util_reop = as.numeric(flg_util_reop)
   ) %>% 
-  tidyext::row_sums(flg_cmp_po_severe_poa, flg_cmp_po_any_poa, flg_readmit_30d, los_gt_75perc, flg_util_reop,
+  tidyext::row_sums(flg_cmp_po_severe_not_poa, flg_cmp_po_any_not_poa, flg_readmit_30d, los_gt_75perc, flg_util_reop,
                     varname = 'flg_any_but_death') %>% 
   mutate(flg_any_but_death = as.integer(flg_any_but_death > 0),
          flg_any_but_death = ifelse(flg_death_30d, NA, flg_any_but_death))
@@ -24,8 +28,8 @@ main_data =  main_data %>%
 # Outcome list ------------------------------------------------------------
 
 outcomes = c(
-  'flg_cmp_po_severe_poa',
-  'flg_cmp_po_any_poa',
+  'flg_cmp_po_severe_not_poa',
+  'flg_cmp_po_any_not_poa',
   'flg_readmit_30d',
   'flg_death_30d',
   'flg_util_reop',
@@ -54,6 +58,9 @@ covariates = c(
   'val_hosp_mcday2inptday_ratio',
   'val_hosp_rn2bed_ratio'
 )
+
+# check if all vars in the data
+all(covariates %in% names(main_data))
 
 
 # Model formula -----------------------------------------------------------
@@ -89,7 +96,7 @@ select_proc <- function(proc) {
 # "Partial Colectomy"
 # "Ventral Hernia Repair"
 # all: all 5 procedures
-procedure = select_proc("Cholecystectomy")
+procedure = select_proc("all")
   
 # make model formulas ------------
 fs = create_formulas(
@@ -134,16 +141,28 @@ results = pmap(list(formula = model_ls$fs,
 
 names(results) = model_name
 
+# example
+summary(results$Par_severe_cmp_all_mean)
+
 # save model ---------
-if (procedure  == "all") {
+if (length(procedure)  == 5) {
   save(results,
        file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/all_out_proc_rating.rdata")
 } else if (procedure == "Partial Colectomy") {
-  save(results, 
-     file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/pc/rating_model.rdata")
+  save(results,
+       file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/pc/rating_model.rdata")
 } else if (procedure == "Cholecystectomy") {
-  save(results, 
+  save(results,
        file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/chole/rating_model.rdata")
 }
+
+
+all_mean_models = str_subset(names(results),"all_mean")
+
+for (i in seq_along(all_mean_models)){
+  list[i] = results[all_mean_models[i]]
+}
+
+names(list) = str_remove_all(all_mean_models, "Par_|_all_mean")
 
 
