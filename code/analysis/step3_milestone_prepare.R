@@ -12,7 +12,7 @@ load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_
 # milestone data
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_final_year.rdata")
 
-n_distinct(milestone_medicare_gs$id_physician_npi) #796
+n_distinct(milestone_medicare_gs$id_physician_npi) #784
 
 # select last milestone records for medicare physician -------
 milestone_person_in_medicare = milestone_final_year %>% 
@@ -22,8 +22,8 @@ milestone_end_person_in_medicare  = milestone_person_in_medicare %>%
   filter(grepl("Year-End",eval_peroid))
 
 # check
-n_distinct(milestone_person_in_medicare$PersonID)  #796
-n_distinct(milestone_end_person_in_medicare$PersonID)  #786
+n_distinct(milestone_person_in_medicare$PersonID)  #784
+n_distinct(milestone_end_person_in_medicare$PersonID)  #774
 
 no_end_eval_person = milestone_person_in_medicare %>% 
   filter(!PersonID %in% milestone_end_person_in_medicare$PersonID) %>% 
@@ -71,6 +71,27 @@ prof_rating = milestone_end_person_in_medicare %>%
   ungroup() %>% 
   glimpse()
 
+# leadership --------
+leadership_rating = milestone_end_person_in_medicare %>% 
+  filter(QuestionKey %in% c("comp5_PR_Q1", "comp6_ICS_Q1", "comp6_ICS_Q2", "comp3_SBP_Q1")) %>% 
+  group_by(PersonID) %>% 
+  mutate(leadership_rating_mean = mean(as.numeric(IntResponseValue), na.rm = T)) %>% 
+  distinct(PersonID, leadership_rating_mean) %>% 
+  ungroup() %>% 
+  glimpse()
+
+range(leadership_rating$leadership_rating_mean)
+
+# mean rating less than 7 ------
+person_less_than_7 = person_values %>% 
+  filter(IntResponseValue_mean<7) %>% 
+  pull(PersonID)
+
+mean_lt_7 = milestone_end_person_in_medicare %>% 
+  distinct(PersonID) %>% 
+  mutate(mean_lt_7 = ifelse(PersonID %in% person_less_than_7, 1, 0))
+
+
 # ever has low rating ------
 low_rating_person = milestone_end_person_in_medicare %>% 
   mutate(ever_less_7_rating = as.numeric(IntResponseValue)<7) %>% 
@@ -83,18 +104,20 @@ low_rating = milestone_end_person_in_medicare %>%
   mutate(ever_less_7_rating = ifelse(PersonID %in% low_rating_person, 1, 0))
 
 
-# person value all
+# person value all -----
 person_values = person_values %>% 
   left_join(prof_rating) %>% 
   left_join(operative_rating) %>% 
-  left_join(low_rating)
+  left_join(low_rating) %>% 
+  left_join(mean_lt_7) %>% 
+  left_join(leadership_rating)
 
 # attach score to the medicare -----
 # (inner join loose 7 people who don't have end-year eval)
 milestone_medicare_ratings =  milestone_medicare_gs %>% 
   inner_join(person_values, by = "PersonID")
 
-n_distinct(milestone_medicare_ratings$PersonID) #786
+n_distinct(milestone_medicare_ratings$PersonID) #774
 
 
 # filter medicare cases after graduation -----------
@@ -111,7 +134,7 @@ milestone_medicare_ratings = milestone_medicare_ratings %>%
   left_join(gradaution_year) %>% 
   filter(grad_year<= (facility_clm_yr + 2007))  # facility_clm_yr was standardized to 0
 
-n_distinct(milestone_medicare_ratings$PersonID) #782
+n_distinct(milestone_medicare_ratings$PersonID) #770
 
 save(milestone_medicare_ratings, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_ratings.rdata")
 
