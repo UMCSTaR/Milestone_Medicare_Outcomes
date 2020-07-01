@@ -14,6 +14,17 @@ milestone_person = read_csv("/Volumes/George_Surgeon_Projects/ACGME_milestone/li
 # multiple matches
 load("/Volumes/George_Surgeon_Projects/ACGME_milestone/linkage/de_name_data/milestone_nppes_ama_abs_15_18.rdata")
 
+# milestone data
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_final_year.rdata")
+
+person_year = milestone_final_year %>% 
+  filter(residentyear == 5) %>% 
+  distinct(PersonID, residentyear, AcademicYear) %>% 
+  arrange(PersonID, desc(AcademicYear)) %>% 
+  group_by(PersonID) %>% 
+  slice(1) %>% ungroup()
+
+
 # load medicare data
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/medicare_gs_by_abs.rdata")
 
@@ -24,6 +35,11 @@ analytic_data = medicare_gs
 n_distinct(analytic_data$id_physician_npi) # n 33760
 n_distinct(milestone_person$npi.linked)    # n 4628
 
+milestone_person %>% 
+  left_join(person_year) %>% 
+  distinct(npi.linked, .keep_all = T) %>% 
+  count(AcademicYear, residentyear, name = "n_surg")
+  
 no_npi_milestone = sum(is.na(milestone_person$npi.linked))/nrow(milestone_person)
 # 0.01991104
 
@@ -34,6 +50,12 @@ n_distinct(milestone_medicare$id_physician_npi) # 1083
 
 milestone_medicare_unique = milestone_medicare %>% 
   distinct(PersonID, id_physician_npi) %>% 
+  glimpse()
+
+# didn't get linked milestoners
+milestone_person %>% 
+  anti_join(milestone_medicare_unique) %>% 
+  select(PersonID, NPI = npi.linked) %>% 
   glimpse()
 
 
@@ -105,6 +127,13 @@ milestone_medicare_person %>%
   add_count(id_physician_npi) %>% 
   filter(n>1)
 
+# 4. add graduation year ------
+acdemic_year = milestone_final_year %>% 
+  distinct(PersonID, AcademicYear,residentyear)
+
+milestone_medicare_person = milestone_medicare_person %>% 
+  left_join(person_year) 
+
 # select medicare cases
 milestone_medicare = analytic_data %>% 
   inner_join(milestone_medicare_person, by = "id_physician_npi")
@@ -123,7 +152,7 @@ milestone_medicare_gs = milestone_medicare %>%
 
 n_distinct(milestone_medicare_gs$id_physician_npi) #1082
 
-# 1. NPI degree------
+# 2. NPI degree------
 load("/Volumes/George_Surgeon_Projects/Other/NPPES_Data_Dissemination_January_2020/npi_md_single_spty_gs.rdata")
 
 milestone_medicare_gs =  milestone_medicare_gs %>% 
@@ -141,6 +170,9 @@ milestone_medicare_gs %>%
   mutate(n_surgeon = n_distinct(id_physician_npi),
          n_cases = n()) %>% 
   distinct(facility_clm_yr, n_surgeon, n_cases)
+
+# 3. todo: last least 5 cases in first 12 month -------
+
 
 save(milestone_medicare_gs, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_gs.rdata")
 
@@ -161,6 +193,6 @@ milestone_medicare_pc_5 = milestone_medicare_pc %>%
 
 n_distinct(milestone_medicare_pc_5$id_physician_npi)
 
-#429
+#423
 save(milestone_medicare_pc_5, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_pc_5.rdata")
 
