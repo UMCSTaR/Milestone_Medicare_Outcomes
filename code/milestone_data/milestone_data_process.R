@@ -52,9 +52,13 @@ write_csv(academic_year_resident_year, path = "data/academic_year_resident_year.
 milestone = rbind(milestone_678, milestone_5) %>% 
   filter(PersonID %in% milestone_person$PersonID)
 
+n_distinct(milestone5678$PersonID)
+n_distinct(milestone$PersonID)
+
 # check
 milestone %>% 
-  cat_by(residentyear)
+  filter(residentyear == 5) %>% 
+  cat_by(AcademicYear)
 
 n_distinct(milestone$PersonID)  #4720
 
@@ -65,6 +69,12 @@ milestone_final_year = milestone %>%
 
 # check
 n_distinct(milestone_final_year$PersonID)  # 4718
+
+# any duplicate
+milestone_final_year %>% 
+  distinct(PersonID, residentyear) %>% 
+  add_count(PersonID) %>% 
+  filter(n>1)
 
 
 save(milestone_final_year, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_final_year.rdata")
