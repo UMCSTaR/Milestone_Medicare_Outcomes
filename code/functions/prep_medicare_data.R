@@ -1,3 +1,4 @@
+# adding labels and var without dropping any observations
 prep_data_for_model <- function(
   data, 
   standardize = vars(age_at_admit, AHRQ_score),
@@ -105,10 +106,10 @@ prep_data_for_model <- function(
   # missing, other will be given NA as well.  It has very few values anyway.  This was checked for appropriate NA
   
   data = data %>% 
-    mutate(e_admit_type = ifelse(e_admit_type == 4 | e_admit_type == 9, 
+    mutate(e_admit_type = ifelse(e_admit_type == "4_Other" | e_admit_type == "9-Unknown/Missing", 
                                  NA, 
                                  e_admit_type)) %>% 
-    mutate(flg_admit_emerg = ifelse(e_admit_type == 3, 0, 1))
+    mutate(flg_admit_emerg = ifelse(e_admit_type == "3_Elective", 0, 1))
   
   
   
