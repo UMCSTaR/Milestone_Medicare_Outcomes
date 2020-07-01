@@ -74,7 +74,7 @@ source("code/functions/run_model.R")
 
 # milestone ratings --------
 primaries = c("IntResponseValue_mean", "prof_rating_mean", "operative_rating_mean",
-            "ever_less_7_rating")
+            "ever_less_7_rating", 'mean_lt_7', 'leadership_rating_mean')
 
 # procedures ---------------
 # 5 major procedure
@@ -96,7 +96,7 @@ select_proc <- function(proc) {
 # "Partial Colectomy"
 # "Ventral Hernia Repair"
 # all: all 5 procedures
-procedure = select_proc("all")
+procedure = select_proc("Partial Colectomy")
   
 # make model formulas ------------
 fs = create_formulas(
@@ -130,7 +130,9 @@ model_name = model_ls %>%
   mutate(pred = ifelse(str_detect(fs, "IntResponseValue_mean"), "all_mean", NA),
          pred = ifelse(str_detect(fs, "prof_rating_mean"), "prof", pred),
          pred = ifelse(str_detect(fs, "operative_rating_mean"), "operative", pred),
-         pred = ifelse(str_detect(fs, "ever_less_7_rating"), "less_7", pred),) %>% 
+         pred = ifelse(str_detect(fs, "ever_less_7_rating"), "ever_less_7", pred),
+         pred = ifelse(str_detect(fs, "leadership"), "leadership", pred),
+         pred = ifelse(str_detect(fs, "mean_lt_7"), "mean_less_7", pred)) %>% 
   mutate(model_name = paste(proc_name, outcome, pred, sep = "_")) %>% 
   pull(model_name)
 
@@ -142,7 +144,7 @@ results = pmap(list(formula = model_ls$fs,
 names(results) = model_name
 
 # example
-summary(results$Par_severe_cmp_all_mean)
+summary(results$Par_severe_cmp_mean_less_7)
 
 # save model ---------
 if (length(procedure)  == 5) {
