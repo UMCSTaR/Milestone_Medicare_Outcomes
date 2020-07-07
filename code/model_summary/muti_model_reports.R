@@ -2,13 +2,13 @@ library(knitr)
 library(readr)
 library(dplyr)
 
-filelist <- list.files("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/")
+filelist <- list.files("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/pc/")
 
 # loop through the file list to read in data and clean it up
 
 for (file in filelist) {
   
-  fp <- paste("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/", file, sep="")
+  fp <- paste0("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/pc/", file, sep="")
   
   # read in results model
   load(fp)
