@@ -35,6 +35,9 @@ length(no_end_eval_person)
 
 range(milestone_end_person_in_medicare$IntResponseValue)
 # 0-9
+# 0 is NA
+milestone_end_person_in_medicare = milestone_end_person_in_medicare %>% 
+  mutate(IntResponseValue = ifelse(IntResponseValue == 0, NA, IntResponseValue)) 
 
 # mean milestone ratings --------
 person_values = milestone_end_person_in_medicare %>% 
@@ -63,7 +66,7 @@ operative_rating = milestone_end_person_in_medicare %>%
   glimpse()
 
 operative_rating = operative_rating %>% 
-  mutate(operative_rating_lt7 = ifelse(operative_rating_mean>=7, 1,0))
+  mutate(operative_rating_lt8 = ifelse(operative_rating_mean<8, 1,0))
 
 
 # mean professionalism------
@@ -76,7 +79,7 @@ prof_rating = milestone_end_person_in_medicare %>%
   glimpse()
 
 prof_rating = prof_rating %>% 
-  mutate(prof_rating_lt7 = ifelse(prof_rating_mean>=7, 1,0))
+  mutate(prof_rating_lt8 = ifelse(prof_rating_mean<8, 1,0))
 
 
 # leadership --------
@@ -89,31 +92,30 @@ leadership_rating = milestone_end_person_in_medicare %>%
   glimpse()
 
 leadership_rating = leadership_rating %>% 
-  mutate(leadership_rating_lt7 = ifelse(leadership_rating_mean>=7, 1,0))
-
+  mutate(leadership_rating_lt8 = ifelse(leadership_rating_mean<8, 1,0))
 
 range(leadership_rating$leadership_rating_mean)
 
-# mean rating less than 7 ------
-person_less_than_7 = person_values %>% 
-  filter(IntResponseValue_mean<7) %>% 
+# mean rating less than 8 ------
+person_less_than_8 = person_values %>% 
+  filter(IntResponseValue_mean<8) %>% 
   pull(PersonID)
 
-mean_lt_7 = milestone_end_person_in_medicare %>% 
+mean_lt_8 = milestone_end_person_in_medicare %>% 
   distinct(PersonID) %>% 
-  mutate(mean_lt_7 = ifelse(PersonID %in% person_less_than_7, 1, 0))
+  mutate(mean_lt_8 = ifelse(PersonID %in% person_less_than_8, 1, 0))
 
 
 # ever has low rating ------
 low_rating_person = milestone_end_person_in_medicare %>% 
-  mutate(ever_less_7_rating = as.numeric(IntResponseValue)<7) %>% 
-  filter(ever_less_7_rating == TRUE) %>% 
-  distinct(PersonID, ever_less_7_rating) %>% 
+  mutate(ever_less_8_rating = as.numeric(IntResponseValue)<8) %>% 
+  filter(ever_less_8_rating == TRUE) %>% 
+  distinct(PersonID, ever_less_8_rating) %>% 
   pull(PersonID)
 
 low_rating = milestone_end_person_in_medicare %>% 
   distinct(PersonID) %>% 
-  mutate(ever_less_7_rating = ifelse(PersonID %in% low_rating_person, 1, 0))
+  mutate(ever_less_8_rating = ifelse(PersonID %in% low_rating_person, 1, 0))
 
 
 # person value all -----
@@ -121,11 +123,11 @@ person_values = person_values %>%
   left_join(prof_rating) %>% 
   left_join(operative_rating) %>% 
   left_join(low_rating) %>% 
-  left_join(mean_lt_7) %>% 
+  left_join(mean_lt_8) %>% 
   left_join(leadership_rating)
 
 # attach score to the medicare -----
-# (inner join loose 7 people who don't have end-year eval)
+# (inner join loose 8 people who don't have end-year eval)
 milestone_medicare_ratings =  milestone_medicare_gs %>% 
   inner_join(person_values, by = "PersonID")
 
