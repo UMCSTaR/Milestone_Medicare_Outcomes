@@ -94,8 +94,8 @@ person_rating = milestone_medicare_pc %>%
     prof_rating_mean,
     operative_rating_mean,
     leadership_rating_mean,
-    mean_lt_7,
-    ever_less_7_rating
+    mean_lt_8,
+    ever_less_8_rating
   )
 ```
 
@@ -119,12 +119,12 @@ milestone_medicare_pc %>%
   datatable(rownames = F)
 ```
 
-#### overall mean milestone ratings less than 7 
+#### overall mean milestone ratings less than 8 
 
-```{r mean_lt_7}
-# overall mean less than 7 -----
+```{r mean_lt_8}
+# overall mean less than 8 -----
 milestone_medicare_pc %>% 
-  group_by(mean_lt_7) %>% 
+  group_by(mean_lt_8) %>% 
   mutate(n_surgeons = length(unique(id_physician_npi)),
          n_cases = n(),
          n_severe_cmp_poa = sum(flg_cmp_po_severe_not_poa),
@@ -132,19 +132,19 @@ milestone_medicare_pc %>%
          n_reop = sum(flg_util_reop),
          n_readmit = sum(flg_readmit_30d)) %>% 
   ungroup() %>% 
-  distinct(mean_lt_7, n_surgeons, n_cases, n_severe_cmp_poa, n_death,
+  distinct(mean_lt_8, n_surgeons, n_cases, n_severe_cmp_poa, n_death,
            n_reop, n_readmit) %>% 
-  datatable(rownames = F, caption = "mean milestone ratings less than 7")
+  datatable(rownames = F, caption = "mean milestone ratings less than 8")
 ```
 
-#### Any Milestone ratings less than 7
+#### Any Milestone ratings less than 8
 
 Note: not match with the numbers above because of rounding.
 
-```{r ever_lt_7}
-# ever_less_7_rating-----
+```{r ever_lt_8}
+# ever_less_8_rating-----
 milestone_medicare_pc %>% 
-  group_by(ever_less_7_rating) %>% 
+  group_by(ever_less_8_rating) %>% 
   mutate(n_surgeons = length(unique(id_physician_npi)),
          n_cases = n(),
          n_severe_cmp_poa = sum(flg_cmp_po_severe_not_poa),
@@ -152,9 +152,9 @@ milestone_medicare_pc %>%
          n_reop = sum(flg_util_reop),
          n_readmit = sum(flg_readmit_30d)) %>% 
   ungroup() %>% 
-  distinct(ever_less_7_rating, n_surgeons, n_cases, n_severe_cmp_poa, n_death,
+  distinct(ever_less_8_rating, n_surgeons, n_cases, n_severe_cmp_poa, n_death,
            n_reop, n_readmit) %>% 
-  datatable(rownames = F, caption = "mean milestone ratings less than 7")
+  datatable(rownames = F, caption = "mean milestone ratings less than 8")
 ```
 
 #### professional ratings mean
@@ -177,7 +177,7 @@ milestone_medicare_pc %>%
   datatable(rownames = F)
 
 milestone_medicare_pc %>% 
-  group_by(prof_rating_lt7) %>% 
+  group_by(prof_rating_lt8) %>% 
   mutate(n_surgeons = length(unique(id_physician_npi)),
          n_cases = n(),
          n_severe_cmp_poa = sum(flg_cmp_po_severe_not_poa),
@@ -185,7 +185,7 @@ milestone_medicare_pc %>%
          n_reop = sum(flg_util_reop),
          n_readmit = sum(flg_readmit_30d)) %>% 
   ungroup() %>% 
-  distinct(prof_rating_lt7, n_surgeons, n_cases, n_severe_cmp_poa, n_death,
+  distinct(prof_rating_lt8, n_surgeons, n_cases, n_severe_cmp_poa, n_death,
            n_reop, n_readmit) %>% 
   datatable(rownames = F)
 
@@ -211,7 +211,7 @@ milestone_medicare_pc %>%
   datatable(rownames = F)
 
 milestone_medicare_pc %>% 
-  group_by(leadership_rating_lt7) %>% 
+  group_by(leadership_rating_lt8) %>% 
   mutate(n_surgeons = length(unique(id_physician_npi)),
          n_cases = n(),
          n_severe_cmp_poa = sum(flg_cmp_po_severe_not_poa),
@@ -219,7 +219,7 @@ milestone_medicare_pc %>%
          n_reop = sum(flg_util_reop),
          n_readmit = sum(flg_readmit_30d)) %>% 
   ungroup() %>% 
-  distinct(leadership_rating_lt7, n_surgeons, n_cases, n_severe_cmp_poa, n_death,
+  distinct(leadership_rating_lt8, n_surgeons, n_cases, n_severe_cmp_poa, n_death,
            n_reop, n_readmit) %>% 
   datatable(rownames = F)
 ```
@@ -244,7 +244,7 @@ milestone_medicare_pc %>%
   datatable(rownames = F)
 
 milestone_medicare_pc %>% 
-  group_by(operative_rating_lt7) %>% 
+  group_by(operative_rating_lt8) %>% 
   mutate(n_surgeons = length(unique(id_physician_npi)),
          n_cases = n(),
          n_severe_cmp_poa = sum(flg_cmp_po_severe_not_poa),
@@ -252,7 +252,7 @@ milestone_medicare_pc %>%
          n_reop = sum(flg_util_reop),
          n_readmit = sum(flg_readmit_30d)) %>% 
   ungroup() %>% 
-  distinct(operative_rating_lt7, n_surgeons, n_cases, n_severe_cmp_poa, n_death,
+  distinct(operative_rating_lt8, n_surgeons, n_cases, n_severe_cmp_poa, n_death,
            n_reop, n_readmit) %>% 
   datatable(rownames = F)
 ```
