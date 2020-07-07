@@ -5,40 +5,57 @@ library(purrr)
 
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/pc/rating_model.rdata")
 
+# overall rating
 mean_rating = map_df(results, extract_fixed_effects, .id = "outcome")  %>% 
   filter(term == "IntResponseValue_mean")
 
-# load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/prof_results_tmb.rdata")
+less_than_7 = map_df(results, extract_fixed_effects, .id = "outcome")  %>% 
+  filter(term == "ever_less_7_rating") # if one rate is less than 7
 
+mean_lt_7_rating = map_df(results, extract_fixed_effects, .id = "outcome")  %>% 
+  filter(term == "mean_lt_7")
+
+
+# professional
 prof_rating = map_df(results, extract_fixed_effects, .id = "outcome")  %>% 
   filter(term == "prof_rating_mean") 
 
-# load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/operative_results_tmb.rdata")
+prof_rating_lt8 = map_df(results, extract_fixed_effects, .id = "outcome")  %>% 
+  filter(term == "prof_rating_lt8") 
 
+# operative
 operative_mean = map_df(results, extract_fixed_effects, .id = "outcome")  %>% 
   filter(term == "operative_rating_mean")
 
-# load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/low_rating_results_tmb.rdata")
-
-less_than_7 = map_df(results, extract_fixed_effects, .id = "outcome")  %>% 
-  filter(term == "ever_less_7_rating")
+operative_mean_lt8 = map_df(results, extract_fixed_effects, .id = "outcome")  %>% 
+  filter(term == "operative_rating_lt8")
 
 # leadership
 leadership_rating = map_df(results, extract_fixed_effects, .id = "outcome")  %>% 
   filter(term == "leadership_rating_mean")
 
-# mean less than 7
-mean_lt_7_rating = map_df(results, extract_fixed_effects, .id = "outcome")  %>% 
-  filter(term == "mean_lt_7")
+leadership_rating_lt8 = map_df(results, extract_fixed_effects, .id = "outcome")  %>% 
+  filter(term == "leadership_rating_lt8")
+
+
 
 # Odds ratio for all outcomes by predictors for partical colectomy-----------
 
-rbind(mean_rating, prof_rating, operative_mean, less_than_7, 
-      leadership_rating, mean_lt_7_rating) %>% 
+rbind(
+  mean_rating,
+  less_than_7,
+  mean_lt_7_rating,
+  prof_rating,
+  prof_rating_lt8,
+  operative_mean,
+  operative_mean_lt8,
+  leadership_rating,
+  leadership_rating_lt8
+) %>% 
   mutate(OR = exp(value),
          OR_lower = exp(lower_2.5),
          OR_upper = exp(upper_97.5),
-         outcome = str_remove_all(outcome, "Par_|_all_mean|_prof|_all_mean|_ever_less_7|_operative|_leadership|_mean_less_7")
+         outcome = str_remove_all(outcome, "Par_|_all_mean|_prof|_lt8|_operative|_leadership|")
   ) %>% 
   ggplot(aes(y = OR, x = reorder(outcome, OR))) +
   geom_point() +
