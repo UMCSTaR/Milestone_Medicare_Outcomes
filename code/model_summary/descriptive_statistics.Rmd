@@ -1,0 +1,261 @@
+---
+title: "Descriptive Stats for Milestone Medicare 2007-2017"
+author: "Xilin Chen"
+date: "`r Sys.Date()`"
+always_allow_html: true
+output:
+  html_document:
+    toc: true
+    toc_depth: 4
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = F,                                     # code
+  message = F,
+  warning = F,
+  error = F,
+  comment = NA,
+  R.options = list(width = 220),
+  dev.args = list(bg = 'transparent'),          # viz
+  fig.align = 'center',
+  cache = F
+)
+
+library(tidyverse)
+library(DT)
+library(tidyext)
+library(kableExtra)
+library(arsenal)
+library(glmmTMB)
+library(mixedup)
+library(ggeffects)
+
+
+kable_df <- function(..., digits=2) {
+  kable(...,digits = digits, booktabs = T) %>% 
+    kable_styling(full_width = F,
+                  latex_options = c("striped", "hold_position"))
+    # kable_styling(full_width = F)
+}
+
+```
+
+## Description
+
+This document uses the end-year milestone evaluations at the last year of residency from ACGME. Milestone rating for each resident is the mean of all 16 questions. The data is linked medicare with milestoner evals.
+
+number of cases by procedure
+
+```{r load_data}
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_ratings.rdata")
+
+milestone_medicare_ratings %>% 
+  count(e_proc_grp_lbl, sort = T) %>% 
+  mutate(all_n = sum(n)) %>% 
+  DT::datatable()
+
+```
+
+
+### Whole Cohort Data Description
+
+```{r data_desc}
+milestone_medicare_pc = milestone_medicare_ratings %>% 
+  filter(proc_Partial_Colectomy==1) %>% 
+  mutate(flg_cmp_po_any_not_poa = as.numeric(flg_cmp_po_any_not_poa),
+         flg_cmp_po_severe_not_poa = as.numeric(flg_cmp_po_severe_not_poa))
+
+
+milestone_medicare_pc %>% 
+  summarise(n_case = n(),
+            n_surgeon = length(unique(id_physician_npi)),
+            n_hosp = length(unique(facility_prvnumgrp)),
+            POA_severe_complication_rate = sum(flg_cmp_po_severe_not_poa)/n_case,
+            severe_complication_rate = sum(flg_cmp_po_severe)/n_case,
+            POA_any_complication_rate = sum(flg_cmp_po_any_not_poa)/n_case,
+            any_complication_rate = sum(flg_cmp_po_any)/n_case,
+            death_rate = sum(flg_death_30d)/n_case,
+            readmit = sum(flg_readmit_30d)/n_case,
+            reop = sum(flg_util_reop)/n_case) %>% 
+  t() %>% 
+  kable_df(caption = "Medicare Outcomes Description for PC")
+```
+
+
+### milestone ratings
+
+```{r rating}
+person_rating = milestone_medicare_pc %>%
+  distinct(
+    id_physician_npi,
+    IntResponseValue_mean,
+    prof_rating_mean,
+    operative_rating_mean,
+    leadership_rating_mean,
+    mean_lt_7,
+    ever_less_7_rating
+  )
+```
+
+#### Overall mean of 16 milestone ratings
+
+```{r mean_overall}
+# mean overall------
+milestone_medicare_pc %>% 
+  mutate(IntResponseValue_mean = round(IntResponseValue_mean)) %>%
+  group_by(IntResponseValue_mean) %>% 
+  mutate(n_surgeons = length(unique(id_physician_npi)),
+         n_cases = n(),
+         n_severe_cmp_poa = sum(flg_cmp_po_severe_not_poa),
+         n_death = sum(flg_death_30d),
+         n_reop = sum(flg_util_reop),
+         n_readmit = sum(flg_readmit_30d)) %>% 
+  ungroup() %>% 
+  distinct(IntResponseValue_mean, n_surgeons, n_cases, n_severe_cmp_poa, n_death,
+           n_reop, n_readmit) %>% 
+  arrange(IntResponseValue_mean) %>% 
+  datatable(rownames = F)
+```
+
+#### overall mean milestone ratings less than 7 
+
+```{r mean_lt_7}
+# overall mean less than 7 -----
+milestone_medicare_pc %>% 
+  group_by(mean_lt_7) %>% 
+  mutate(n_surgeons = length(unique(id_physician_npi)),
+         n_cases = n(),
+         n_severe_cmp_poa = sum(flg_cmp_po_severe_not_poa),
+         n_death = sum(flg_death_30d),
+         n_reop = sum(flg_util_reop),
+         n_readmit = sum(flg_readmit_30d)) %>% 
+  ungroup() %>% 
+  distinct(mean_lt_7, n_surgeons, n_cases, n_severe_cmp_poa, n_death,
+           n_reop, n_readmit) %>% 
+  datatable(rownames = F, caption = "mean milestone ratings less than 7")
+```
+
+#### Any Milestone ratings less than 7
+
+Note: not match with the numbers above because of rounding.
+
+```{r ever_lt_7}
+# ever_less_7_rating-----
+milestone_medicare_pc %>% 
+  group_by(ever_less_7_rating) %>% 
+  mutate(n_surgeons = length(unique(id_physician_npi)),
+         n_cases = n(),
+         n_severe_cmp_poa = sum(flg_cmp_po_severe_not_poa),
+         n_death = sum(flg_death_30d),
+         n_reop = sum(flg_util_reop),
+         n_readmit = sum(flg_readmit_30d)) %>% 
+  ungroup() %>% 
+  distinct(ever_less_7_rating, n_surgeons, n_cases, n_severe_cmp_poa, n_death,
+           n_reop, n_readmit) %>% 
+  datatable(rownames = F, caption = "mean milestone ratings less than 7")
+```
+
+#### professional ratings mean
+
+```{r prof_rating_mean}
+# prof_rating_mean -----
+milestone_medicare_pc %>% 
+  mutate(prof_rating_mean = round(prof_rating_mean)) %>%
+  group_by(prof_rating_mean) %>% 
+  mutate(n_surgeons = length(unique(id_physician_npi)),
+         n_cases = n(),
+         n_severe_cmp_poa = sum(flg_cmp_po_severe_not_poa),
+         n_death = sum(flg_death_30d),
+         n_reop = sum(flg_util_reop),
+         n_readmit = sum(flg_readmit_30d)) %>% 
+  ungroup() %>% 
+  distinct(prof_rating_mean, n_surgeons, n_cases, n_severe_cmp_poa, n_death,
+           n_reop, n_readmit) %>% 
+  arrange(prof_rating_mean) %>% 
+  datatable(rownames = F)
+
+milestone_medicare_pc %>% 
+  group_by(prof_rating_lt7) %>% 
+  mutate(n_surgeons = length(unique(id_physician_npi)),
+         n_cases = n(),
+         n_severe_cmp_poa = sum(flg_cmp_po_severe_not_poa),
+         n_death = sum(flg_death_30d),
+         n_reop = sum(flg_util_reop),
+         n_readmit = sum(flg_readmit_30d)) %>% 
+  ungroup() %>% 
+  distinct(prof_rating_lt7, n_surgeons, n_cases, n_severe_cmp_poa, n_death,
+           n_reop, n_readmit) %>% 
+  datatable(rownames = F)
+
+```
+
+#### leadership ratings mean
+
+```{r leadership_rating_mean}
+# leadership_rating_mean----
+milestone_medicare_pc %>% 
+  mutate(leadership_rating_mean = round(leadership_rating_mean)) %>%
+  group_by(leadership_rating_mean) %>% 
+  mutate(n_surgeons = length(unique(id_physician_npi)),
+         n_cases = n(),
+         n_severe_cmp_poa = sum(flg_cmp_po_severe_not_poa),
+         n_death = sum(flg_death_30d),
+         n_reop = sum(flg_util_reop),
+         n_readmit = sum(flg_readmit_30d)) %>% 
+  ungroup() %>% 
+  distinct(leadership_rating_mean, n_surgeons, n_cases, n_severe_cmp_poa, n_death,
+           n_reop, n_readmit) %>% 
+  arrange(leadership_rating_mean) %>% 
+  datatable(rownames = F)
+
+milestone_medicare_pc %>% 
+  group_by(leadership_rating_lt7) %>% 
+  mutate(n_surgeons = length(unique(id_physician_npi)),
+         n_cases = n(),
+         n_severe_cmp_poa = sum(flg_cmp_po_severe_not_poa),
+         n_death = sum(flg_death_30d),
+         n_reop = sum(flg_util_reop),
+         n_readmit = sum(flg_readmit_30d)) %>% 
+  ungroup() %>% 
+  distinct(leadership_rating_lt7, n_surgeons, n_cases, n_severe_cmp_poa, n_death,
+           n_reop, n_readmit) %>% 
+  datatable(rownames = F)
+```
+
+#### Operative ratings mean
+
+```{r operative_rating_mean}
+# operative_rating_mean---
+milestone_medicare_pc %>% 
+  mutate(operative_rating_mean = round(operative_rating_mean)) %>%
+  group_by(operative_rating_mean) %>% 
+  mutate(n_surgeons = length(unique(id_physician_npi)),
+         n_cases = n(),
+         n_severe_cmp_poa = sum(flg_cmp_po_severe_not_poa),
+         n_death = sum(flg_death_30d),
+         n_reop = sum(flg_util_reop),
+         n_readmit = sum(flg_readmit_30d)) %>% 
+  ungroup() %>% 
+  distinct(operative_rating_mean, n_surgeons, n_cases, n_severe_cmp_poa, n_death,
+           n_reop, n_readmit) %>% 
+  arrange(operative_rating_mean) %>% 
+  datatable(rownames = F)
+
+milestone_medicare_pc %>% 
+  group_by(operative_rating_lt7) %>% 
+  mutate(n_surgeons = length(unique(id_physician_npi)),
+         n_cases = n(),
+         n_severe_cmp_poa = sum(flg_cmp_po_severe_not_poa),
+         n_death = sum(flg_death_30d),
+         n_reop = sum(flg_util_reop),
+         n_readmit = sum(flg_readmit_30d)) %>% 
+  ungroup() %>% 
+  distinct(operative_rating_lt7, n_surgeons, n_cases, n_severe_cmp_poa, n_death,
+           n_reop, n_readmit) %>% 
+  datatable(rownames = F)
+```
+
+
+
