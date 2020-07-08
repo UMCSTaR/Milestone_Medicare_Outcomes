@@ -9,11 +9,11 @@ load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/pc/rating_mod
 mean_rating = map_df(results, extract_fixed_effects, .id = "outcome")  %>% 
   filter(term == "IntResponseValue_mean")
 
-less_than_7 = map_df(results, extract_fixed_effects, .id = "outcome")  %>% 
-  filter(term == "ever_less_7_rating") # if one rate is less than 7
+less_than_8 = map_df(results, extract_fixed_effects, .id = "outcome")  %>% 
+  filter(term == "ever_less_8_rating") # if one rate is less than 7
 
-mean_lt_7_rating = map_df(results, extract_fixed_effects, .id = "outcome")  %>% 
-  filter(term == "mean_lt_7")
+mean_lt_8_rating = map_df(results, extract_fixed_effects, .id = "outcome")  %>% 
+  filter(term == "mean_lt_8")
 
 
 # professional
@@ -43,8 +43,8 @@ leadership_rating_lt8 = map_df(results, extract_fixed_effects, .id = "outcome") 
 
 rbind(
   mean_rating,
-  less_than_7,
-  mean_lt_7_rating,
+  less_than_8,
+  mean_lt_8_rating,
   prof_rating,
   prof_rating_lt8,
   operative_mean,
@@ -55,7 +55,10 @@ rbind(
   mutate(OR = exp(value),
          OR_lower = exp(lower_2.5),
          OR_upper = exp(upper_97.5),
-         outcome = str_remove_all(outcome, "Par_|_all_mean|_prof|_lt8|_operative|_leadership|")
+         outcome = str_remove_all(
+           outcome,
+           "Par_|_all_mean|_prof|_lt8|_operative|_leadership|_mean_less_8|_ever_less_8"
+         )
   ) %>% 
   ggplot(aes(y = OR, x = reorder(outcome, OR))) +
   geom_point() +
