@@ -109,14 +109,21 @@ milestone_medicare_pc %>%
   mutate(n_surgeons = length(unique(id_physician_npi)),
          n_cases = n(),
          n_severe_cmp_poa = sum(flg_cmp_po_severe_not_poa),
+         rate_severe_cmp_poa = n_severe_cmp_poa/n_cases,
          n_death = sum(flg_death_30d),
+         rate_death = n_death/n_cases,
          n_reop = sum(flg_util_reop),
-         n_readmit = sum(flg_readmit_30d)) %>% 
+         rate_reop = n_reop/n_cases,
+         n_readmit = sum(flg_readmit_30d),
+         rate_readmit = n_readmit/n_cases
+         ) %>% 
   ungroup() %>% 
-  distinct(IntResponseValue_mean, n_surgeons, n_cases, n_severe_cmp_poa, n_death,
-           n_reop, n_readmit) %>% 
+  distinct(IntResponseValue_mean, n_surgeons, n_cases, n_severe_cmp_poa, rate_severe_cmp_poa, n_death, rate_death,
+           n_reop, rate_reop,rate_reop, n_readmit, rate_readmit) %>% 
   arrange(IntResponseValue_mean) %>% 
-  datatable(rownames = F)
+  rename(overall_mean = IntResponseValue_mean) %>% 
+  datatable(rownames = F, options = list(scrollX = T)) %>% 
+  formatPercentage(c('rate_severe_cmp_poa', 'rate_death', 'rate_reop','rate_readmit'), 2)
 ```
 
 #### overall mean milestone ratings less than 8 
@@ -128,13 +135,21 @@ milestone_medicare_pc %>%
   mutate(n_surgeons = length(unique(id_physician_npi)),
          n_cases = n(),
          n_severe_cmp_poa = sum(flg_cmp_po_severe_not_poa),
+         rate_severe_cmp_poa = n_severe_cmp_poa/n_cases,
          n_death = sum(flg_death_30d),
+         rate_death = n_death/n_cases,
          n_reop = sum(flg_util_reop),
-         n_readmit = sum(flg_readmit_30d)) %>% 
+         rate_reop = n_reop/n_cases,
+         n_readmit = sum(flg_readmit_30d),
+         rate_readmit = n_readmit/n_cases
+         ) %>% 
   ungroup() %>% 
-  distinct(mean_lt_8, n_surgeons, n_cases, n_severe_cmp_poa, n_death,
-           n_reop, n_readmit) %>% 
-  datatable(rownames = F, caption = "mean milestone ratings less than 8")
+  distinct(mean_lt_8, n_surgeons, n_cases, n_severe_cmp_poa, rate_severe_cmp_poa, n_death, rate_death,
+           n_reop, rate_reop,rate_reop, n_readmit, rate_readmit) %>% 
+  datatable(rownames = F, 
+            options = list(scrollX = T),
+            caption = "mean milestone ratings less than 8") %>% 
+  formatPercentage(c('rate_severe_cmp_poa', 'rate_death', 'rate_reop','rate_readmit'), 2)
 ```
 
 #### Any Milestone ratings less than 8
@@ -148,13 +163,22 @@ milestone_medicare_pc %>%
   mutate(n_surgeons = length(unique(id_physician_npi)),
          n_cases = n(),
          n_severe_cmp_poa = sum(flg_cmp_po_severe_not_poa),
+         rate_severe_cmp_poa = n_severe_cmp_poa/n_cases,
          n_death = sum(flg_death_30d),
+         rate_death = n_death/n_cases,
          n_reop = sum(flg_util_reop),
-         n_readmit = sum(flg_readmit_30d)) %>% 
+         rate_reop = n_reop/n_cases,
+         n_readmit = sum(flg_readmit_30d),
+         rate_readmit = n_readmit/n_cases
+         ) %>% 
   ungroup() %>% 
-  distinct(ever_less_8_rating, n_surgeons, n_cases, n_severe_cmp_poa, n_death,
-           n_reop, n_readmit) %>% 
-  datatable(rownames = F, caption = "mean milestone ratings less than 8")
+  distinct(ever_less_8_rating, n_surgeons, n_cases, n_severe_cmp_poa, rate_severe_cmp_poa, n_death, rate_death,
+           n_reop, rate_reop,rate_reop, n_readmit, rate_readmit) %>% 
+  datatable(rownames = F, 
+            options = list(scrollX = T)) %>% 
+  formatPercentage(c('rate_severe_cmp_poa', 'rate_death', 'rate_reop','rate_readmit'), 2)
+
+
 ```
 
 #### professional ratings mean
