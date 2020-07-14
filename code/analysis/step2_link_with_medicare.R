@@ -33,6 +33,14 @@ person_year = milestone_final_year %>%
   group_by(PersonID) %>% 
   slice(1) %>% ungroup()
 
+# add graduation year
+person_year = person_year %>% 
+  mutate(AcademicYear = as.numeric(AcademicYear)) %>% 
+  mutate(grad_year = AcademicYear+1)
+
+person_year %>% 
+  count(grad_year)
+
 
 # load medicare data
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/medicare_gs_by_abs.rdata")
@@ -47,27 +55,56 @@ n_distinct(milestone_person$npi.linked)    # n 4628
 sum(is.na(milestone_person$npi.linked))/nrow(milestone_person)
 # 0.01991104
 
-# exclude non-us -----
+
+# 2. exclude specialty trained and non-us------
+# 2.1 exclude non-us -----
 milestone_person_us = milestone_person %>% 
   filter(!npi.linked %in% non_us_npi) 
 
-n_distinct(milestone_person_us$npi.linked)
+n_distinct(milestone_person_us$npi.linked) #3869
 
-# exclude fellowship ---
-milestone_person_us_no_fellow = milestone_person_us %>% 
+# 2.2 exclude fellowship from ABS ------
+milestone_person_us_no_fellow_abs = milestone_person_us %>% 
   filter(!npi.linked %in% abs_fellowship_npi)  
+
+milestone_person_us_no_fellow_abs %>% 
+  left_join(person_year) %>% 
+  distinct(npi.linked, .keep_all = T) %>% 
+  count(grad_year, residentyear, name = "n_surg")
+
+# 2.3 fellowship council data ------
+fellow_council = read_csv("~/Box/ACGME Milestones v Outcomes/ACGME Milestones v Outcomes - Data/fellowship_npi.csv") %>% 
+  mutate(npi= as.character(npi))
+
+milestone_person_us_no_fellow = milestone_person_us_no_fellow_abs %>%
+  anti_join(fellow_council, by = c("npi.linked" = "npi")) 
 
 milestone_person_us_no_fellow %>% 
   left_join(person_year) %>% 
   distinct(npi.linked, .keep_all = T) %>% 
-  count(AcademicYear, residentyear, name = "n_surg")
+  count(grad_year, residentyear, name = "n_surg")
+
+
+# 2.4 exclude fellowship from NPPES -----
+load("/Volumes/George_Surgeon_Projects/Other/NPPES_Data_Dissemination_January_2020/npi_md_single_spty_gs.rdata")
+
+milestone_person_us_no_fellow =  milestone_person_us_no_fellow %>% 
+  mutate(nppes_gs = ifelse(npi.linked %in% npi_md_single_spty_gs$NPI,
+                           "gs","not gs")) 
+
+milestone_person_us_nppes = milestone_person_us_no_fellow %>% 
+  filter(nppes_gs == "gs") 
+
+milestone_person_us_nppes %>% 
+  left_join(person_year) %>% 
+  count(grad_year)
 
 
 # join medicare with milestone by npi
 milestone_medicare = analytic_data %>% 
-  inner_join(milestone_person_us_no_fellow, by = c("id_physician_npi" = "npi.linked"))
+  inner_join(milestone_person_us_nppes, by = c("id_physician_npi" = "npi.linked"))
 
-n_distinct(milestone_medicare$id_physician_npi) # 1083
+n_distinct(milestone_medicare$id_physician_npi) # 777
 
 milestone_medicare_unique = milestone_medicare %>% 
   distinct(PersonID, id_physician_npi) %>% 
@@ -82,7 +119,7 @@ milestone_medicare_unique = milestone_medicare_unique %>%
 
 
 # didn't get linked milestoners
-milestone_person_us_no_fellow %>% 
+milestone_person_us_nppes %>% 
   anti_join(milestone_medicare_unique) %>% 
   select(PersonID, NPI = npi.linked) %>% 
   glimpse()
@@ -90,7 +127,7 @@ milestone_person_us_no_fellow %>%
 
 # 2. multiple matches ----------
 # 2.1 multi match by NPEES and can't decide by yog or yob ------
-milestone_person_m = milestone_person_us_no_fellow %>% 
+milestone_person_m = milestone_person_us_nppes %>% 
   filter(is.na(npi.linked))
 
 multi = milestone_nppes_ama_abs_15_18 %>% 
@@ -108,9 +145,6 @@ milestone_medicare_muti = analytic_data %>%
 milestone_match_with_medicare_person = milestone_medicare_muti %>% 
   distinct(PersonID, id_physician_npi)
 
-# PersonID id_physician_npi
-# 494347   1760771901      
-# 533431   1871693077  
 
 
 # 2.2 AMA and ABS with no matches, by names ----------
@@ -141,10 +175,12 @@ abs_medicare_person = analytic_data %>%
 # 3
 
 # 3. combine unique and multiple --------
-milestone_medicare_person = rbind(milestone_medicare_unique,
-milestone_match_with_medicare_person,
-ama_medicare_person,
-abs_medicare_person) %>% 
+milestone_medicare_person = rbind(
+  milestone_medicare_unique,
+  milestone_match_with_medicare_person,
+  ama_medicare_person,
+  abs_medicare_person
+) %>%
   distinct()
 
 # delete dup for personID and NPI
@@ -168,58 +204,65 @@ milestone_medicare %>%
   add_count(id_physician_npi) %>% 
   filter(n>1)
 
-n_distinct(milestone_medicare$id_physician_npi)  #1094
+n_distinct(milestone_medicare$id_physician_npi)  #788
 
 milestone_medicare %>% 
-  distinct(id_physician_npi, AcademicYear) %>% 
-  count(AcademicYear, name = "n_surg")
+  distinct(id_physician_npi, grad_year) %>% 
+  count(grad_year, name = "n_surg")
+
+milestone_medicare %>% 
+  group_by(facility_clm_yr) %>% 
+  mutate(n_surg = length(unique(id_physician_npi)),
+         n_case = n()) %>% 
+  distinct(facility_clm_yr, n_surg, n_case) %>% 
+  mutate(facility_clm_yr = facility_clm_yr+2007)
+
+# QA why didn't match -----
+matched_2015 = milestone_medicare %>% 
+  filter(grad_year ==2015) %>% 
+  distinct(id_physician_npi) %>% 
+  pull
+
+not_match_2015_ms = milestone_person_us_nppes %>% 
+  left_join(person_year, by = "PersonID") %>% 
+  filter(grad_year == 2015,
+         !npi.linked %in% matched_2015) %>% 
+  select(npi.linked, grad_year)
+
+# match with all chop procedure cohort
+all_chop_surgoens = data.table::fread("/Volumes/George_Surgeon_Projects/standardized_medicare_data_using_R/std/full_data/professionals.csv",
+                                      select = "provider_npi")
+
+milestone_person_us_nppes %>% 
+  left_join(person_year, by = "PersonID") %>% 
+  select(npi = npi.linked, grad_year) %>% 
+  filter(npi %in% pull(all_chop_surgoens)) %>% 
+  count(grad_year)
   
 
-# filter non-fellowship surgeons-----
-# 1. fellowship data------
-fellow_council = read_csv("~/Box/ACGME Milestones v Outcomes/ACGME Milestones v Outcomes - Data/fellowship_npi.csv") %>% 
-  mutate(npi= as.character(npi))
-
-n_distinct(milestone_medicare$id_physician_npi)
-
-milestone_medicare_gs = milestone_medicare %>%
-  anti_join(fellow_council, by = c("id_physician_npi" = "npi")) 
-
-n_distinct(milestone_medicare_gs$id_physician_npi) #1080
-
-# 2. NPI degree------
-load("/Volumes/George_Surgeon_Projects/Other/NPPES_Data_Dissemination_January_2020/npi_md_single_spty_gs.rdata")
-
-milestone_medicare_gs =  milestone_medicare_gs %>% 
-  mutate(nppes_gs = ifelse(id_physician_npi %in% npi_md_single_spty_gs$NPI,
-                           "gs","not gs")) 
-
-milestone_medicare_gs = milestone_medicare_gs %>% 
-  filter(nppes_gs == "gs") 
-
-n_distinct(milestone_medicare_gs$id_physician_npi) #782
-
-milestone_medicare_gs %>% 
-  group_by(facility_clm_yr) %>% 
-  mutate(facility_clm_yr = facility_clm_yr +2007) %>% 
-  mutate(n_surgeon = n_distinct(id_physician_npi),
-         n_cases = n()) %>% 
-  distinct(facility_clm_yr, n_surgeon, n_cases)
-
-
-# 3. practice after graduation -------
+# 5. practice after graduation -------
 # add 
-milestone_medicare_gs = milestone_medicare_gs %>% 
+milestone_medicare = milestone_medicare %>% 
+  mutate(AcademicYear = as.numeric(AcademicYear)+1) %>% 
   mutate(graduate_date_ms = paste0(AcademicYear, "-07-01"),
          graduate_date_ms = as_date(graduate_date_ms),
          month = ceiling((as_date(dt_facclm_adm) - as_date(graduate_date_ms))/30),
          month = as.numeric(month)) %>% 
   filter(month>0)
 
-n_distinct(milestone_medicare_gs$id_physician_npi) #780
+quantile(milestone_medicare$month, probs = c(0.05,0.1, 0.3,0.4,.5,.6,.9,1))
+
+n_distinct(milestone_medicare$id_physician_npi) #780
+
+milestone_medicare_gs = milestone_medicare
 
 save(milestone_medicare_gs, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_gs.rdata")
 
+# check graduation year
+milestone_medicare_gs %>% 
+  distinct(id_physician_npi, AcademicYear, graduate_date_ms) %>% 
+  group_by(AcademicYear) %>% 
+  slice(1:2)
 
 ggplot(data = milestone_medicare_gs, aes(x = month)) +
   geom_histogram(bins = 30) +
@@ -254,9 +297,9 @@ rbind(t1,t2,t3) %>%
   rename(" " = AcademicYear) %>% 
   kable(caption = "year of graduation by claim year") %>% 
   kable_styling(full_width = F) %>% 
-  pack_rows("claim year 2015", 1,2) %>% 
-  pack_rows("claim year 2016", 3,4) %>%  
-  pack_rows("claim year 2017", 5,8)  
+  pack_rows("claim year 2015", 1,1) %>% 
+  pack_rows("claim year 2016", 2,3) %>%  
+  pack_rows("claim year 2017", 4,6)  
 
 
 # only keep partial colectomy ------
