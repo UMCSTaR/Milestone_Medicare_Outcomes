@@ -40,6 +40,51 @@ kable_df <- function(..., digits=2) {
     # kable_styling(full_width = F)
 }
 
+sum_table <- function(name = "overall_mean",
+                      rating_var = IntResponseValue_mean) {
+  rating_var = enquo(rating_var)
+
+  milestone_medicare_pc %>%
+    mutate(!!name := round(!!rating_var)) %>%
+    group_by(!!!syms(name)) %>%
+    mutate(
+      n_surgeons = length(unique(id_physician_npi)),
+      n_cases = n(),
+      n_severe_cmp_poa = sum(flg_cmp_po_severe_not_poa),
+      rate_severe_cmp_poa = n_severe_cmp_poa / n_cases,
+      n_death = sum(flg_death_30d),
+      rate_death = n_death / n_cases,
+      n_reop = sum(flg_util_reop),
+      rate_reop = n_reop / n_cases,
+      n_readmit = sum(flg_readmit_30d),
+      rate_readmit = n_readmit / n_cases
+    ) %>%
+    ungroup() %>%
+    distinct(
+      !!!syms(name),
+      n_surgeons,
+      n_cases,
+      n_severe_cmp_poa,
+      rate_severe_cmp_poa,
+      n_death,
+      rate_death,
+      n_reop,
+      rate_reop,
+      rate_reop,
+      n_readmit,
+      rate_readmit
+    ) %>%
+    arrange(!!!syms(name)) %>%
+    datatable(rownames = F, options = list(scrollX = T)) %>%
+    formatPercentage(c(
+      'rate_severe_cmp_poa',
+      'rate_death',
+      'rate_reop',
+      'rate_readmit'
+    ),
+    2)
+}
+
 ```
 
 ## Description
@@ -52,14 +97,13 @@ number of cases by procedure
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_ratings.rdata")
 
 milestone_medicare_ratings %>% 
-  count(e_proc_grp_lbl, sort = T) %>% 
-  mutate(all_n = sum(n)) %>% 
+  count(e_proc_grp_lbl, sort = T, name = "n_cases") %>% 
   DT::datatable()
 
 ```
 
 
-### Whole Cohort Data Description
+### Whole Cohort Data Description for Partial Colectomy
 
 ```{r data_desc}
 milestone_medicare_pc = milestone_medicare_ratings %>% 
@@ -84,18 +128,24 @@ milestone_medicare_pc %>%
 ```
 
 
-### milestone ratings
+### Milestone Ratings vs Descriptive Outcomes for Patial Colectomy
 
 ```{r rating}
 person_rating = milestone_medicare_pc %>%
   distinct(
     id_physician_npi,
     IntResponseValue_mean,
+    never_less_8_rating,
+    mean_ge_8,
+    
     prof_rating_mean,
+    prof_rating_ge8,
+    
     operative_rating_mean,
+    operative_rating_ge8,
+    
     leadership_rating_mean,
-    mean_lt_8,
-    ever_less_8_rating
+    leadership_rating_ge8
   )
 ```
 
@@ -103,182 +153,62 @@ person_rating = milestone_medicare_pc %>%
 
 ```{r mean_overall}
 # mean overall------
-milestone_medicare_pc %>% 
-  mutate(IntResponseValue_mean = round(IntResponseValue_mean)) %>%
-  group_by(IntResponseValue_mean) %>% 
-  mutate(n_surgeons = length(unique(id_physician_npi)),
-         n_cases = n(),
-         n_severe_cmp_poa = sum(flg_cmp_po_severe_not_poa),
-         rate_severe_cmp_poa = n_severe_cmp_poa/n_cases,
-         n_death = sum(flg_death_30d),
-         rate_death = n_death/n_cases,
-         n_reop = sum(flg_util_reop),
-         rate_reop = n_reop/n_cases,
-         n_readmit = sum(flg_readmit_30d),
-         rate_readmit = n_readmit/n_cases
-         ) %>% 
-  ungroup() %>% 
-  distinct(IntResponseValue_mean, n_surgeons, n_cases, n_severe_cmp_poa, rate_severe_cmp_poa, n_death, rate_death,
-           n_reop, rate_reop,rate_reop, n_readmit, rate_readmit) %>% 
-  arrange(IntResponseValue_mean) %>% 
-  rename(overall_mean = IntResponseValue_mean) %>% 
-  datatable(rownames = F, options = list(scrollX = T)) %>% 
-  formatPercentage(c('rate_severe_cmp_poa', 'rate_death', 'rate_reop','rate_readmit'), 2)
+# debugonce(sum_table)
+sum_table(rating_var = IntResponseValue_mean, 
+          name = "overall_mean")
 ```
 
 #### overall mean milestone ratings less than 8 
 
+Note: not matched with the numbers above because of rounding.
+
 ```{r mean_lt_8}
 # overall mean less than 8 -----
-milestone_medicare_pc %>% 
-  group_by(mean_lt_8) %>% 
-  mutate(n_surgeons = length(unique(id_physician_npi)),
-         n_cases = n(),
-         n_severe_cmp_poa = sum(flg_cmp_po_severe_not_poa),
-         rate_severe_cmp_poa = n_severe_cmp_poa/n_cases,
-         n_death = sum(flg_death_30d),
-         rate_death = n_death/n_cases,
-         n_reop = sum(flg_util_reop),
-         rate_reop = n_reop/n_cases,
-         n_readmit = sum(flg_readmit_30d),
-         rate_readmit = n_readmit/n_cases
-         ) %>% 
-  ungroup() %>% 
-  distinct(mean_lt_8, n_surgeons, n_cases, n_severe_cmp_poa, rate_severe_cmp_poa, n_death, rate_death,
-           n_reop, rate_reop,rate_reop, n_readmit, rate_readmit) %>% 
-  datatable(rownames = F, 
-            options = list(scrollX = T),
-            caption = "mean milestone ratings less than 8") %>% 
-  formatPercentage(c('rate_severe_cmp_poa', 'rate_death', 'rate_reop','rate_readmit'), 2)
+sum_table(rating_var = mean_ge_8, 
+          name = "overall_mean_gt_8")
 ```
 
 #### Any Milestone ratings less than 8
 
-Note: not match with the numbers above because of rounding.
-
 ```{r ever_lt_8}
 # ever_less_8_rating-----
-milestone_medicare_pc %>% 
-  group_by(ever_less_8_rating) %>% 
-  mutate(n_surgeons = length(unique(id_physician_npi)),
-         n_cases = n(),
-         n_severe_cmp_poa = sum(flg_cmp_po_severe_not_poa),
-         rate_severe_cmp_poa = n_severe_cmp_poa/n_cases,
-         n_death = sum(flg_death_30d),
-         rate_death = n_death/n_cases,
-         n_reop = sum(flg_util_reop),
-         rate_reop = n_reop/n_cases,
-         n_readmit = sum(flg_readmit_30d),
-         rate_readmit = n_readmit/n_cases
-         ) %>% 
-  ungroup() %>% 
-  distinct(ever_less_8_rating, n_surgeons, n_cases, n_severe_cmp_poa, rate_severe_cmp_poa, n_death, rate_death,
-           n_reop, rate_reop,rate_reop, n_readmit, rate_readmit) %>% 
-  datatable(rownames = F, 
-            options = list(scrollX = T)) %>% 
-  formatPercentage(c('rate_severe_cmp_poa', 'rate_death', 'rate_reop','rate_readmit'), 2)
-
-
+sum_table(rating_var = never_less_8_rating, 
+          name = "never_have_lt8_rating")
 ```
 
-#### professional ratings mean
+#### professional ratings mean (comp5_PR_Q1, comp5_PR_Q2, comp5_PR_Q3)
 
 ```{r prof_rating_mean}
 # prof_rating_mean -----
-milestone_medicare_pc %>% 
-  mutate(prof_rating_mean = round(prof_rating_mean)) %>%
-  group_by(prof_rating_mean) %>% 
-  mutate(n_surgeons = length(unique(id_physician_npi)),
-         n_cases = n(),
-         n_severe_cmp_poa = sum(flg_cmp_po_severe_not_poa),
-         n_death = sum(flg_death_30d),
-         n_reop = sum(flg_util_reop),
-         n_readmit = sum(flg_readmit_30d)) %>% 
-  ungroup() %>% 
-  distinct(prof_rating_mean, n_surgeons, n_cases, n_severe_cmp_poa, n_death,
-           n_reop, n_readmit) %>% 
-  arrange(prof_rating_mean) %>% 
-  datatable(rownames = F)
+sum_table(rating_var = prof_rating_mean, 
+          name = "prof_rating_mean")
 
-milestone_medicare_pc %>% 
-  group_by(prof_rating_lt8) %>% 
-  mutate(n_surgeons = length(unique(id_physician_npi)),
-         n_cases = n(),
-         n_severe_cmp_poa = sum(flg_cmp_po_severe_not_poa),
-         n_death = sum(flg_death_30d),
-         n_reop = sum(flg_util_reop),
-         n_readmit = sum(flg_readmit_30d)) %>% 
-  ungroup() %>% 
-  distinct(prof_rating_lt8, n_surgeons, n_cases, n_severe_cmp_poa, n_death,
-           n_reop, n_readmit) %>% 
-  datatable(rownames = F)
+sum_table(rating_var = prof_rating_ge8, 
+          name = "prof_rating_ge_8")
 
 ```
 
-#### leadership ratings mean
+#### leadership ratings mean (comp5_PR_Q1, comp6_ICS_Q1, comp6_ICS_Q2, comp3_SBP_Q")
 
 ```{r leadership_rating_mean}
 # leadership_rating_mean----
-milestone_medicare_pc %>% 
-  mutate(leadership_rating_mean = round(leadership_rating_mean)) %>%
-  group_by(leadership_rating_mean) %>% 
-  mutate(n_surgeons = length(unique(id_physician_npi)),
-         n_cases = n(),
-         n_severe_cmp_poa = sum(flg_cmp_po_severe_not_poa),
-         n_death = sum(flg_death_30d),
-         n_reop = sum(flg_util_reop),
-         n_readmit = sum(flg_readmit_30d)) %>% 
-  ungroup() %>% 
-  distinct(leadership_rating_mean, n_surgeons, n_cases, n_severe_cmp_poa, n_death,
-           n_reop, n_readmit) %>% 
-  arrange(leadership_rating_mean) %>% 
-  datatable(rownames = F)
+sum_table(rating_var = leadership_rating_mean, 
+          name = "leadership_rating_mean")
 
-milestone_medicare_pc %>% 
-  group_by(leadership_rating_lt8) %>% 
-  mutate(n_surgeons = length(unique(id_physician_npi)),
-         n_cases = n(),
-         n_severe_cmp_poa = sum(flg_cmp_po_severe_not_poa),
-         n_death = sum(flg_death_30d),
-         n_reop = sum(flg_util_reop),
-         n_readmit = sum(flg_readmit_30d)) %>% 
-  ungroup() %>% 
-  distinct(leadership_rating_lt8, n_surgeons, n_cases, n_severe_cmp_poa, n_death,
-           n_reop, n_readmit) %>% 
-  datatable(rownames = F)
+sum_table(rating_var = leadership_rating_ge8, 
+          name = "leadership_rating_ge8")
 ```
 
-#### Operative ratings mean
+#### Operative ratings mean (PC3, MK2, ICS3)
 
 ```{r operative_rating_mean}
 # operative_rating_mean---
-milestone_medicare_pc %>% 
-  mutate(operative_rating_mean = round(operative_rating_mean)) %>%
-  group_by(operative_rating_mean) %>% 
-  mutate(n_surgeons = length(unique(id_physician_npi)),
-         n_cases = n(),
-         n_severe_cmp_poa = sum(flg_cmp_po_severe_not_poa),
-         n_death = sum(flg_death_30d),
-         n_reop = sum(flg_util_reop),
-         n_readmit = sum(flg_readmit_30d)) %>% 
-  ungroup() %>% 
-  distinct(operative_rating_mean, n_surgeons, n_cases, n_severe_cmp_poa, n_death,
-           n_reop, n_readmit) %>% 
-  arrange(operative_rating_mean) %>% 
-  datatable(rownames = F)
+sum_table(rating_var = operative_rating_mean, 
+          name = "operative_rating_mean")
 
-milestone_medicare_pc %>% 
-  group_by(operative_rating_lt8) %>% 
-  mutate(n_surgeons = length(unique(id_physician_npi)),
-         n_cases = n(),
-         n_severe_cmp_poa = sum(flg_cmp_po_severe_not_poa),
-         n_death = sum(flg_death_30d),
-         n_reop = sum(flg_util_reop),
-         n_readmit = sum(flg_readmit_30d)) %>% 
-  ungroup() %>% 
-  distinct(operative_rating_lt8, n_surgeons, n_cases, n_severe_cmp_poa, n_death,
-           n_reop, n_readmit) %>% 
-  datatable(rownames = F)
+sum_table(rating_var = operative_rating_ge8, 
+          name = "operative_rating_ge8")
+
 ```
 
 
