@@ -1,11 +1,13 @@
-model_vis <- function(model) {
-  if (predict_term != "ever_less_7_rating") {
+model_vis <- function(model,
+                      predict_term,
+                      binary_outcome = FALSE) {
+  if (binary_outcome == T) {
       
       pointrange_predict = plot(ggpredict(model, terms = predict_term)) 
     
       plot(pointrange_predict)
 
-      ggpredict(model, terms = paste(predict_term, "[quart2]")) %>% 
+      ggpredict(model, terms = paste(predict_term)) %>% 
         mutate(quart = c("Q1", "median", "Q3")) %>% 
         rename(milestone_rating = x) %>% 
         select(quart, everything(), -group) %>% 

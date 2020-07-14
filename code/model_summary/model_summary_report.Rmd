@@ -6,7 +6,7 @@ always_allow_html: true
 output:
   html_document:
     toc: true
-    toc_depth: 1
+    toc_depth: 4
     toc_float: true
 ---
 
@@ -49,35 +49,33 @@ source("/Users/xilinchen/Documents/Repo/Milestone_Medicare_Outcomes/code/functio
 
 ```{r load_data}
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_ratings.rdata")
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/pc/rating_model.rdata")
 
-milestone_medicare_pc = milestone_medicare_ratings %>% 
-  filter(proc_Partial_Colectomy==1) %>% 
-  mutate(flg_cmp_po_any_not_poa = as.numeric(flg_cmp_po_any_not_poa),
-         flg_cmp_po_severe_not_poa = as.numeric(flg_cmp_po_severe_not_poa))
+# milestone data
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_final_year.rdata")
+
+
+
+milestone_medicare_pc = milestone_medicare_ratings %>%
+  filter(proc_Partial_Colectomy == 1) %>%
+  mutate(
+    flg_cmp_po_any_not_poa = as.numeric(flg_cmp_po_any_not_poa),
+    flg_cmp_po_severe_not_poa = as.numeric(flg_cmp_po_severe_not_poa)
+  )
 ```
 
 # Description
 
 This document uses the end-year milestone evaluations at the last year of residency from ACGME. Milestone rating for each resident is the mean of all questions.
 
-# Whole Data Description
+## Milestone question keys and descriptions
 
-```{r data_desc}
-milestone_medicare_pc %>% 
-  summarise(n_case = n(),
-            n_surgeon = length(unique(id_physician_npi)),
-            n_hosp = length(unique(facility_prvnumgrp)),
-            POA_severe_complication_rate = sum(flg_cmp_po_severe_not_poa)/n_case,
-            severe_complication_rate = sum(flg_cmp_po_severe)/n_case,
-            POA_any_complication_rate = sum(flg_cmp_po_any_not_poa)/n_case,
-            any_complication_rate = sum(flg_cmp_po_any)/n_case,
-            death_rate = sum(flg_death_30d)/n_case,
-            readmit = sum(flg_readmit_30d)/n_case,
-            reop = sum(flg_util_reop)/n_case) %>% 
-  t() %>% 
-  kable_df(caption = "Medicare Outcomes Description")
+```{r milestone eval}
+milestone_final_year %>% 
+  distinct(ReportCategory, QuestionKey, QuestionText) %>% 
+  filter(!is.na(ReportCategory)) %>% 
+  DT::datatable()
 ```
-
 
 ## Table1 for model variables
 
@@ -98,7 +96,7 @@ milestone_medicare_pc = milestone_medicare_pc %>%
   )
 
 
-table_one <- tableby( ~ IntResponseValue_mean + prof_rating_mean + operative_rating_mean + factor(ever_less_7_rating) + flg_male + age_at_admit + factor(e_race_wbho_lable) + AHRQ_score + ses_2grp + colectomy_type + factor(facility_clm_yr) + factor(flg_multi_surgeon) + factor(flg_assistant_surgeon)  + hosp_beds_2grp + val_hosp_mcday2inptday_ratio + val_hosp_rn2bed_ratio, data = milestone_medicare_pc)
+table_one <- tableby( ~ flg_male + age_at_admit + factor(e_race_wbho_lable) + AHRQ_score + ses_2grp + colectomy_type + factor(facility_clm_yr) + factor(flg_multi_surgeon) + factor(flg_assistant_surgeon)  + hosp_beds_2grp + val_hosp_mcday2inptday_ratio + val_hosp_rn2bed_ratio, data = milestone_medicare_pc)
 
 mylabels <- list(val_hosp_mcday2inptday_ratio = "medicaid/inpatient days ratio", val_hosp_rn2bed_ratio = "Registered nurse to bed ratios")
 
@@ -106,174 +104,123 @@ summary(table_one, labelTranslations = mylabels)
 ```
 
 
-\newpage
+## Outcomes: Severe Complication (Excluded POA)
 
+### 1.1 Overall Mean
 
-```{r rating_desc}
-# main predictor
-predict_term = extract_fixed_effects(results$Par_any_cmp_all_mean) %>%
-  slice(2) %>% 
-  pull(term)
+```{r overall_mean}
+overall_mean = results$Par_severe_cmp_all_mean
 
-milestone_medicare_pc %>% 
-  ggplot() +
-  geom_bar(aes_string(x = predict_term)) +
-  theme_classic() 
+fe(overall_mean)
 
-milestone_medicare_pc %>% 
-  num_by(predict_term) %>% 
-  kable_df()
-```
-
-
-## observed outcomes 
-
-```{r observed_outcome}
-milestone_medicare_pc %>% 
-  mutate(IntResponseValue_mean = as.integer(IntResponseValue_mean)) %>% 
-  group_by(IntResponseValue_mean) %>% 
-  mutate(n_tot = n()) %>% 
-  mutate_at(vars('flg_cmp_po_severe_not_poa',
-                 'flg_cmp_po_any_not_poa',
-                 'flg_readmit_30d',
-                 'flg_death_30d',
-                 'flg_util_reop'), sum) %>% 
-  distinct(IntResponseValue_mean, n_tot, flg_cmp_po_severe_not_poa,
-           flg_cmp_po_any_not_poa,
-           flg_readmit_30d,
-           flg_death_30d,
-           flg_util_reop) %>% arrange(IntResponseValue_mean)  %>% 
-  kable_df
-
-
-milestone_medicare_pc %>% 
-  group_by(ever_less_7_rating) %>% 
-  mutate(n_tot = n()) %>% 
-  mutate_at(vars('flg_cmp_po_severe_not_poa',
-                 'flg_cmp_po_any_not_poa',
-                 'flg_readmit_30d',
-                 'flg_death_30d',
-                 'flg_util_reop'), sum) %>% 
-  distinct(ever_less_7_rating, n_tot, flg_cmp_po_severe_not_poa,
-           flg_cmp_po_any_not_poa,
-           flg_readmit_30d,
-           flg_death_30d,
-           flg_util_reop) %>% arrange(ever_less_7_rating)  %>% 
-  kable_df
-```
-
-
-\newpage
-
-
-# Severe Complication (Excluded POA)
-
-```{r severe_cmp}
-model_severe_cmp = results$flg_cmp_po_severe_no
-
-fe(model_severe_cmp)
-
-extract_vc(model_severe_cmp, ci_level = 0) %>% 
+extract_vc(overall_mean, ci_level = 0) %>% 
     kable_df() 
 
 
-# predicted probability for surgeons
-model_vis(results$flg_cmp_po_severe_poa)
+# # predicted probability for surgeons
+# model_vis(results$Par_severe_cmp_all_mean)
 
 
 ```
 
 
+### 1.2 Overall mean greater or equal to 8
 
+```{r mean_lt8}
+mean_ge_8 = results$Par_severe_cmp_mean_ge_8
 
+fe(mean_ge_8)
 
-\newpage
-
-# Any Complication (Exclude POA)
-
-```{r any_cmp}
-model_any_cmp = results$flg_cmp_po_any_poa
-
-fe(model_any_cmp)
-
-extract_vc(model_any_cmp, ci_level = 0) %>%
+extract_vc(mean_ge_8, ci_level = 0) %>%
     kable_df()
-
-# predicted probability for surgeons
-model_vis(results$flg_cmp_po_any_poa)
-
-```
-
-\newpage
-
-
-# Readmit 30 days
-
-```{r readmit}
-flg_readmit_30d = results$flg_readmit_30d
-
-fe(flg_readmit_30d)
-
-extract_vc(flg_readmit_30d, ci_level = 0) %>%
-    kable_df()
-
-# predicted probability for surgeons
-model_vis(results$flg_readmit_30d)
-```
-
-
-\newpage
-
-
-# Death 30 days
-
-```{r death}
-flg_death_30d = results$flg_death_30d
-
-fe(flg_death_30d)
-
-extract_vc(flg_death_30d, ci_level = 0) %>%
-    kable_df()
-
-# predicted probability for surgeons
-model_vis(results$flg_death_30d)
 
 ```
 
 
-\newpage
 
+### 1.3 Any rating greater or equal to 8
 
-# Reoperation
+```{r ever_lt8}
+never_lt_8 = results$Par_severe_cmp_never_less_8
 
-```{r reoperation}
-flg_util_reop = results$flg_util_reop
+fe(never_lt_8)
 
-fe(flg_util_reop)
-
-extract_vc(flg_util_reop, ci_level = 0) %>%
+extract_vc(never_lt_8, ci_level = 0) %>%
     kable_df()
-
-# predicted probability for surgeons
-model_vis(results$flg_util_reop)
 
 ```
 
 
-\newpage
+### 2.1 Professional Mean
 
+```{r prof_mean}
+prof_mean = results$Par_severe_cmp_prof
 
-# Any Complication Exclude Death
+fe(prof_mean)
 
-```{r complication}
-flg_any_but_death = results$flg_any_but_death
-
-fe(flg_any_but_death)
-
-extract_vc(flg_any_but_death, ci_level = 0) %>%
+extract_vc(prof_mean, ci_level = 0) %>%
     kable_df()
 
-# predicted probability for surgeons
-model_vis(results$flg_any_but_death)
+```
 
+### 2.2 Professional greater or equal to 8
+
+```{r prof_8}
+prof_ge_8 = results$Par_severe_cmp_prof_ge8
+
+fe(prof_ge_8)
+
+extract_vc(prof_ge_8, ci_level = 0) %>%
+    kable_df()
+
+```
+
+
+### 3.1 Operative ratings
+
+```{r opera_mean}
+operative_mean = results$Par_severe_cmp_operative
+
+fe(operative_mean)
+
+extract_vc(operative_mean, ci_level = 0) %>%
+    kable_df()
+
+```
+
+
+### 3.1 Operative ratings
+
+```{r opera_8}
+operative_ge8 = results$Par_severe_cmp_operative_ge8
+
+fe(operative_ge8)
+
+extract_vc(operative_ge8, ci_level = 0) %>%
+    kable_df()
+```
+
+
+### 4.1 Leadership ratings
+
+```{r lead_mean}
+lead_mean = results$Par_severe_cmp_leadership
+
+fe(lead_mean)
+
+extract_vc(lead_mean, ci_level = 0) %>%
+    kable_df()
+
+```
+
+
+### 4.2 Leadership ratings less than 8
+
+```{r lead_lt8}
+lead_ge8 = results$Par_severe_cmp_leadership_ge8
+
+fe(lead_ge8)
+
+extract_vc(lead_ge8, ci_level = 0) %>%
+    kable_df()
 ```
