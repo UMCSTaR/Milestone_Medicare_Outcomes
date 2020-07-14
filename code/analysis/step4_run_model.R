@@ -28,13 +28,13 @@ main_data =  main_data %>%
 # Outcome list ------------------------------------------------------------
 
 outcomes = c(
-  'flg_cmp_po_severe_not_poa',
-  'flg_cmp_po_any_not_poa',
-  'flg_readmit_30d',
-  'flg_death_30d',
-  'flg_util_reop',
-  'los_gt_75perc',
-  'flg_any_but_death'
+  'flg_cmp_po_severe_not_poa'
+  # 'flg_cmp_po_any_not_poa',
+  # 'flg_readmit_30d',
+  # 'flg_death_30d'
+  # 'flg_util_reop',
+  # 'los_gt_75perc',
+  # 'flg_any_but_death'
 )
 
 
@@ -73,8 +73,23 @@ source("code/functions/run_model.R")
 # Run models --------------------------------------------------
 
 # milestone ratings --------
-primaries = c("IntResponseValue_mean", "prof_rating_mean", "operative_rating_mean",
-            "ever_less_7_rating", 'mean_lt_7', 'leadership_rating_mean')
+primaries = c(
+  "IntResponseValue_mean",
+  "never_less_8_rating",
+  "mean_ge_8",  
+  
+  "prof_rating_mean",
+  "prof_rating_ge8",    
+  
+  "operative_rating_mean",
+  "operative_rating_ge8",        
+                   
+  "leadership_rating_mean",
+  "leadership_rating_ge8"     
+)
+
+# check if all vars in the data
+all(primaries %in% names(main_data))
 
 # procedures ---------------
 # 5 major procedure
@@ -105,7 +120,8 @@ fs = create_formulas(
   other_covariates = covariates,
   interaction_term = NULL,
   # random_effects = c('id_physician_npi', 'facility_prvnumgrp')
-  random_effects = c('id_physician_npi', 'facility_prvnumgrp', 'cpt_cd')
+  # random_effects = c('id_physician_npi', 'facility_prvnumgrp', 'cpt_cd')
+  random_effects = c('id_physician_npi', 'cpt_cd')
 )
 
 names(fs) = outcomes
@@ -128,11 +144,17 @@ model_name = model_ls %>%
          outcome = ifelse(str_detect(fs, "but_death"), "but_death", outcome)
          ) %>% 
   mutate(pred = ifelse(str_detect(fs, "IntResponseValue_mean"), "all_mean", NA),
+         pred = ifelse(str_detect(fs, "never_less_8_rating"), "never_less_8", pred),
+         pred = ifelse(str_detect(fs, "mean_ge_8"), "mean_ge_8", pred),
+         
          pred = ifelse(str_detect(fs, "prof_rating_mean"), "prof", pred),
+         pred = ifelse(str_detect(fs, "prof_rating_ge8"), "prof_ge8", pred),
+         
          pred = ifelse(str_detect(fs, "operative_rating_mean"), "operative", pred),
-         pred = ifelse(str_detect(fs, "ever_less_7_rating"), "ever_less_7", pred),
-         pred = ifelse(str_detect(fs, "leadership"), "leadership", pred),
-         pred = ifelse(str_detect(fs, "mean_lt_7"), "mean_less_7", pred)) %>% 
+         pred = ifelse(str_detect(fs, "operative_rating_ge8"), "operative_ge8", pred),
+         
+         pred = ifelse(str_detect(fs, "leadership_rating_mean"), "leadership", pred),
+         pred = ifelse(str_detect(fs, "leadership_rating_ge8"), "leadership_ge8", pred)) %>% 
   mutate(model_name = paste(proc_name, outcome, pred, sep = "_")) %>% 
   pull(model_name)
 
@@ -144,7 +166,7 @@ results = pmap(list(formula = model_ls$fs,
 names(results) = model_name
 
 # example
-summary(results$Par_severe_cmp_mean_less_7)
+summary(results$Par_severe_cmp_all_mean)
 
 # save model ---------
 if (length(procedure)  == 5) {
@@ -159,12 +181,5 @@ if (length(procedure)  == 5) {
 }
 
 
-all_mean_models = str_subset(names(results),"all_mean")
-
-for (i in seq_along(all_mean_models)){
-  list[i] = results[all_mean_models[i]]
-}
-
-names(list) = str_remove_all(all_mean_models, "Par_|_all_mean")
 
 
