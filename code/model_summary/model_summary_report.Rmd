@@ -1,5 +1,6 @@
 ---
 title: "Model Summary Reports"
+subtitle: "`r params$outcome_name`"
 author: "Xilin Chen"
 date: "`r Sys.Date()`"
 always_allow_html: true
@@ -8,6 +9,9 @@ output:
     toc: true
     toc_depth: 4
     toc_float: true
+params:
+  data: results
+  outcome_name: outcome_name
 ---
 
 ```{r setup, include=FALSE}
@@ -49,10 +53,12 @@ source("/Users/xilinchen/Documents/Repo/Milestone_Medicare_Outcomes/code/functio
 
 ```{r load_data}
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_ratings.rdata")
-load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/pc/rating_model.rdata")
+# load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/pc/rating_model.rdata")
 
 # milestone data
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_final_year.rdata")
+
+results = params$data
 
 
 
@@ -66,7 +72,7 @@ milestone_medicare_pc = milestone_medicare_ratings %>%
 
 # Description
 
-This document uses the end-year milestone evaluations at the last year of residency from ACGME. Milestone rating for each resident is the mean of all questions.
+This document uses the end-year milestone evaluations at the last year of residency from ACGME. Milestone rating for each resident is the mean of all questions. We only used Partial Colectomy procedure.
 
 ## Milestone question keys and descriptions
 
@@ -104,12 +110,12 @@ summary(table_one, labelTranslations = mylabels)
 ```
 
 
-## Outcomes: Severe Complication (Excluded POA)
+## Outcomes: `r params$outcome_name`
 
 ### 1.1 Overall Mean
 
 ```{r overall_mean}
-overall_mean = results$Par_severe_cmp_all_mean
+overall_mean = results$Par_all_mean
 
 fe(overall_mean)
 
@@ -127,7 +133,7 @@ extract_vc(overall_mean, ci_level = 0) %>%
 ### 1.2 Overall mean greater or equal to 8
 
 ```{r mean_lt8}
-mean_ge_8 = results$Par_severe_cmp_mean_ge_8
+mean_ge_8 = results$Par_mean_ge_8
 
 fe(mean_ge_8)
 
@@ -141,7 +147,7 @@ extract_vc(mean_ge_8, ci_level = 0) %>%
 ### 1.3 Any rating greater or equal to 8
 
 ```{r ever_lt8}
-never_lt_8 = results$Par_severe_cmp_never_less_8
+never_lt_8 = results$Par_never_less_8
 
 fe(never_lt_8)
 
@@ -154,7 +160,7 @@ extract_vc(never_lt_8, ci_level = 0) %>%
 ### 2.1 Professional Mean
 
 ```{r prof_mean}
-prof_mean = results$Par_severe_cmp_prof
+prof_mean = results$Par_prof
 
 fe(prof_mean)
 
@@ -166,7 +172,7 @@ extract_vc(prof_mean, ci_level = 0) %>%
 ### 2.2 Professional greater or equal to 8
 
 ```{r prof_8}
-prof_ge_8 = results$Par_severe_cmp_prof_ge8
+prof_ge_8 = results$Par_prof_ge8
 
 fe(prof_ge_8)
 
@@ -179,7 +185,7 @@ extract_vc(prof_ge_8, ci_level = 0) %>%
 ### 3.1 Operative ratings
 
 ```{r opera_mean}
-operative_mean = results$Par_severe_cmp_operative
+operative_mean = results$Par_operative
 
 fe(operative_mean)
 
@@ -189,10 +195,10 @@ extract_vc(operative_mean, ci_level = 0) %>%
 ```
 
 
-### 3.1 Operative ratings
+### 3.2 Operative ratings greater or equal to 8
 
 ```{r opera_8}
-operative_ge8 = results$Par_severe_cmp_operative_ge8
+operative_ge8 = results$Par_operative_ge8
 
 fe(operative_ge8)
 
@@ -204,7 +210,7 @@ extract_vc(operative_ge8, ci_level = 0) %>%
 ### 4.1 Leadership ratings
 
 ```{r lead_mean}
-lead_mean = results$Par_severe_cmp_leadership
+lead_mean = results$Par_leadership
 
 fe(lead_mean)
 
@@ -217,10 +223,13 @@ extract_vc(lead_mean, ci_level = 0) %>%
 ### 4.2 Leadership ratings less than 8
 
 ```{r lead_lt8}
-lead_ge8 = results$Par_severe_cmp_leadership_ge8
+lead_ge8 = results$Par_leadership_ge8
 
 fe(lead_ge8)
 
 extract_vc(lead_ge8, ci_level = 0) %>%
     kable_df()
 ```
+
+
+
