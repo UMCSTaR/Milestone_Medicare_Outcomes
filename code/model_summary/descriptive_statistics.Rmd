@@ -87,11 +87,10 @@ sum_table <- function(name = "overall_mean",
 
 ```
 
-## Description
 
 This document uses the end-year milestone evaluations at the last year of residency from ACGME. Milestone rating for each resident is the mean of all 16 questions. The data is linked medicare with milestoner evals.
 
-number of cases by procedure
+### Number of cases by procedure
 
 ```{r load_data}
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_ratings.rdata")
@@ -126,6 +125,40 @@ milestone_medicare_pc %>%
   t() %>% 
   kable_df(caption = "Medicare Outcomes Description for PC")
 ```
+
+### Trainees by Year
+
+```{r trainees_by_year}
+milestone_medicare_pc %>% 
+  distinct(id_physician_npi, grad_year) %>% 
+  count(grad_year, name = "number of surgeons") %>% 
+  kable_df(caption = "number of sugeons by graduation year in medicare PC")
+
+
+milestone_medicare_pc %>% 
+  count(grad_year, name = "number of cases") %>% 
+  kable_df(caption = "number of cases by graduation year in medicare PC")
+
+surg_case_year = left_join(
+  milestone_medicare_pc %>%
+    group_by(facility_clm_yr) %>%
+    distinct(id_physician_npi, grad_year) %>%
+    count(grad_year, name = "number of surgeons")  %>%
+    mutate(facility_clm_yr = facility_clm_yr + 2007) ,
+  milestone_medicare_pc %>%
+    group_by(facility_clm_yr) %>%
+    count(grad_year, name = "number of cases")  %>%
+    mutate(facility_clm_yr = facility_clm_yr + 2007)
+) %>% 
+  mutate(`cases per surg` = `number of cases`/`number of surgeons`,
+         `cases per surg` = round(`cases per surg`, 2) )  %>%
+  ungroup()
+
+surg_case_year %>% 
+  DT::datatable(caption = "number of surg and cases by graduation year and medicare year")
+
+```
+
 
 
 ### Milestone Ratings vs Descriptive Outcomes for Patial Colectomy
