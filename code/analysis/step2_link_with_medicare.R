@@ -39,7 +39,7 @@ person_year = person_year %>%
   mutate(grad_year = AcademicYear+1)
 
 person_year %>% 
-  count(grad_year)
+  count(grad_year, AcademicYear)
 
 
 # load medicare data
@@ -86,10 +86,10 @@ milestone_person_us_no_fellow %>%
 
 
 # 2.4 exclude fellowship from NPPES -----
-load("/Volumes/George_Surgeon_Projects/Other/NPPES_Data_Dissemination_January_2020/npi_md_single_spty_gs.rdata")
+load("/Volumes/George_Surgeon_Projects/standardized_medicare_data_using_R/analysis_ready_data/all_gs_splty.rdata")
 
 milestone_person_us_no_fellow =  milestone_person_us_no_fellow %>% 
-  mutate(nppes_gs = ifelse(npi.linked %in% npi_md_single_spty_gs$NPI,
+  mutate(nppes_gs = ifelse(npi.linked %in% gs_splty_only,
                            "gs","not gs")) 
 
 milestone_person_us_nppes = milestone_person_us_no_fellow %>% 
@@ -104,7 +104,7 @@ milestone_person_us_nppes %>%
 milestone_medicare = analytic_data %>% 
   inner_join(milestone_person_us_nppes, by = c("id_physician_npi" = "npi.linked"))
 
-n_distinct(milestone_medicare$id_physician_npi) # 777
+n_distinct(milestone_medicare$id_physician_npi) # 948
 
 milestone_medicare_unique = milestone_medicare %>% 
   distinct(PersonID, id_physician_npi) %>% 
@@ -204,7 +204,7 @@ milestone_medicare %>%
   add_count(id_physician_npi) %>% 
   filter(n>1)
 
-n_distinct(milestone_medicare$id_physician_npi)  #788
+n_distinct(milestone_medicare$id_physician_npi)  #959
 
 milestone_medicare %>% 
   distinct(id_physician_npi, grad_year) %>% 
@@ -252,7 +252,7 @@ milestone_medicare = milestone_medicare %>%
 
 quantile(milestone_medicare$month, probs = c(0.05,0.1, 0.3,0.4,.5,.6,.9,1))
 
-n_distinct(milestone_medicare$id_physician_npi) #780
+n_distinct(milestone_medicare$id_physician_npi) #749
 
 milestone_medicare_gs = milestone_medicare
 
@@ -301,12 +301,44 @@ rbind(t1,t2,t3) %>%
   pack_rows("claim year 2016", 2,3) %>%  
   pack_rows("claim year 2017", 4,6)  
 
+# 5.1 at least 5 procedures in first 12 months -------
+first12_cases = milestone_medicare_gs %>% 
+  filter(month<=12) %>% 
+  add_count(id_physician_npi) %>% 
+  distinct(id_physician_npi, n) 
 
-# only keep partial colectomy ------
+ggplot(data = first12_cases) +
+  geom_histogram(aes(x= n)) +
+  labs(x = "number of cases in the first 12 months",
+       y = "number of surgons",
+       caption = "cohort includes all CHOP 5 procedures") +
+  theme_minimal()
+
+quantile(first12_cases$n)
+
+# surgeons who don't have any cases in their first 12 month practice
+no_first12_case_surgeon =  milestone_medicare_gs %>% 
+  distinct(id_physician_npi) %>% 
+  anti_join(first12_cases) %>% 
+  pull
+
+lt5_cases_surg = first12_cases %>% 
+  filter(n<5) %>% 
+  pull(id_physician_npi)
+
+milestone_medicare_gs %>% 
+  filter(!id_physician_npi %in% no_first12_case_surgeon &
+         !id_physician_npi %in% lt5_cases_surg)  %>% 
+  distinct(id_physician_npi)
+  
+ 
+
+
+# 6. only keep partial colectomy ------
 milestone_medicare_pc = milestone_medicare_gs %>% 
   filter(e_proc_grp_lbl == "Partial Colectomy")
 
-n_distinct(milestone_medicare_pc$id_physician_npi) #577
+n_distinct(milestone_medicare_pc$id_physician_npi) #681
 
 save(milestone_medicare_pc, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_pc.rdata")
 
