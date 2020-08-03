@@ -102,15 +102,23 @@ milestone_person_us_no_fellow %>%
 load("/Volumes/George_Surgeon_Projects/standardized_medicare_data_using_R/analysis_ready_data/all_gs_splty.rdata")
 
 milestone_person_us_no_fellow =  milestone_person_us_no_fellow %>% 
-  mutate(nppes_gs = ifelse(npi.linked %in% gs_splty_only,
+  mutate(carrier_nppes_gs = ifelse(npi.linked %in% gs_splty_only,
                            "gs","not gs")) 
 
 milestone_person_us_nppes = milestone_person_us_no_fellow %>% 
-  filter(nppes_gs == "gs") 
+  filter(carrier_nppes_gs == "gs") 
 
 milestone_person_us_nppes %>% 
   left_join(person_year) %>% 
   count(grad_year)
+
+# QA NPPES NPI ----
+# load("/Volumes/George_Surgeon_Projects/Other/NPPES_Data_Dissemination_January_2020/npi_md_single_spty_gs.rdata")
+# milestone_person_us_no_fellow = milestone_person_us_no_fellow %>% 
+#   mutate(npi_nppes_gs = ifelse(npi.linked %in% npi_md_single_spty_gs$NPI,
+#                            "gs","not gs"))
+# 
+# save(milestone_person_us_no_fellow, file = "data/milestone_person_us_no_fellow.rdata")
 
 
 # join medicare with milestone by npi
