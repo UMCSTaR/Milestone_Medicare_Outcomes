@@ -33,7 +33,10 @@ no_end_eval_person = milestone_person_in_medicare %>%
 length(no_end_eval_person)
 # 9 people don't have year-end eval, only mid-year eval
 
-range(milestone_end_person_in_medicare$IntResponseValue)
+milestone_end_person_in_medicare$IntResponseValue = as.numeric(milestone_end_person_in_medicare$IntResponseValue)
+
+milestone_end_person_in_medicare %>% 
+  count(IntResponseValue)
 # 0-9
 # 0 is NA
 milestone_end_person_in_medicare = milestone_end_person_in_medicare %>% 
