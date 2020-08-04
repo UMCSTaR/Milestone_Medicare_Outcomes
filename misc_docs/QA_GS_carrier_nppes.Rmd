@@ -51,7 +51,7 @@ milestone_person_us_no_fellow %>%
 ```
 
 
-- Milestone link with Medicare
+- Milestone link with Medicare (5 Procedures)
 
 ```{r linked}
 milestone_medicare = milestone_medicare%>% 
@@ -81,6 +81,8 @@ n_no_linked = medicare_milestone_stat %>%
 ```
 
 number of linked surgeons are `r n_linked`; number of linked surgeons are `r n_no_linked`
+
+710 surgeons were both defined as GS in NPPES and Carrier; that is `r scales::percent(round(710/(710+324), 2))`of all linked GS surgeons based on Carrier file definition.
 
 
 
