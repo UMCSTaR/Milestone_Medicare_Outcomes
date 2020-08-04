@@ -1,4 +1,4 @@
-# Link milestone ratings (which are our main predictors) to medicare cases
+# Link milestone ratings (which are our main predictors) to medicare cases (partical Colectomy)
 # - attach year-end eval from the last year to medicare
 # - create overall mean, professional eval mean and operative evals mean, >7 rating binary
 # - filter case by graduating year (only count case after graduation)
@@ -7,23 +7,23 @@ library(tidyverse)
 
 # load data ------
 # medicare gs
-load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_gs.rdata")
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/data_08_03/milestone_medicare_pc.rdata")
 
 # milestone data
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_final_year.rdata")
 
-n_distinct(milestone_medicare_gs$id_physician_npi) #949
+n_distinct(milestone_medicare_pc$id_physician_npi) #534
 
 # select last milestone records for medicare physician -------
 milestone_person_in_medicare = milestone_final_year %>% 
-  filter(PersonID %in% milestone_medicare_gs$PersonID)
+  filter(PersonID %in% milestone_medicare_pc$PersonID)
 
 milestone_end_person_in_medicare  = milestone_person_in_medicare %>% 
   filter(grepl("Year-End",eval_peroid))
 
 # check
-n_distinct(milestone_person_in_medicare$PersonID)  #949
-n_distinct(milestone_end_person_in_medicare$PersonID)  #940
+n_distinct(milestone_person_in_medicare$PersonID)  # 534
+n_distinct(milestone_end_person_in_medicare$PersonID)  #528
 
 no_end_eval_person = milestone_person_in_medicare %>% 
   filter(!PersonID %in% milestone_end_person_in_medicare$PersonID) %>% 
@@ -31,7 +31,7 @@ no_end_eval_person = milestone_person_in_medicare %>%
   pull()
 
 length(no_end_eval_person)
-# 9 people don't have year-end eval, only mid-year eval
+# 6 people don't have year-end eval, only mid-year eval
 
 milestone_end_person_in_medicare$IntResponseValue = as.numeric(milestone_end_person_in_medicare$IntResponseValue)
 
@@ -100,9 +100,8 @@ leadership_rating = leadership_rating %>%
 range(leadership_rating$leadership_rating_mean)
 
 # mean rating less than 8 ------
-person_less_than_8 = person_values %>% 
-  filter(IntResponseValue_mean<8) %>% 
-  pull(PersonID)
+person_less_than_8 = person_values %>%
+  filter(IntResponseValue_mean < 8) %>% pull(PersonID)
 
 mean_gt_8 = milestone_end_person_in_medicare %>% 
   distinct(PersonID) %>% 
@@ -131,10 +130,10 @@ person_values = person_values %>%
 
 # attach score to the medicare -----
 # (inner join loose 8 people who don't have end-year eval)
-milestone_medicare_ratings =  milestone_medicare_gs %>% 
+milestone_medicare_ratings =  milestone_medicare_pc %>% 
   inner_join(person_values, by = "PersonID")
 
-n_distinct(milestone_medicare_ratings$PersonID) #773
+n_distinct(milestone_medicare_ratings$PersonID) #528
 
 
 # filter medicare cases after graduation -----------
