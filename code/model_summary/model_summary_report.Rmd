@@ -132,6 +132,8 @@ extract_vc(overall_mean, ci_level = 0) %>%
 
 ### 1.2 Overall mean greater or equal to 8
 
+mean less than 8 is the reference group
+
 ```{r mean_lt8}
 mean_ge_8 = results$Par_mean_ge_8
 
