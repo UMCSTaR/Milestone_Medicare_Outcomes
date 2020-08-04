@@ -8,7 +8,10 @@ library(purrr)
 # load data
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_ratings.rdata")
 
-main_data = milestone_medicare_ratings
+n_months = 36
+
+main_data = milestone_medicare_ratings %>% 
+  filter(month<=n_months)
 
 # create patient outcomes variables
 main_data =  main_data %>% 
@@ -28,10 +31,10 @@ main_data =  main_data %>%
 # Outcome list ------------------------------------------------------------
 
 outcomes = c(
-  'flg_cmp_po_severe_not_poa'
-  # 'flg_cmp_po_any_not_poa',
-  # 'flg_readmit_30d',
-  # 'flg_death_30d'
+  'flg_cmp_po_severe_not_poa',
+  'flg_cmp_po_any_not_poa',
+  'flg_readmit_30d',
+  'flg_death_30d'
   # 'flg_util_reop',
   # 'los_gt_75perc',
   # 'flg_any_but_death'
@@ -169,15 +172,15 @@ names(results) = model_name
 summary(results$Par_severe_cmp_all_mean)
 
 # save model ---------
-if (length(procedure)  == 5) {
+if (n_months == 12) {
   save(results,
-       file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/all_out_proc_rating.rdata")
-} else if (procedure == "Partial Colectomy") {
+       file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month12_pc.rdata")
+} else if (n_months == 24) {
   save(results,
-       file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/pc/rating_model.rdata")
-} else if (procedure == "Cholecystectomy") {
+       file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month24_pc.rdata")
+} else if (n_months == 36) {
   save(results,
-       file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/chole/rating_model.rdata")
+       file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_non_limit_pc.rdata")
 }
 
 
