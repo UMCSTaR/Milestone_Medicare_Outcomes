@@ -1,5 +1,6 @@
 ---
-title: "Descriptive Stats for Milestone Medicare 2007-2017"
+title: "Descriptive Stats for Milestone Medicare 2015-2017"
+subtitle: "Max `r params$n_month` months after graduation"
 author: "Xilin Chen"
 date: "`r Sys.Date()`"
 always_allow_html: true
@@ -8,6 +9,8 @@ output:
     toc: true
     toc_depth: 4
     toc_float: true
+params:
+  n_month: 12
 ---
 
 ```{r setup, include=FALSE}
@@ -93,20 +96,45 @@ This document uses the end-year milestone evaluations at the last year of reside
 ### Number of cases by procedure
 
 ```{r load_data}
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/data_08_03/milestone_medicare_all_procedure_1case.rdata")
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_ratings.rdata")
 
-milestone_medicare_ratings %>% 
+all_proc = milestone_medicare_gs_1case %>% 
+  filter(month <= params$n_month)
+# keep valid rating score
+milestone_medicare_pc = milestone_medicare_ratings %>% 
+  filter(!is.na(IntResponseValue_mean),
+         month <= params$n_month)
+
+all_proc %>% 
   count(e_proc_grp_lbl, sort = T, name = "n_cases") %>% 
   DT::datatable()
+
+# n_distinct(milestone_medicare_ratings$id_physician_npi)
 
 ```
 
 
-### Whole Cohort Data Description for Partial Colectomy
+#### months after graduation 
+
+```{r month_case}
+all_proc %>% 
+  group_by(month) %>%
+  mutate(n_cases = n(),
+         n_surg = n_distinct(id_physician_npi)) %>% 
+  distinct(month, n_cases, n_surg) %>% 
+  arrange(month) %>% 
+  rename(month_after_grad = month) %>% 
+  DT::datatable(rownames = F)
+```
+
+Note: trainees who graduated in 2017 only had 6 months medicare cases.
+
+
+### Cohort Data Description for Partial Colectomy
 
 ```{r data_desc}
-milestone_medicare_pc = milestone_medicare_ratings %>% 
-  filter(proc_Partial_Colectomy==1) %>% 
+milestone_medicare_pc = milestone_medicare_pc %>% 
   mutate(flg_cmp_po_any_not_poa = as.numeric(flg_cmp_po_any_not_poa),
          flg_cmp_po_severe_not_poa = as.numeric(flg_cmp_po_severe_not_poa))
 
@@ -155,7 +183,7 @@ surg_case_year = left_join(
   ungroup()
 
 surg_case_year %>% 
-  DT::datatable(caption = "number of surg and cases by graduation year and medicare year")
+  DT::datatable(caption = "number of surg and cases by graduation year and medicare year", rownames = F)
 
 ```
 
