@@ -354,8 +354,9 @@ lt5_cases_surg = first12_cases %>%
   pull(id_physician_npi)
 
 milestone_medicare_gs_1case = milestone_medicare_gs %>% 
-  filter(id_physician_npi %in% first12_cases$id_physician_npi)  
+  filter(id_physician_npi %in% first12_cases$id_physician_npi) 
 
+save(milestone_medicare_gs_1case, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/data_08_03/milestone_medicare_all_procedure_1case.rdata")
 
 # 6. only keep partial colectomy ------
 milestone_medicare_pc = milestone_medicare_gs_1case %>% 
