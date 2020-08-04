@@ -1,0 +1,87 @@
+---
+title: "General Surgery Definitions Carrier vs. NPPES"
+author: "Xilin Chen"
+date: "8/3/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = F,                                     # code
+  message = F,
+  warning = F,
+  error = F,
+  comment = NA,
+  R.options = list(width = 220),
+  dev.args = list(bg = 'transparent'),          # viz
+  fig.align = 'center',
+  cache = F
+)
+
+library(tidyverse)
+library(kableExtra)
+
+kable_df <- function(..., digits=2) {
+  kable(...,digits = digits, booktabs = T) %>% 
+    kable_styling(full_width = F,
+                  latex_options = c("striped", "hold_position"))
+}
+
+```
+
+```{r data, cache=T}
+load("data/milestone_person_us_no_fellow.rdata")
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/medicare_gs_by_abs.rdata")
+
+milestone_medicare =  milestone_person_us_no_fellow %>% 
+  left_join(medicare_gs, by = c("npi.linked" = "id_physician_npi"))
+```
+
+Compare the differences between using Carrier file and NPPES to define general surgery specialty surgeons. In Carrier file definition, GS was defined as surgeons that only had GS as their specialty for all medicare cases. In NPPES, GS was defined as surgeons who only listed GS as their primary specialty.
+
+
+- The number of surgeons in Milestone before filter GS specialty is `r nrow(milestone_person_us_no_fellow)`.
+
+Carrier vs NPPES definition
+
+```{r comp}
+milestone_person_us_no_fellow %>% 
+  count(carrier_nppes_gs, npi_nppes_gs, name = "n surgeons") %>% 
+  kable_df()
+```
+
+
+- Milestone link with Medicare
+
+```{r linked}
+milestone_medicare = milestone_medicare%>% 
+  mutate(linked_with_medicare = ifelse(is.na(id), "no", "yes"))
+
+
+linked_surg = milestone_medicare %>% 
+  distinct(npi.linked, carrier_nppes_gs, npi_nppes_gs, linked_with_medicare)
+
+medicare_milestone_stat = linked_surg %>% 
+  count(carrier_nppes_gs, npi_nppes_gs, linked_with_medicare, name = "n linked surgs") %>% 
+  mutate(perc = scales::percent(`n linked surgs`/sum(`n linked surgs`))) %>% 
+  arrange(linked_with_medicare) 
+
+medicare_milestone_stat %>% 
+  select(- linked_with_medicare) %>%
+  kable_df() %>% 
+  group_rows("No Medicare Case", 1,4) %>% 
+  group_rows("Linked with Medicare Case", 5,8) 
+
+n_linked = medicare_milestone_stat %>%
+  filter(linked_with_medicare == "yes") %>% select(`n linked surgs`) %>% sum()
+
+n_no_linked = medicare_milestone_stat %>%
+  filter(linked_with_medicare == "no") %>% select(`n linked surgs`) %>% sum()
+  
+```
+
+number of linked surgeons are `r n_linked`; number of linked surgeons are `r n_no_linked`
+
+
+
+
