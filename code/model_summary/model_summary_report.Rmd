@@ -1,6 +1,6 @@
 ---
-title: "Model Summary Reports"
-subtitle: "`r params$outcome_name`"
+title: "`r params$outcome_name` Model Summary Report"
+subtitle: "`r params$n_month` months max"
 author: "Xilin Chen"
 date: "`r Sys.Date()`"
 always_allow_html: true
@@ -12,6 +12,7 @@ output:
 params:
   data: results
   outcome_name: outcome_name
+  n_month: 12
 ---
 
 ```{r setup, include=FALSE}
@@ -87,6 +88,7 @@ milestone_final_year %>%
 
 ```{r table1, results="asis"}
 milestone_medicare_pc = milestone_medicare_pc %>% 
+  filter(month <= params$n_month) %>% 
   mutate(
     # patient
     ses_2grp = factor(ses_2grp, labels = c('bot 2 quint', 'top 3 quint')),
