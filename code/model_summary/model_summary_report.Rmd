@@ -37,15 +37,6 @@ library(mixedup)
 library(ggeffects)
 
 
-kable_df <- function(..., digits=2) {
-  kable(...,digits = digits, booktabs = T) %>% 
-    kable_styling(full_width = F,
-                  latex_options = c("striped", "hold_position"))
-    # kable_styling(full_width = F)
-}
-
-
-
 source("/Users/xilinchen/Documents/Repo/Milestone_Medicare_Outcomes/code/functions/fe.r")
 source("/Users/xilinchen/Documents/Repo/Milestone_Medicare_Outcomes/code/functions/predictor_visual_from_model.R")
 

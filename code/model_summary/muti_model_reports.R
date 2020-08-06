@@ -2,8 +2,10 @@ library(knitr)
 library(readr)
 library(tidyverse)
 
+source("code/functions/multi_reports_by_outcome.R")
+
 # choose how many months of practice after graduation
-n_month = 36
+n_month = 12
 
 if (n_month == 12) {
   load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month12_pc.rdata")
@@ -13,45 +15,30 @@ if (n_month == 12) {
   load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_non_limit_pc.rdata")
 }
 
-# severe complication ------
-severe_cmp = names(results) %>% 
-  as_tibble() %>% 
-  filter(str_detect(value, "severe_cmp")) %>% 
-  pull
-
-severe_cmp_model = map(severe_cmp, ~results[[.]])
-
-names(severe_cmp_model) = str_remove(severe_cmp, "severe_cmp_")
-
-rmarkdown::render(
-  "/Users/xilinchen/Documents/Repo/Milestone_Medicare_Outcomes/code/model_summary/model_summary_report.Rmd",
-  params = list(data = severe_cmp_model,
-                n_month = n_month,
-                outcome_name = "Severe Complication (exclude POA)"),
-  output_dir = "/Users/xilinchen/Documents/Repo/Milestone_Medicare_Outcomes/reports",
-  output_file = paste0("severe_complication-", n_month, "_months.html")
-)
+# severe complication -----
+model_reports_by_outcome(results = results,
+                         outcome = "severe_cmp", 
+                         outcome_name = "Severe Complication (exclude POA)",
+                         n_month = n_month)
 
 
 
 # death ------
-load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/pc/rating_model.rdata")
+model_reports_by_outcome(results = results,
+                         outcome = "death", 
+                         outcome_name = "Death within 30 days",
+                         n_month = n_month)
 
-death = names(results) %>% 
-  as_tibble() %>% 
-  filter(str_detect(value, "death")) %>% 
-  pull
+# Any Complication -----
+model_reports_by_outcome(results = results,
+                         outcome = "any_cmp", 
+                         outcome_name = "Any Complication",
+                         n_month = n_month)
 
-death_model = map(death, ~results[[.]])
-names(death_model) = str_remove(death, "death_")
-
-rmarkdown::render(
-  "/Users/xilinchen/Documents/Repo/Milestone_Medicare_Outcomes/code/model_summary/model_summary_report.Rmd",
-  params = list(data = death_model,
-                n_month = n_month,
-                outcome_name = "Death within 30 days"),
-  output_dir = "/Users/xilinchen/Documents/Repo/Milestone_Medicare_Outcomes/reports",
-  output_file = paste0("death_30days-", n_month, "_months.html")
-)
+# Readmission -----
+model_reports_by_outcome(results = results,
+                         outcome = "readmit", 
+                         outcome_name = "Readmission within 30 Days",
+                         n_month = n_month)
 
 
