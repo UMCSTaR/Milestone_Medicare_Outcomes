@@ -6,7 +6,7 @@
 library(tidyverse)
 
 # load data ------
-# medicare gs
+# medicare gs for colectomy
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/data_08_03/milestone_medicare_pc.rdata")
 
 # milestone data

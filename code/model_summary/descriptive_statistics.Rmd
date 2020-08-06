@@ -245,7 +245,7 @@ sum_table(rating_var = prof_rating_mean,
           name = "prof_rating_mean")
 
 sum_table(rating_var = prof_rating_ge8, 
-          name = "prof_rating_ge_8")
+          name = "prof_rating_ge8")
 
 ```
 
