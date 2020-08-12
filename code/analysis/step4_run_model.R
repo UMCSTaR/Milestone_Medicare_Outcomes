@@ -184,5 +184,15 @@ if (n_months == 12) {
 }
 
 
+# univariate model for death ----
+model_univariate_death = glm(
+  formula = "flg_death_30d ~ IntResponseValue_mean",
+  data = main_data,
+  family = 'binomial'
+)
 
+
+uni_death_model_no_limit_model_sum = broom::tidy(model_univariate_death)
+
+save(uni_death_model_no_limit, file = "data/uni_death_model_no_limit_model.rdata")
 
