@@ -80,7 +80,7 @@ n_no_linked = medicare_milestone_stat %>%
   
 ```
 
-number of linked surgeons are `r n_linked`; number of linked surgeons are `r n_no_linked`
+the number of linked surgeons is `r n_linked`; the number of not linked surgeons is `r n_no_linked`
 
 710 surgeons were both defined as GS in NPPES and Carrier; that is `r scales::percent(round(710/(710+324), 2))`of all linked GS surgeons based on Carrier file definition.
 
