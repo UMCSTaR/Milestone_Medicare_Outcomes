@@ -219,6 +219,69 @@ sum_table(rating_var = IntResponseValue_mean,
           name = "overall_mean")
 ```
 
+
+####  Death Descriptive
+
+```{r death}
+death_case = milestone_medicare_pc %>%
+  filter(flg_death_30d == 1) %>%
+  transmute(
+    overall_mean = round(IntResponseValue_mean),
+    flg_death_30d,
+    # covers
+    flg_male,
+    age_at_admit,
+    race_white,
+    race_hisp_other,
+    flg_admit_emerg,
+    AHRQ_score,
+    ses_2grp,
+    # 'cpt_cd',
+    facility_clm_yr,
+    flg_multi_surgeon,
+    flg_assistant_surgeon,
+    hosp_beds_2grp,
+    # 'flg_hosp_ICU_hosp',
+    val_hosp_mcday2inptday_ratio,
+    val_hosp_rn2bed_ratio
+  )
+```
+
+Based on the model results, age(negative), admit emergent (negative) status and multiple surgeons performance (positive) are 3 variables that had statistically significance on death within 30 days. Below are the descriptive stats for each overall milestone score.
+
+```{r death_cov}
+case_by_mean_milestone = milestone_medicare_pc %>% 
+  mutate(overall_mean = round(IntResponseValue_mean)) %>% 
+  group_by(overall_mean) %>% 
+  summarise(n_case = n()) 
+
+death_case %>%
+  group_by(overall_mean) %>%
+  summarise(n_cases_death = n(),
+            emergent_admit_rate = mean(flg_admit_emerg, na.rm = T),
+            emergent_admit_rate = scales::percent(emergent_admit_rate),
+            age = mean(age_at_admit),
+            multi_surg = mean(flg_multi_surgeon),
+            multi_surg = scales::percent(multi_surg)) %>% 
+  left_join(case_by_mean_milestone) %>% 
+  select(overall_mean, n_case, n_cases_death, everything()) %>% 
+  kable_df()
+```
+
+In order to understand the milestone rating vs. death relationship, without considering other covariates. Below are the univariate analysis between death within 30 days and mean of milestone rating for 30 months practice
+
+```{r uni_model_death}
+load("~/Documents/Repo/Milestone_Medicare_Outcomes/data/uni_death_model_no_limit_model.rdata")
+
+uni_death_model_no_limit %>% 
+  mutate(OR = exp(estimate)) %>% 
+  select(term, OR, everything()) %>% 
+  kable_df()
+```
+
+Without controlling for covariate, higher overall milestone ratings had lower patient mortality rate.
+
+
 #### Overall mean milestone ratings greater or equal to 8 
 
 Note: not matched with the numbers above because of rounding.
