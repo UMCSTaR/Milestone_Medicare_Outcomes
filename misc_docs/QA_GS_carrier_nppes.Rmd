@@ -1,7 +1,7 @@
 ---
 title: "General Surgery Definitions Carrier vs. NPPES"
 author: "Xilin Chen"
-date: "8/3/2020"
+date: "`r Sys.Date()`"
 output: pdf_document
 ---
 
@@ -32,6 +32,10 @@ kable_df <- function(..., digits=2) {
 ```{r data, cache=T}
 load("data/milestone_person_us_no_fellow.rdata")
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/medicare_gs_by_abs.rdata")
+# qa data
+load("data/qa_surg.rdata")
+load("data/qa_surg_gs_npi_no_gs_carrier.rdata")
+
 
 milestone_medicare =  milestone_person_us_no_fellow %>% 
   left_join(medicare_gs, by = c("npi.linked" = "id_physician_npi"))
@@ -50,6 +54,64 @@ milestone_person_us_no_fellow %>%
   kable_df()
 ```
 
+- Carrier GS, NPPES Not GS
+
+Among the 119 surgeons who are defined as GS in carrier but not NPPES NPI file, before is ther specilty definition in NPPES file
+
+```{r nppes_splty}
+# nppes is not gs, carrier all gs procedures
+npi_list = milestone_person_us_no_fellow %>%
+  filter(carrier_nppes_gs =="gs" , npi_nppes_gs =="not gs") %>%
+  pull(npi.linked) %>% 
+  unique()
+
+# nppes isgs, carrier not all gs procedures
+npi_list2 = milestone_person_us_no_fellow %>%
+  filter(carrier_nppes_gs =="not gs" , npi_nppes_gs =="gs") %>%
+  pull(npi.linked)
+
+# npi_taxonomy = data.table::fread(
+#   "/Volumes/George_Surgeon_Projects/Other/NPPES_Data_Dissemination_January_2020/npi_taxonomy_individual.csv"
+# )
+# qa_surg = npi_taxonomy %>%
+#   mutate(NPI = as.character(NPI)) %>%
+#   filter(NPI %in% npi_list) %>%
+#   janitor::clean_names()
+# 
+# save(qa_surg, file = "data/qa_surg.rdata")
+
+# qa_surg_gs_npi_no_gs_carrier = npi_taxonomy %>%
+#   mutate(NPI = as.character(NPI)) %>%
+#   filter(NPI %in% npi_list2) %>%
+#   janitor::clean_names()
+# 
+# save(qa_surg_gs_npi_no_gs_carrier, file = "data/qa_surg_gs_npi_no_gs_carrier.rdata")
+
+qa_surg = qa_surg %>%
+  mutate(degree = ifelse(str_detect(provider_credential_text, "M.D|MD"), "with MD", NA),
+         degree = ifelse(str_detect(provider_credential_text, "D.O|DO"), "with DO", degree))
+
+qa_surg %>% 
+  distinct(npi, degree) %>% 
+  count(degree, name = "n_surg") %>% 
+  rename(degree_record_nppes = degree) %>% 
+  kable_df()
+```
+
+- Carrier Not GS, NPPES GS
+
+NPPES specialty Taxonomy code have one to many relation with medicare specialty group.  Below are the surgeons who didn't link with Medicare data, but is defined as GS in NPPES, who have more than one medicare specialty (873/1260).
+
+```{r QA_surg}
+qa_surg_gs_npi_no_gs_carrier %>% 
+  select(npi, medicare_specialty_code,medicare_provider_supplier_type_description) %>% 
+  add_count(npi) %>% 
+  filter(n>1) %>% 
+  count(medicare_provider_supplier_type_description, name = "n surg", sort = T) %>% 
+  kable_df()
+```
+
+
 
 - Milestone link with Medicare (5 Procedures)
 
@@ -57,13 +119,12 @@ milestone_person_us_no_fellow %>%
 milestone_medicare = milestone_medicare%>% 
   mutate(linked_with_medicare = ifelse(is.na(id), "no", "yes"))
 
-
 linked_surg = milestone_medicare %>% 
   distinct(npi.linked, carrier_nppes_gs, npi_nppes_gs, linked_with_medicare)
 
 medicare_milestone_stat = linked_surg %>% 
   count(carrier_nppes_gs, npi_nppes_gs, linked_with_medicare, name = "n linked surgs") %>% 
-  mutate(perc = scales::percent(`n linked surgs`/sum(`n linked surgs`))) %>% 
+  mutate(perc = scales::percent(`n linked surgs`/sum(`n linked surgs`))) %>%
   arrange(linked_with_medicare) 
 
 medicare_milestone_stat %>% 
@@ -82,7 +143,7 @@ n_no_linked = medicare_milestone_stat %>%
 
 the number of linked surgeons is `r n_linked`; the number of not linked surgeons is `r n_no_linked`
 
-710 surgeons were both defined as GS in NPPES and Carrier; that is `r scales::percent(round(710/(710+324), 2))`of all linked GS surgeons based on Carrier file definition.
+837 surgeons were both defined as GS in NPPES and Carrier; that is `r scales::percent(round((837+107)/(837+107+12+92), 2))`of all linked GS surgeons based on Carrier file definition.
 
 
 
