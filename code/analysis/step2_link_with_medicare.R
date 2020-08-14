@@ -113,7 +113,7 @@ milestone_person_us_nppes %>%
   count(grad_year)
 
 # # QA NPPES NPI ----
-# load("/Volumes/George_Surgeon_Projects/Other/NPPES_Data_Dissemination_January_2020/npi_md_single_spty_gs.rdata")
+# load("/Volumes/George_Surgeon_Projects/Other/NPPES_Data_Dissemination_January_2020/npi_md_single_spty_gs_2020.rdata")
 # milestone_person_us_no_fellow = milestone_person_us_no_fellow %>%
 #   mutate(npi_nppes_gs = ifelse(npi.linked %in% npi_md_single_spty_gs$NPI,
 #                            "gs","not gs"))
