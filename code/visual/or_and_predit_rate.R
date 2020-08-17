@@ -12,7 +12,8 @@ load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month2
 # overall mean -------
 # or
 mean_rating = map_df(results, extract_fixed_effects, .id = "outcome")  %>% 
-  filter(term == "IntResponseValue_mean")
+  filter(term == "IntResponseValue_mean" |
+           term == "prof_rating_mean")
 
 mean_rating_tbl = mean_rating %>%
   mutate(
@@ -20,16 +21,47 @@ mean_rating_tbl = mean_rating %>%
     OR_lower = exp(lower_2.5),
     OR_upper = exp(upper_97.5)
   ) %>%
-  mutate(outcome = str_remove_all(outcome, pattern = c("Par_|_all_mean")),
-         term = "overall_mean") %>%
+  mutate(outcome = str_remove_all(outcome, pattern = c("Par_|_all_mean|_prof")),
+         term = case_when(term == "IntResponseValue_mean" ~ "overall_mean",
+                          term == "prof_rating_mean" ~ "professional_rating")) %>%
   select(outcome, term, OR, contains("OR"), p_value) 
 
+# table
 mean_rating_tbl %>% 
   mutate_if(is.numeric,~round(.,2)) %>% 
   mutate(`95% CI` = paste0("[", OR_lower, ", ", OR_upper, "]")) %>% 
-  select(outcome, OR, `95% CI`, p_value) %>% 
+  select(outcome, term, OR, `95% CI`, p_value) %>% 
   kable(digits = 2, caption = "Odds Ratio of Mean Milestone Scores") %>% 
-  kable_styling(full_width = F) 
+  kable_styling(full_width = F) %>% 
+  collapse_rows(columns = 1, valign = "top") 
+
+# plot
+ggplot(data = mean_rating_tbl %>% arrange(OR, outcome, term),
+       aes(y = OR, x = term)) +
+  geom_hline(aes(fill = outcome), yintercept = 1, alpha = 0.25, linetype = 2) +
+  geom_pointrange(aes(ymin = OR_lower,
+                      ymax = OR_upper,
+                      shape = term)) +
+  facet_wrap(~outcome, strip.position = "left", ncol = 1) +
+  coord_flip() +
+  labs(x = "", y = "Odds Ratio (95% CI)") +
+  theme_minimal() +
+  theme(axis.text.y=element_blank(),
+        axis.text.x = element_text(size = 10),
+        axis.ticks.y=element_blank(),
+        strip.text.y = element_text(size = 12),
+        legend.position="bottom",
+        legend.title = element_blank())
+  # visibly::theme_trueMinimal(center_axis_labels = T) 
+
+  
+
+ggplot(data = mean_rating_tbl,
+       aes(y = OR, x = reorder(outcome, -OR))) +
+  geom_point() +
+  geom_vline(xintercept = 0, color = "firebrick4", alpha = 1/10) +
+  geom_hline(yintercept = 1, alpha = 0.25)
+  
   
 
 # predicted rate
