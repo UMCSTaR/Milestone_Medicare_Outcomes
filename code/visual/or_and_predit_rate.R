@@ -9,6 +9,7 @@ library(kableExtra)
 # load 24 months ------
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month24_pc.rdata")
 
+my_color = c("#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3")
 # overall mean -------
 # or ------
 mean_rating = map_df(results, extract_fixed_effects, .id = "outcome")  %>%
@@ -40,40 +41,45 @@ mean_rating_tbl %>%
   kable_styling(full_width = F) %>% 
   collapse_rows(columns = 1, valign = "top") 
 
+
 # or plot -----
-ggplot(data = mean_rating_tbl %>%
+or = ggplot(data = mean_rating_tbl %>%
          mutate(
            outcome = factor(outcome,
                             levels = c(
-                              "any_cmp", "severe_cmp", "readmit", "death"
+                              "death", "severe_cmp","any_cmp", "readmit"
                             )),
+          
            term = factor(
              term,
-             levels = c("leadership", "operative", "professional", "overall_mean")
+             levels = c("overall_mean", "leadership", "operative", "professional")
            )
          ),
-       aes(y = OR, x = term)) +
+       aes(y = OR, x = outcome)) +
   geom_hline(
-    aes(fill = outcome),
+    aes(fill = term),
     yintercept = 1,
     alpha = 0.25,
     linetype = 2
   ) +
+  scale_fill_grey(start = 0.8, end = 0.2) +
   geom_pointrange(aes(ymin = OR_lower, 
                       ymax = OR_upper,
-                      shape = term,
-                      color = term)) +
-  facet_wrap(~outcome, strip.position = "left", ncol = 1) +
+                      shape = outcome,
+                      color = outcome),
+                  fatten = 5, size = 1) +
+  scale_color_manual(values = my_color) +
+  facet_wrap(~term, strip.position = "left", ncol = 1) +
   coord_flip() +
-  labs(x = "", y = "Odds Ratio (95% CI)") +
-  guides(cplor = guide_legend(reverse=T)) +
+  labs(x = "", y = "Odds Ratio (95% CI)",
+       title = "Risk-adjusted Odds Ratios Plot") +
   visibly::theme_trueMinimal(center_axis_labels = T) +
   theme(axis.text.y=element_blank(),
         axis.text.x = element_text(size = 10),
         axis.ticks.y=element_blank(),
-        strip.text.y = element_text(size = 12),
+        strip.text.y = element_text(size = 13),
         legend.position="bottom",
-        legend.title = element_blank())
+        legend.title = element_blank()) 
  
 ggsave("images/or_rating_plot.png") 
   
@@ -87,7 +93,7 @@ mean_ge8 = map2_df(
   ggpredict,
   .id = "outcome"
 ) %>% 
-  mutate(term = "mean_ge_8")
+  mutate(term = "overall_mean")
 
 prof_ge8 = map2_df(
   # model
@@ -97,7 +103,7 @@ prof_ge8 = map2_df(
   ggpredict,
   .id = "outcome"
 ) %>% 
-  mutate(term = "Professional")
+  mutate(term = "professional")
 
 operative_ge8 = map2_df(
   # model
@@ -145,24 +151,50 @@ bin_mean_pred_tbl %>%
   
 
 
-# plot
-bin_mean_pred_tbl %>%
-  filter(outcome == "any_cmp", term == "Professional") %>% 
+# prob plot ------
+v = bin_mean_pred_tbl %>%
+  mutate(
+    outcome = factor(outcome,
+                     levels = c(
+                       "death", "severe_cmp","any_cmp", "readmit"
+                     )),
+    term = factor(
+      term,
+      levels = c("overall_mean", "leadership", "operative", "professional")
+    )
+  ) %>%
+  # filter(term == "professional") %>%
   
   ggplot(aes(x = overall_mean, y = predicted)) +
-  geom_bar(stat = "identity", fill = "#00274C",width = 0.5) +
-  geom_pointrange(aes(ymin = conf.low, ymax = conf.high),
-                  colour = "#FFCB05",
-                  size = 1.3) +
-  labs(title = "Predicted Probabilities of Any Complication",
+  geom_bar(aes(fill = outcome), stat = "identity",  position = position_dodge(width = 0.6), width = 0.5, show.legend = FALSE) +
+  # scale_color_manual(values = my_color) +
+  scale_fill_manual(values=my_color) +  
+  geom_pointrange(aes(ymin = conf.low, ymax = conf.high, shape = outcome), alpha = 0.7, position = position_dodge(width = 0.6)) +
+  
+  # horizontal 
+  # facet_wrap(~ term, nrow = 1, strip.position = "bottom") +
+  
+  # vertical
+  facet_wrap(~ term, nrow = 4, strip.position = "left") +
+  coord_flip() +
+  
+  labs(title = "Predicted Probabilities of Binay Ratings",
        y = "",
-       x = "Professional Milestone Scores") +
+       x = "") +
   scale_y_continuous(labels = scales::percent) +
-  theme_minimal()
+  theme(legend.position="bottom",
+        legend.title = element_blank()) +
+  visibly::theme_trueMinimal(center_axis_labels = T) 
 
-ggsave(filename = "images/predicted_prob_prof_cmp.png")
+  
+ggsave(filename = "images/predicted_prob_prof_cmp_v.png")
     
-
-
+# combine plots -----
+library(gridExtra)
+combo = grid.arrange(or + theme(legend.position = "none") + labs(title = "") , 
+                     v + theme(legend.position = "none",
+                               strip.text.y = element_blank()) + labs(title = "", y = "predicted probability"),
+                     ncol = 2)
+ggsave(combo, filename = "images/or_prob_combo.png")
 
 
