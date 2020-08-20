@@ -1,6 +1,6 @@
-# Link milestone ratings (which are our main predictors) to medicare cases (partical Colectomy)
+# Link milestone ratings (which are our main predictors) to medicare cases (partial Colectomy)
 # - attach year-end eval from the last year to medicare
-# - create overall mean, professional eval mean and operative evals mean, >7 rating binary
+# - create overall mean, professional eval mean and operative evals mean, >8 rating binary
 # - filter case by graduating year (only count case after graduation)
 
 library(tidyverse)
@@ -22,8 +22,8 @@ milestone_end_person_in_medicare  = milestone_person_in_medicare %>%
   filter(grepl("Year-End",eval_peroid))
 
 # check
-n_distinct(milestone_person_in_medicare$PersonID)  # 534
-n_distinct(milestone_end_person_in_medicare$PersonID)  #528
+n_distinct(milestone_person_in_medicare$PersonID)  # 535
+n_distinct(milestone_end_person_in_medicare$PersonID)  #529
 
 no_end_eval_person = milestone_person_in_medicare %>% 
   filter(!PersonID %in% milestone_end_person_in_medicare$PersonID) %>% 
@@ -150,7 +150,7 @@ milestone_medicare_ratings = milestone_medicare_ratings %>%
   left_join(gradaution_year) %>% 
   filter(grad_year<= (facility_clm_yr + 2007))  # facility_clm_yr was standardized to 0
 
-n_distinct(milestone_medicare_ratings$PersonID) 
+n_distinct(milestone_medicare_ratings$PersonID) #529
 
 save(milestone_medicare_ratings, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_ratings.rdata")
 

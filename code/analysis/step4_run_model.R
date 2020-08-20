@@ -1,6 +1,6 @@
 # Goal:  multiple outcomes, multiple procedures, milestone ratings 
 # create models based on procedures
-# milestone rating: overall mean, operative mean, professional mean, >7 binary
+# milestone rating: overall mean, operative mean, professional mean, >8 binary
 
 library(tidyverse)
 library(purrr)
@@ -183,7 +183,7 @@ if (n_months == 12) {
        file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_non_limit_pc.rdata")
 }
 
-
+# QA death-------
 # univariate model for death ----
 model_univariate_death = glm(
   formula = "flg_death_30d ~ IntResponseValue_mean",
