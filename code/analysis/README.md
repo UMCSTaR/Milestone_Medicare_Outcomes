@@ -1,0 +1,1 @@
+This folder contains code that used for creating cohort and running models

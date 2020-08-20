@@ -22,10 +22,10 @@ load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/abs_fellowship_npi.
 # non-us medical school students flag from AMA and ABS
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/non_us_npi.rdata")
 
-# milestone data
+# milestone evaluation data
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_final_year.rdata")
 
-
+# keep pgy5 student
 person_year = milestone_final_year %>% 
   filter(residentyear == 5) %>% 
   distinct(PersonID, residentyear, AcademicYear) %>% 
@@ -34,6 +34,7 @@ person_year = milestone_final_year %>%
   slice(1) %>% ungroup()
 
 # add graduation year
+# after checking, gradution year is academicyear+1
 person_year = person_year %>% 
   mutate(AcademicYear = as.numeric(AcademicYear)) %>% 
   mutate(grad_year = AcademicYear+1)
@@ -41,8 +42,7 @@ person_year = person_year %>%
 person_year %>% 
   count(grad_year, AcademicYear)
 
-# delete milestone grad year 2018, becasue no medicare data
-
+# delete milestone grad year 2018, because no medicare data
 person_year_15_17 = person_year %>% 
   filter(grad_year <=2017)
 
@@ -55,18 +55,18 @@ milestone_person_15_17 = milestone_person %>%
   filter(PersonID %in% person_year_15_17$PersonID)
 
 
-# load medicare data
-load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/medicare_gs_by_abs.rdata")
-
-analytic_data = medicare_gs
-
-# match by NPI process -------
-## 1. unique match -----
-n_distinct(analytic_data$id_physician_npi) # n 33760
-n_distinct(milestone_person_15_17$npi.linked)    # n 4628
-
-sum(is.na(milestone_person_15_17$npi.linked))/nrow(milestone_person_15_17)
-# 0.02
+# # load medicare data
+# load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/medicare_gs_by_abs.rdata")
+# 
+# analytic_data = medicare_gs
+# 
+# # match by NPI process -------
+# ## 1. unique match -----
+# n_distinct(analytic_data$id_physician_npi) # n 33760
+# n_distinct(milestone_person_15_17$npi.linked)    # n 4628
+# 
+# sum(is.na(milestone_person_15_17$npi.linked))/nrow(milestone_person_15_17)
+# # 0.02
 
 
 # 2. exclude specialty trained and non-us------
@@ -131,7 +131,7 @@ milestone_medicare_unique = milestone_medicare %>%
   distinct(PersonID, id_physician_npi) %>% 
   glimpse()
 
-# delete duplicate npi and person ID
+# delete duplicate npi and person ID if any
 milestone_medicare_unique = milestone_medicare_unique %>% 
   add_count(id_physician_npi, name = "npi_n") %>% 
   add_count(PersonID, name = "id_n") %>% 
@@ -146,26 +146,13 @@ milestone_person_us_nppes %>%
   glimpse()
 
 
-# 2. multiple matches ----------
+# 3. multiple matches ----------
 # 2.1 multi match by NPEES and can't decide by yog or yob ------
 milestone_person_m = milestone_person_us_nppes %>% 
   filter(is.na(npi.linked))
 
-multi = milestone_nppes_ama_abs_15_18 %>% 
-  select(PersonID, NPI.ms, NPI.nppes) %>% 
-  gather("npi_version", "npi", -PersonID) %>% 
-  filter(PersonID %in% milestone_person_m$PersonID) %>% 
-  filter(!is.na(npi)) 
-
 # check
-n_distinct(multi$PersonID)  # 0
-
-milestone_medicare_muti = analytic_data %>% 
-  inner_join(multi, by = c("id_physician_npi" = "npi"))
-
-milestone_match_with_medicare_person = milestone_medicare_muti %>% 
-  distinct(PersonID, id_physician_npi)
-
+n_distinct(milestone_person_m$PersonID)  # 0; all linked milstone has unique NPI
 
 
 # 2.2 AMA and ABS with no matches, by names ----------
@@ -183,7 +170,7 @@ ama_medicare_person = analytic_data %>%
   inner_join(npi_ama, by = c("id_physician_npi" = "npi.ama")) %>% 
   distinct(PersonID, id_physician_npi) %>% 
   glimpse()
-# 9
+# 11
 
 # abs 
 npi_abs = no_match_abs %>% 
@@ -193,18 +180,17 @@ abs_medicare_person = analytic_data %>%
   inner_join(npi_abs, by = c("id_physician_npi" = "npi.abs")) %>% 
   distinct(PersonID, id_physician_npi) %>% 
   glimpse()
-# 3
+# 4
 
 # 3. combine unique and multiple --------
 milestone_medicare_person = rbind(
   milestone_medicare_unique,
-  milestone_match_with_medicare_person,
   ama_medicare_person,
   abs_medicare_person
 ) %>%
   distinct()
 
-# delete dup for personID and NPI
+# delete dup for personID and NPI if any
 milestone_medicare_person = milestone_medicare_person %>% 
   add_count(PersonID, name = "id_n") %>% 
   add_count(id_physician_npi, name = "npi_n") %>% 
@@ -220,12 +206,7 @@ milestone_medicare_person = milestone_medicare_person %>%
 milestone_medicare = analytic_data %>% 
   inner_join(milestone_medicare_person, by = "id_physician_npi")
 
-milestone_medicare %>% 
-  distinct(id_physician_npi, AcademicYear) %>% 
-  add_count(id_physician_npi) %>% 
-  filter(n>1)
-
-n_distinct(milestone_medicare$id_physician_npi)  #955
+n_distinct(milestone_medicare$id_physician_npi)  #957
 
 milestone_medicare %>% 
   distinct(id_physician_npi, grad_year) %>% 
@@ -276,7 +257,7 @@ milestone_medicare %>%
 
 quantile(milestone_medicare$month, probs = c(0.05,0.1, 0.3,0.4,.5,.6,.9,1))
 
-n_distinct(milestone_medicare$id_physician_npi) #949
+n_distinct(milestone_medicare$id_physician_npi) #951
 
 milestone_medicare_gs = milestone_medicare
 
@@ -343,16 +324,7 @@ ggplot(data = first12_cases) +
 
 quantile(first12_cases$n)
 
-# surgeons who don't have any cases in their first 12 month practice
-no_first12_case_surgeon =  milestone_medicare_gs %>% 
-  distinct(id_physician_npi) %>% 
-  anti_join(first12_cases) %>% 
-  pull
-
-lt5_cases_surg = first12_cases %>% 
-  filter(n<5) %>% 
-  pull(id_physician_npi)
-
+# surgeons who had at least one casew in their first 12 month practice
 milestone_medicare_gs_1case = milestone_medicare_gs %>% 
   filter(id_physician_npi %in% first12_cases$id_physician_npi) 
 
@@ -362,7 +334,7 @@ save(milestone_medicare_gs_1case, file = "/Volumes/George_Surgeon_Projects/Miles
 milestone_medicare_pc = milestone_medicare_gs_1case %>% 
   filter(e_proc_grp_lbl == "Partial Colectomy")
 
-n_distinct(milestone_medicare_pc$id_physician_npi) #534
+n_distinct(milestone_medicare_pc$id_physician_npi) #535
 nrow(milestone_medicare_pc)
 
 save(milestone_medicare_pc, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/data_08_03/milestone_medicare_pc.rdata")
