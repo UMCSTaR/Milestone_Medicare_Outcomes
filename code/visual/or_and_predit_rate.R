@@ -197,4 +197,75 @@ combo = grid.arrange(or + theme(legend.position = "none") + labs(title = "") ,
                      ncol = 2)
 ggsave(combo, filename = "images/or_prob_combo.png")
 
+# 1.1 Andy's idea
+p = bin_mean_pred_tbl %>%
+  mutate(
+    outcome = factor(outcome,
+                     levels = c(
+                       "death", "severe_cmp","any_cmp", "readmit"
+                     )),
+    term = factor(
+      term,
+      levels = c("overall_mean", "leadership", "operative", "professional")
+    )
+  ) %>%
+  filter(outcome == "any_cmp") %>%
+  
+  ggplot(aes(x = overall_mean, y = predicted)) +
+  geom_pointrange(
+    aes(
+      ymin = conf.low,
+      ymax = conf.high,
+      shape = outcome,
+      # color = outcome
+    ),
+    alpha = 0.7,
+    color = "black",
+    position = position_dodge(width = 0.6),
+    show.legend = FALSE
+  ) +
+  scale_y_continuous(labels = scales::percent) 
+
+p +
+  geom_segment(
+    data = bin_mean_pred_tbl %>%
+      filter(outcome == "any_cmp") %>%
+      select(outcome, term, overall_mean, predicted) %>%
+      pivot_wider(names_from = overall_mean, values_from = predicted),
+    aes(
+      x = "<8",
+      y = `<8`,
+      xend  = ">=8",
+      yend = `>=8`
+    ),
+    arrow = arrow(length=unit(0.30,"cm"), type = "closed"),
+    color = my_color[[1]]
+  ) +
+  scale_color_manual(values = my_color) +
+  facet_wrap( ~ term, nrow = 1, strip.position = "bottom") +
+  labs(y = "",
+       subtitle = "predicted probabilities (95% CI) for any complication") +
+  theme(legend.title = element_blank()) +
+  visibly::theme_trueMinimal(center_axis_labels = T) 
+
+ggsave("images/prob_segment.png")
+ 
+
+# 1.2 diff probs ------
+bin_mean_pred_tbl %>%
+  select(term, outcome, overall_mean, predicted) %>% 
+  as_tibble() %>% 
+  pivot_wider(names_from = overall_mean, values_from = predicted ) %>% 
+  mutate(pred_diff = `<8` - `>=8`) %>% 
+  ggplot(aes(x = term, y = pred_diff)) +
+  geom_bar(aes(fill = outcome), stat = "identity",  position = position_dodge(width = 0.6), width = 0.5) +
+  scale_fill_manual(values=my_color) +
+  labs(title = "Predicted Probabilities diff (binary ratings)",
+       y = "",
+       x = "") +
+  scale_y_continuous(labels = scales::percent) +
+  theme(legend.position="bottom",
+        legend.title = element_blank()) +
+  visibly::theme_trueMinimal(center_axis_labels = T) 
+  
 
