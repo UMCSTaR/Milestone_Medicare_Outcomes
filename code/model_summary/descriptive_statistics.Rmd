@@ -34,6 +34,7 @@ library(arsenal)
 library(glmmTMB)
 library(mixedup)
 library(ggeffects)
+library(gtsummary)
 
 
 kable_df <- function(..., digits=2) {
@@ -43,57 +44,13 @@ kable_df <- function(..., digits=2) {
     # kable_styling(full_width = F)
 }
 
-sum_table <- function(name = "overall_mean",
-                      rating_var = IntResponseValue_mean) {
-  rating_var = enquo(rating_var)
-
-  milestone_medicare_pc %>%
-    mutate(!!name := round(!!rating_var)) %>%
-    group_by(!!!syms(name)) %>%
-    mutate(
-      n_surgeons = length(unique(id_physician_npi)),
-      n_cases = n(),
-      n_severe_cmp_poa = sum(flg_cmp_po_severe_not_poa),
-      rate_severe_cmp_poa = n_severe_cmp_poa / n_cases,
-      n_death = sum(flg_death_30d),
-      rate_death = n_death / n_cases,
-      n_reop = sum(flg_util_reop),
-      rate_reop = n_reop / n_cases,
-      n_readmit = sum(flg_readmit_30d),
-      rate_readmit = n_readmit / n_cases
-    ) %>%
-    ungroup() %>%
-    distinct(
-      !!!syms(name),
-      n_surgeons,
-      n_cases,
-      n_severe_cmp_poa,
-      rate_severe_cmp_poa,
-      n_death,
-      rate_death,
-      n_reop,
-      rate_reop,
-      rate_reop,
-      n_readmit,
-      rate_readmit
-    ) %>%
-    arrange(!!!syms(name)) %>%
-    datatable(rownames = F, options = list(scrollX = T)) %>%
-    formatPercentage(c(
-      'rate_severe_cmp_poa',
-      'rate_death',
-      'rate_reop',
-      'rate_readmit'
-    ),
-    2)
-}
+source("~/Documents/Repo/Milestone_Medicare_Outcomes/code/functions/sum_table.R")
 
 ```
 
 
-This document uses the end-year milestone evaluations at the last year of residency from ACGME. Milestone rating for each resident is the mean of all 16 questions. The data is linked medicare with milestoner evals.
+This document uses the end-year milestone evaluations at the last year of residency from ACGME. Milestone rating for each resident is the mean of all 16 questions. The cohort is linked medicare with milestone evals.
 
-### Number of cases by procedure
 
 ```{r load_data}
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/data_08_03/milestone_medicare_all_procedure_1case.rdata")
@@ -106,23 +63,66 @@ milestone_medicare_pc = milestone_medicare_ratings %>%
   filter(!is.na(IntResponseValue_mean),
          month <= params$n_month)
 
-all_proc %>% 
-  count(e_proc_grp_lbl, sort = T, name = "n_cases") %>% 
-  DT::datatable()
+# all_proc %>% 
+#   count(e_proc_grp_lbl, sort = T, name = "n_cases") 
 
 # n_distinct(milestone_medicare_ratings$id_physician_npi)
 
 ```
 
+### 1. Cohort Data Description for Partial Colectomy
 
-#### months after graduation 
+```{r data_desc}
+milestone_medicare_pc = milestone_medicare_pc %>% 
+  mutate(flg_cmp_po_any_not_poa = as.numeric(flg_cmp_po_any_not_poa),
+         flg_cmp_po_severe_not_poa = as.numeric(flg_cmp_po_severe_not_poa)) %>% 
+  mutate(
+    open_colectomy = cpt_cd %in% c(44140:44147, 44160),
+    lap_colectomy  = cpt_cd %in% 44204:44208,
+    colectomy_type = factor(ifelse(
+      cpt_cd %in% c(44140:44147, 44160), 'open', 'lap'
+    ))
+  ) 
+
+
+milestone_medicare_pc %>% 
+  summarise(n_case = n(),
+            n_surgeon = length(unique(id_physician_npi)),
+            n_hosp = length(unique(facility_prvnumgrp)),
+            n_patient = length(unique(member_id)),
+            POA_severe_complication_rate = sum(flg_cmp_po_severe_not_poa)/n_case,
+            severe_complication_rate = sum(flg_cmp_po_severe)/n_case,
+            POA_any_complication_rate = sum(flg_cmp_po_any_not_poa)/n_case,
+            any_complication_rate = sum(flg_cmp_po_any)/n_case,
+            death_rate = sum(flg_death_30d)/n_case,
+            readmit_rate = sum(flg_readmit_30d)/n_case,
+            reop_rate = sum(flg_util_reop)/n_case) %>% 
+  mutate_at(vars(contains("rate")), scales::percent_format()) %>% 
+  t() %>% 
+  kable_df(caption = "Medicare Outcomes Description for PC")
+```
+
+details about each variables above:
+
+- n_cases: number of medicare cases
+- n_surgeons: number of surgeons
+- n_hosp: number of hospitals
+- n_patient: number of patients
+- POA_severe_complication_rate: this was used for model outcomes instead of severe_complication; it's defined as severe complication within 30 days after the operation; the length of stay is >= 75% of this procedure in medicare and had any complication. 
+- death_rate: death within 30days after the procedure
+- readmit: readmission within 30days
+
+
+#### 1.1 months after graduation 
+
+number of cases and surgeons in medicare at each month after graduation
 
 ```{r month_case}
-all_proc %>% 
+milestone_medicare_pc %>% 
   group_by(month) %>%
   mutate(n_cases = n(),
-         n_surg = n_distinct(id_physician_npi)) %>% 
-  distinct(month, n_cases, n_surg) %>% 
+         n_surgeons = n_distinct(id_physician_npi)) %>% 
+  distinct(month, n_cases, n_surgeons) %>% 
   arrange(month) %>% 
   rename(month_after_grad = month) %>% 
   DT::datatable(rownames = F)
@@ -131,41 +131,18 @@ all_proc %>%
 Note: trainees who graduated in 2017 only had 6 months medicare cases.
 
 
-### Cohort Data Description for Partial Colectomy
+#### 1.2 By Graduation Year
 
-```{r data_desc}
-milestone_medicare_pc = milestone_medicare_pc %>% 
-  mutate(flg_cmp_po_any_not_poa = as.numeric(flg_cmp_po_any_not_poa),
-         flg_cmp_po_severe_not_poa = as.numeric(flg_cmp_po_severe_not_poa))
-
-
-milestone_medicare_pc %>% 
-  summarise(n_case = n(),
-            n_surgeon = length(unique(id_physician_npi)),
-            n_hosp = length(unique(facility_prvnumgrp)),
-            POA_severe_complication_rate = sum(flg_cmp_po_severe_not_poa)/n_case,
-            severe_complication_rate = sum(flg_cmp_po_severe)/n_case,
-            POA_any_complication_rate = sum(flg_cmp_po_any_not_poa)/n_case,
-            any_complication_rate = sum(flg_cmp_po_any)/n_case,
-            death_rate = sum(flg_death_30d)/n_case,
-            readmit = sum(flg_readmit_30d)/n_case,
-            reop = sum(flg_util_reop)/n_case) %>% 
-  t() %>% 
-  kable_df(caption = "Medicare Outcomes Description for PC")
-```
-
-### Trainees by Year
 
 ```{r trainees_by_year}
 milestone_medicare_pc %>% 
-  distinct(id_physician_npi, grad_year) %>% 
-  count(grad_year, name = "number of surgeons") %>% 
-  kable_df(caption = "number of sugeons by graduation year in medicare PC")
+  group_by(grad_year) %>% 
+  summarise("numer of cases" = n(),
+            "number of surgeons" = length(unique(id_physician_npi)),
+            "cases per surgeon" = `numer of cases`/`number of surgeons`) %>%
+    kable_df(caption = paste0("number of medicare cases within ", params$n_month, "months of graduation"))
 
 
-milestone_medicare_pc %>% 
-  count(grad_year, name = "number of cases") %>% 
-  kable_df(caption = "number of cases by graduation year in medicare PC")
 
 surg_case_year = left_join(
   milestone_medicare_pc %>%
@@ -178,8 +155,6 @@ surg_case_year = left_join(
     count(grad_year, name = "number of cases")  %>%
     mutate(facility_clm_yr = facility_clm_yr + 2007)
 ) %>% 
-  mutate(`cases per surg` = `number of cases`/`number of surgeons`,
-         `cases per surg` = round(`cases per surg`, 2) )  %>%
   ungroup()
 
 surg_case_year %>% 
@@ -187,9 +162,36 @@ surg_case_year %>%
 
 ```
 
+#### 1.3 Case Specs in the cohort
+
+```{r pt_specs}
+milestone_medicare_pc %>% 
+  select(flg_male, age_at_admit, race_white,AHRQ_score, flg_admit_emerg,
+         hosp_beds_2grp, colectomy_type) %>% 
+  tbl_summary(missing = "no")
 
 
-### Milestone Ratings vs Descriptive Outcomes for Patial Colectomy
+
+
+```
+
+Note: 
+
+- hosp_beds_2grp :(0.<349, 1: >=350)
+- lap vs. open: 
+  - open =  cpt_cd %in% c(44140:44147, 44160),
+  - lap = cpt_cd %in% 44204:44208
+- [AHQR score](https://www.ingentaconnect.com/content/wk/mcar/2017/00000055/00000007/art00010) reference paper
+
+
+### 2. Milestone Ratings vs Descriptive stats
+
+Milestone ratings range from 1 to 9; 0 rating is categorized as "not yet assessable" as NA in data.
+
+Binary ratings for milestones are defined as:
+
+- 0 : mean milestone ratings <8
+- 1 : mean milestone ratings >=8
 
 ```{r rating}
 person_rating = milestone_medicare_pc %>%
@@ -220,69 +222,8 @@ sum_table(rating_var = IntResponseValue_mean,
 ```
 
 
-####  Death Descriptive
 
-```{r death}
-death_case = milestone_medicare_pc %>%
-  filter(flg_death_30d == 1) %>%
-  transmute(
-    overall_mean = round(IntResponseValue_mean),
-    flg_death_30d,
-    # covers
-    flg_male,
-    age_at_admit,
-    race_white,
-    race_hisp_other,
-    flg_admit_emerg,
-    AHRQ_score,
-    ses_2grp,
-    # 'cpt_cd',
-    facility_clm_yr,
-    flg_multi_surgeon,
-    flg_assistant_surgeon,
-    hosp_beds_2grp,
-    # 'flg_hosp_ICU_hosp',
-    val_hosp_mcday2inptday_ratio,
-    val_hosp_rn2bed_ratio
-  )
-```
-
-Based on the model results, age(negative), admit emergent (negative) status and multiple surgeons performance (positive) are 3 variables that had statistically significance on death within 30 days. Below are the descriptive stats for each overall milestone score.
-
-```{r death_cov}
-case_by_mean_milestone = milestone_medicare_pc %>% 
-  mutate(overall_mean = round(IntResponseValue_mean)) %>% 
-  group_by(overall_mean) %>% 
-  summarise(n_case = n()) 
-
-death_case %>%
-  group_by(overall_mean) %>%
-  summarise(n_cases_death = n(),
-            emergent_admit_rate = mean(flg_admit_emerg, na.rm = T),
-            emergent_admit_rate = scales::percent(emergent_admit_rate),
-            age = mean(age_at_admit),
-            multi_surg = mean(flg_multi_surgeon),
-            multi_surg = scales::percent(multi_surg)) %>% 
-  left_join(case_by_mean_milestone) %>% 
-  select(overall_mean, n_case, n_cases_death, everything()) %>% 
-  kable_df()
-```
-
-In order to understand the milestone rating vs. death relationship, without considering other covariates. Below are the univariate analysis between death within 30 days and mean of milestone rating for 30 months practice
-
-```{r uni_model_death}
-load("~/Documents/Repo/Milestone_Medicare_Outcomes/data/uni_death_model_no_limit_model.rdata")
-
-uni_death_model_no_limit %>% 
-  mutate(OR = exp(estimate)) %>% 
-  select(term, OR, everything()) %>% 
-  kable_df()
-```
-
-Without controlling for covariate, higher overall milestone ratings had lower patient mortality rate.
-
-
-#### Overall mean milestone ratings greater or equal to 8 
+#### 2.1 Overall mean milestone ratings greater or equal to 8 
 
 Note: not matched with the numbers above because of rounding.
 
@@ -292,15 +233,8 @@ sum_table(rating_var = mean_ge_8,
           name = "overall_mean_gt_8")
 ```
 
-#### All Milestone ratings are greater or equal to 8
 
-```{r ever_lt_8}
-# ever_less_8_rating-----
-sum_table(rating_var = never_less_8_rating, 
-          name = "never_have_lt8_rating")
-```
-
-#### professional ratings mean (comp5_PR_Q1, comp5_PR_Q2, comp5_PR_Q3)
+#### 2.2 professional ratings mean (comp5_PR_Q1, comp5_PR_Q2, comp5_PR_Q3)
 
 ```{r prof_rating_mean}
 # prof_rating_mean -----
@@ -347,4 +281,65 @@ sum_table(rating_var = operative_rating_ge8,
 ```
 
 
+
+<!-- ####  Death Descriptive -->
+
+<!-- ```{r death} -->
+<!-- death_case = milestone_medicare_pc %>% -->
+<!--   filter(flg_death_30d == 1) %>% -->
+<!--   transmute( -->
+<!--     overall_mean = round(IntResponseValue_mean), -->
+<!--     flg_death_30d, -->
+<!--     # covers -->
+<!--     flg_male, -->
+<!--     age_at_admit, -->
+<!--     race_white, -->
+<!--     race_hisp_other, -->
+<!--     flg_admit_emerg, -->
+<!--     AHRQ_score, -->
+<!--     ses_2grp, -->
+<!--     # 'cpt_cd', -->
+<!--     facility_clm_yr, -->
+<!--     flg_multi_surgeon, -->
+<!--     flg_assistant_surgeon, -->
+<!--     hosp_beds_2grp, -->
+<!--     # 'flg_hosp_ICU_hosp', -->
+<!--     val_hosp_mcday2inptday_ratio, -->
+<!--     val_hosp_rn2bed_ratio -->
+<!--   ) -->
+<!-- ``` -->
+
+<!-- Based on the model results, age(negative), admit emergent (negative) status and multiple surgeons performance (positive) are 3 variables that had statistically significance on death within 30 days. Below are the descriptive stats for each overall milestone score. -->
+
+<!-- ```{r death_cov} -->
+<!-- case_by_mean_milestone = milestone_medicare_pc %>%  -->
+<!--   mutate(overall_mean = round(IntResponseValue_mean)) %>%  -->
+<!--   group_by(overall_mean) %>%  -->
+<!--   summarise(n_case = n())  -->
+
+<!-- death_case %>% -->
+<!--   group_by(overall_mean) %>% -->
+<!--   summarise(n_cases_death = n(), -->
+<!--             emergent_admit_rate = mean(flg_admit_emerg, na.rm = T), -->
+<!--             emergent_admit_rate = scales::percent(emergent_admit_rate), -->
+<!--             age = mean(age_at_admit), -->
+<!--             multi_surg = mean(flg_multi_surgeon), -->
+<!--             multi_surg = scales::percent(multi_surg)) %>%  -->
+<!--   left_join(case_by_mean_milestone) %>%  -->
+<!--   select(overall_mean, n_case, n_cases_death, everything()) %>%  -->
+<!--   kable_df() -->
+<!-- ``` -->
+
+<!-- In order to understand the milestone rating vs. death relationship, without considering other covariates. Below are the univariate analysis between death within 30 days and mean of milestone rating for 30 months practice -->
+
+<!-- ```{r uni_model_death} -->
+<!-- load("~/Documents/Repo/Milestone_Medicare_Outcomes/data/uni_death_model_no_limit_model.rdata") -->
+
+<!-- uni_death_model_no_limit %>%  -->
+<!--   mutate(OR = exp(estimate)) %>%  -->
+<!--   select(term, OR, everything()) %>%  -->
+<!--   kable_df() -->
+<!-- ``` -->
+
+<!-- Without controlling for covariate, higher overall milestone ratings had lower patient mortality rate. -->
 

@@ -1,3 +1,5 @@
+# script to run descriptive stats based on months of practice cohorts.
+
 # 12 months in practice
 rmarkdown::render(
   "/Users/xilinchen/Documents/Repo/Milestone_Medicare_Outcomes/code/model_summary/descriptive_statistics.Rmd",
