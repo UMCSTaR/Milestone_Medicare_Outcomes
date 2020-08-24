@@ -11,8 +11,8 @@ my_color = c("#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3")
 # load 24 months ------
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month24_pc.rdata")
 
-# overall mean -------
-# or ------
+#1. OR ------
+# data process----
 mean_rating = map_df(results, extract_fixed_effects, .id = "outcome")  %>%
   filter(
     term == "IntResponseValue_mean" |
@@ -85,7 +85,8 @@ or = ggplot(data = mean_rating_tbl %>%
 ggsave("images/or_rating_plot.png") 
   
 
-# predicted rates -------
+# 2. predicted rates -------
+# data process ----
 mean_ge8 = map2_df(
   # model
   rlist::list.match(results, 'mean_ge_8'),
@@ -140,7 +141,7 @@ bin_mean_pred = bin_mean_pred %>%
 bin_mean_pred_tbl =  bin_mean_pred %>% 
   mutate(outcome = str_remove_all(outcome, pattern = c("Par_|_mean_ge_8|_prof_ge8|_leadership_ge8|_operative_ge8")),
          x = ifelse(x ==1, ">=8", "<8")) %>% 
-  rename(overall_mean = x) %>% 
+  rename(binary_rating = x) %>% 
   mutate(
     outcome = factor(outcome,
                      levels = c(
@@ -166,7 +167,7 @@ bin_mean_pred_tbl %>%
 bin_mean_pred_tbl %>%
   # filter(term == "professional") %>%
   
-  ggplot(aes(x = overall_mean, y = predicted)) +
+  ggplot(aes(x = binary_rating, y = predicted)) +
   geom_bar(aes(fill = outcome), stat = "identity",  position = position_dodge(width = 0.6), width = 0.5, show.legend = FALSE) +
   # scale_color_manual(values = my_color) +
   scale_fill_manual(values=my_color) +  
@@ -200,10 +201,11 @@ combo = grid.arrange(or + theme(legend.position = "none") + labs(title = "") ,
 ggsave(combo, filename = "images/or_prob_combo.png")
 
 # geom_segment arrow-----
-p = bin_mean_pred_tbl %>%
+ci_bars = 
+  bin_mean_pred_tbl %>%
   filter(outcome == "any_cmp") %>%
   
-  ggplot(aes(x = overall_mean, y = predicted)) +
+  ggplot(aes(x = binary_rating, y = predicted)) +
   geom_pointrange(
     aes(
       ymin = conf.low,
@@ -212,18 +214,19 @@ p = bin_mean_pred_tbl %>%
       # color = outcome
     ),
     alpha = 0.7,
-    color = "black",
+    color = "gray",
     position = position_dodge(width = 0.6),
     show.legend = FALSE
   ) +
+  geom_point(color = "gray50", show.legend = FALSE) +
   scale_y_continuous(labels = scales::percent) 
 
-p +
+ci_bars +
   geom_segment(
     data = bin_mean_pred_tbl %>%
       filter(outcome == "any_cmp") %>%
-      select(outcome, term, overall_mean, predicted) %>%
-      pivot_wider(names_from = overall_mean, values_from = predicted),
+      select(outcome, term, binary_rating, predicted) %>%
+      pivot_wider(names_from = binary_rating, values_from = predicted),
     aes(
       x = "<8",
       y = `<8`,
@@ -236,18 +239,19 @@ p +
   scale_color_manual(values = my_color) +
   facet_wrap( ~ term, nrow = 1, strip.position = "bottom") +
   labs(y = "",
-       subtitle = "predicted probabilities (95% CI) for any complication") +
+       x = "",
+       subtitle = "Predicted probabilities (95% CI) for any complication") +
   theme(legend.title = element_blank()) +
   visibly::theme_trueMinimal(center_axis_labels = T) 
 
 ggsave("images/prob_segment.png")
  
 
-# 1.2 diff probs ------
+# diff probs ------
 bin_mean_pred_tbl %>%
-  select(term, outcome, overall_mean, predicted) %>% 
+  select(term, outcome, binary_rating, predicted) %>% 
   as_tibble() %>% 
-  pivot_wider(names_from = overall_mean, values_from = predicted ) %>% 
+  pivot_wider(names_from = binary_rating, values_from = predicted ) %>% 
   mutate(pred_diff = `<8` - `>=8`) %>% 
   ggplot(aes(x = term, y = pred_diff)) +
   geom_bar(aes(fill = outcome), stat = "identity",  position = position_dodge(width = 0.6), width = 0.5) +
