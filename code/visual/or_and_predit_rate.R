@@ -6,10 +6,11 @@ library(purrr)
 library(ggeffects)
 library(kableExtra)
 
+my_color = c("#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3")
+
 # load 24 months ------
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month24_pc.rdata")
 
-my_color = c("#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3")
 # overall mean -------
 # or ------
 mean_rating = map_df(results, extract_fixed_effects, .id = "outcome")  %>%
@@ -139,7 +140,17 @@ bin_mean_pred = bin_mean_pred %>%
 bin_mean_pred_tbl =  bin_mean_pred %>% 
   mutate(outcome = str_remove_all(outcome, pattern = c("Par_|_mean_ge_8|_prof_ge8|_leadership_ge8|_operative_ge8")),
          x = ifelse(x ==1, ">=8", "<8")) %>% 
-  rename(overall_mean = x)
+  rename(overall_mean = x) %>% 
+  mutate(
+    outcome = factor(outcome,
+                     levels = c(
+                       "death", "severe_cmp","any_cmp", "readmit"
+                     )),
+    term = factor(
+      term,
+      levels = c("overall_mean", "leadership", "operative", "professional")
+    )
+  )
 
 bin_mean_pred_tbl %>% 
   mutate(`95% CI` = paste0("[", conf.low, ", ", conf.high, "]")) %>% 
@@ -152,17 +163,7 @@ bin_mean_pred_tbl %>%
 
 
 # prob plot ------
-v = bin_mean_pred_tbl %>%
-  mutate(
-    outcome = factor(outcome,
-                     levels = c(
-                       "death", "severe_cmp","any_cmp", "readmit"
-                     )),
-    term = factor(
-      term,
-      levels = c("overall_mean", "leadership", "operative", "professional")
-    )
-  ) %>%
+bin_mean_pred_tbl %>%
   # filter(term == "professional") %>%
   
   ggplot(aes(x = overall_mean, y = predicted)) +
@@ -187,7 +188,8 @@ v = bin_mean_pred_tbl %>%
   visibly::theme_trueMinimal(center_axis_labels = T) 
 
   
-ggsave(filename = "images/predicted_prob_prof_cmp_v.png")
+ggsave(filename = "images/predicted_prob_prof_cmp_v.png")  # vertical bars
+# ggsave(filename = "images/predicted_prob_prof_cmp_h.png") # horizontal bars
     
 # combine plots -----
 library(gridExtra)
@@ -197,18 +199,8 @@ combo = grid.arrange(or + theme(legend.position = "none") + labs(title = "") ,
                      ncol = 2)
 ggsave(combo, filename = "images/or_prob_combo.png")
 
-# 1.1 Andy's idea
+# geom_segment arrow-----
 p = bin_mean_pred_tbl %>%
-  mutate(
-    outcome = factor(outcome,
-                     levels = c(
-                       "death", "severe_cmp","any_cmp", "readmit"
-                     )),
-    term = factor(
-      term,
-      levels = c("overall_mean", "leadership", "operative", "professional")
-    )
-  ) %>%
   filter(outcome == "any_cmp") %>%
   
   ggplot(aes(x = overall_mean, y = predicted)) +
