@@ -10,7 +10,7 @@ output:
     toc_depth: 4
     toc_float: true
 params:
-  n_month: 12
+  n_month: 24
 ---
 
 ```{r setup, include=FALSE}
@@ -212,7 +212,54 @@ person_rating = milestone_medicare_pc %>%
   )
 ```
 
-#### Overall mean of 16 milestone ratings
+
+```{r conditional_prob, eval = F}
+# Descriptive Conditional Probabilities
+
+# not show in report
+dt = milestone_medicare_pc %>%
+  transmute(overall_mean = round(IntResponseValue_mean),
+            mean_ge_8,
+            flg_death_30d) %>% 
+  mutate(overall_mean = as.factor(overall_mean))
+
+dt %>%
+  count(overall_mean, flg_death_30d) %>%
+  pivot_wider(names_from = flg_death_30d,
+              values_from = n) %>%
+  rename(n_death = `1`,
+         n_alive = `0`) %>%
+  mutate(
+    n_all = n_alive + n_death,
+    `P(death|rating)` = n_death / n_all,
+    prob_rating = n_all / sum(n_all),
+    `P(death and certain rating)` = `P(death|rating)` * prob_rating
+  ) %>%
+  select(-prob_rating, -n_all) %>%
+  mutate_at(vars(contains("p(")), scales::percent_format()) %>% 
+  kable_df()
+
+dt %>%
+  count(mean_ge_8, flg_death_30d) %>%
+  pivot_wider(names_from = flg_death_30d,
+              values_from = n) %>%
+  rename(n_death = `1`,
+         n_alive = `0`) %>%
+  mutate(
+    n_all = n_alive + n_death,
+    `P(death|rating)` = n_death / n_all,
+    prob_rating = n_all / sum(n_all),
+    `P(death and certain rating)` = `P(death|rating)` * prob_rating
+  ) %>%
+  select(-prob_rating, -n_all) %>%
+  mutate_at(vars(contains("p(")), scales::percent_format()) %>% 
+  kable_df()
+
+
+```
+
+
+#### 2.1 Overall mean of 16 milestone ratings
 
 ```{r mean_overall}
 # mean overall------
@@ -222,8 +269,7 @@ sum_table(rating_var = IntResponseValue_mean,
 ```
 
 
-
-#### 2.1 Overall mean milestone ratings greater or equal to 8 
+**Overall mean milestone ratings greater or equal to 8**
 
 Note: not matched with the numbers above because of rounding.
 
@@ -243,6 +289,7 @@ sum_table(rating_var = prof_rating_mean,
 ```
 
 **Mean of professional ratings are greater or equal to 8**
+
 ```{r prof_rating_mean2}
 sum_table(rating_var = prof_rating_ge8, 
           name = "prof_rating_ge8")
