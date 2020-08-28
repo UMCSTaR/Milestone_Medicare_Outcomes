@@ -53,20 +53,12 @@ This document uses the end-year milestone evaluations at the last year of reside
 
 
 ```{r load_data}
-load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/data_08_03/milestone_medicare_all_procedure_1case.rdata")
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_ratings.rdata")
 
-all_proc = milestone_medicare_gs_1case %>% 
-  filter(month <= params$n_month)
 # keep valid rating score
 milestone_medicare_pc = milestone_medicare_ratings %>% 
   filter(!is.na(IntResponseValue_mean),
          month <= params$n_month)
-
-# all_proc %>% 
-#   count(e_proc_grp_lbl, sort = T, name = "n_cases") 
-
-# n_distinct(milestone_medicare_ratings$id_physician_npi)
 
 ```
 
