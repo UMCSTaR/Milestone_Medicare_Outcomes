@@ -8,6 +8,20 @@ library(purrr)
 # load data
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_ratings.rdata")
 
+# # fix AHRQ score
+# ahrq = read_csv("/Volumes/George_Surgeon_Projects/standardized_medicare_data_using_R/analytic/full_data/archive/ahrq.csv")
+# 
+# milestone_medicare_ratings = milestone_medicare_ratings %>% 
+#   select(-AHRQ_score) %>%
+#   left_join(ahrq) 
+# 
+# milestone_medicare_ratings = milestone_medicare_ratings %>% 
+#   mutate(AHRQ_score_scale = scale(AHRQ_score),
+#          AHRQ_score_scale = as.numeric(AHRQ_score_scale))
+# 
+# save(milestone_medicare_ratings, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_ratings.rdata")
+
+# data process
 n_months = 36
 
 main_data = milestone_medicare_ratings %>% 
