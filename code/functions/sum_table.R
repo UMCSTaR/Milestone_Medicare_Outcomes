@@ -40,5 +40,5 @@ sum_table <- function(name = "overall_mean",
     ) %>% 
     arrange(!!!syms(name)) %>% 
     mutate_at(vars(contains("rate")), scales::percent_format()) %>% 
-    datatable(rownames = F, options = list(scrollX = T))
+    datatable(rownames = F, options = list(scrollX = T, dom = 't'))
 }

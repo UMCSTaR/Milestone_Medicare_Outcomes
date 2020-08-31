@@ -150,7 +150,6 @@ milestone_medicare_pc %>%
     kable_df(caption = paste0("number of medicare cases within ", params$n_month, "months of graduation"))
 
 
-
 surg_case_year = left_join(
   milestone_medicare_pc %>%
     group_by(facility_clm_yr) %>%
@@ -300,7 +299,7 @@ sum_table(rating_var = prof_rating_ge8,
 
 ```
 
-#### leadership ratings mean (comp5_PR_Q1, comp6_ICS_Q1, comp6_ICS_Q2, comp3_SBP_Q")
+#### 2.3 leadership ratings mean (comp5_PR_Q1, comp6_ICS_Q1, comp6_ICS_Q2, comp3_SBP_Q")
 
 ```{r leadership_rating_mean}
 # leadership_rating_mean----
@@ -315,7 +314,7 @@ sum_table(rating_var = leadership_rating_ge8,
           name = "leadership_rating_ge8")
 ```
 
-#### Operative ratings mean (PC3, MK2, ICS3)
+#### 2.4 Operative ratings mean (PC3, MK2, ICS3)
 
 ```{r operative_rating_mean}
 # operative_rating_mean---

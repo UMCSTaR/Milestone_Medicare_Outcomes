@@ -3,7 +3,8 @@ fe = function(model) {
   fe = extract_fixed_effects(model) %>% 
     mutate(OR = exp(value),
            OR_lower = exp(lower_2.5),
-           OR_upper = exp(upper_97.5)
+           OR_upper = exp(upper_97.5),
+           term = ifelse(term == "IntResponseValue_mean", "overall mean", term)
     ) %>% 
     select(-z, -se) %>% 
     rename(Estimate = value) 
