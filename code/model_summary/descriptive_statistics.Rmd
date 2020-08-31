@@ -83,9 +83,9 @@ milestone_medicare_pc %>%
             n_hosp = length(unique(facility_prvnumgrp)),
             n_patient = length(unique(member_id)),
             POA_severe_complication_rate = sum(flg_cmp_po_severe_not_poa)/n_case,
-            severe_complication_rate = sum(flg_cmp_po_severe)/n_case,
+            # severe_complication_rate = sum(flg_cmp_po_severe)/n_case,
             POA_any_complication_rate = sum(flg_cmp_po_any_not_poa)/n_case,
-            any_complication_rate = sum(flg_cmp_po_any)/n_case,
+            # any_complication_rate = sum(flg_cmp_po_any)/n_case,
             death_rate = sum(flg_death_30d)/n_case,
             readmit_rate = sum(flg_readmit_30d)/n_case,
             reop_rate = sum(flg_util_reop)/n_case) %>% 
@@ -100,7 +100,7 @@ details about each variables above:
 - n_surgeons: number of surgeons
 - n_hosp: number of hospitals
 - n_patient: number of patients
-- POA_severe_complication_rate: this was used for model outcomes instead of severe_complication; it's defined as severe complication within 30 days after the operation; the length of stay is >= 75% of this procedure in medicare and had any complication. 
+- POA_severe_complication_rate: severe complication within 30 days after the operation; the length of stay is >= 75% of this procedure in medicare and had any complication. The complications were not present at admission
 - death_rate: death within 30days after the procedure
 - readmit: readmission within 30days
 
@@ -110,14 +110,29 @@ details about each variables above:
 number of cases and surgeons in medicare at each month after graduation
 
 ```{r month_case}
-milestone_medicare_pc %>% 
+month_n = milestone_medicare_pc %>% 
   group_by(month) %>%
   mutate(n_cases = n(),
          n_surgeons = n_distinct(id_physician_npi)) %>% 
   distinct(month, n_cases, n_surgeons) %>% 
   arrange(month) %>% 
   rename(month_after_grad = month) %>% 
+  ungroup()
+
+month_n %>% 
   DT::datatable(rownames = F)
+
+# ggplot(data = month_n) +
+#   geom_bar(aes(x = month_after_grad, y = n_cases), stat = "identity") +
+#   labs(title = "N of medicare cases at each month after graduation",
+#         y = "") +
+#   visibly::theme_trueMinimal(center_axis_labels = T)
+# 
+# ggplot(data = month_n) +
+#   geom_bar(aes(x = month_after_grad, y = n_surgeons), stat = "identity") +
+#   labs(title = "N of Surgeons in Medicare at each month after graduation",
+#         y = "") +
+#   visibly::theme_trueMinimal(center_axis_labels = T)
 ```
 
 Note: trainees who graduated in 2017 only had 6 months medicare cases.
@@ -150,7 +165,8 @@ surg_case_year = left_join(
   ungroup()
 
 surg_case_year %>% 
-  DT::datatable(caption = "number of surg and cases by graduation year and medicare year", rownames = F)
+  rename(medicare_year = facility_clm_yr) %>% 
+  kable_df(caption = "number of surg and cases by graduation year and medicare year")
 
 ```
 
@@ -161,10 +177,6 @@ milestone_medicare_pc %>%
   select(flg_male, age_at_admit, race_white,AHRQ_score, flg_admit_emerg,
          hosp_beds_2grp, colectomy_type) %>% 
   tbl_summary(missing = "no")
-
-
-
-
 ```
 
 Note: 

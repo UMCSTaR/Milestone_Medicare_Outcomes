@@ -13,12 +13,14 @@ sum_table <- function(name = "overall_mean",
       n_severe_cmp_poa = sum(flg_cmp_po_severe_not_poa),
       
       # pt
+      open_colectomy_rate = mean(open_colectomy, na.rm = T),
+      n_open_colectomy = round(n_cases*open_colectomy_rate,1),
       male_pt_rate = mean(flg_male, na.rm = T),
       white_pt_rate = mean(race_white, na.rm = T),
       emerg_admit_rate = mean(flg_admit_emerg, na.rm = T),
-      open_colectomy_rate = mean(open_colectomy, na.rm = T),
       hosp_bed_gt350_rate = mean(hosp_beds_2grp, na.rm = T),
       
+      # outcome
       rate_severe_cmp_poa = n_severe_cmp_poa / n_cases,
       n_death = sum(flg_death_30d),
       rate_death = n_death / n_cases,
@@ -32,6 +34,7 @@ sum_table <- function(name = "overall_mean",
       !!!syms(name),
       n_surgeons,
       n_cases,
+      n_open_colectomy,
       case_per_surg,
       across(contains("rate"))
     ) %>% 
