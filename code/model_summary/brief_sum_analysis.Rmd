@@ -1,0 +1,224 @@
+---
+title: "Milestones and Medicare Outcome Analysis Summary"
+date: "8/31/2020"
+output: 
+  word_document:
+        toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = F,                                     # code
+  message = F,
+  warning = F,
+  error = F,
+  comment = NA,
+  R.options = list(width = 220),
+  dev.args = list(bg = 'transparent'),          # viz
+  fig.align = 'center',
+  cache = F
+)
+
+library(tidyverse)
+library(knitr)
+library(gtsummary)
+library(mixedup)
+library(glmmTMB)
+
+source("/Users/xilinchen/Documents/Repo/Milestone_Medicare_Outcomes/code/functions/fe.r")
+source("/Users/xilinchen/Documents/Repo/Milestone_Medicare_Outcomes/code/functions/predictor_visual_from_model.R")
+sum_tbl_by_rating <- function(data = milestone_medicare_pc,
+                              rating_var = mean_ge_8) {
+  
+  # rating_var = enquo(rating_var)
+
+  data %>%
+    select(
+      {{rating_var}},
+      flg_male,
+      age_at_admit,
+      race_white,
+      AHRQ_score,
+      flg_admit_emerg,
+      hosp_beds_2grp,
+      colectomy_type
+    ) %>% 
+    mutate({{rating_var}} := ifelse({{rating_var}} == 0 , "mean<8", "mean>=8")) %>% 
+    tbl_summary(by = {{rating_var}},
+                missing = "no") %>%
+    add_p()
+}
+
+```
+
+Milestones vs medicare outcomes cohort details
+
+- Medicare cases: inpatient
+- Procedure: Partial Colectomy
+- Practice months after graduation: 24 months
+
+```{r load_data, cache=TRUE}
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_ratings.rdata")
+# model
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month24_pc.rdata")
+
+
+# keep valid rating score
+milestone_medicare_pc = milestone_medicare_ratings %>% 
+  filter(!is.na(IntResponseValue_mean),
+         month <= 24)
+```
+
+## 1. Cohort Description
+
+**Overall Cohort**
+```{r cohort_desc}
+milestone_medicare_pc = milestone_medicare_pc %>% 
+  mutate(flg_cmp_po_any_not_poa = as.numeric(flg_cmp_po_any_not_poa),
+         flg_cmp_po_severe_not_poa = as.numeric(flg_cmp_po_severe_not_poa)) %>% 
+  mutate(
+    open_colectomy = cpt_cd %in% c(44140:44147, 44160),
+    lap_colectomy  = cpt_cd %in% 44204:44208,
+    colectomy_type = factor(ifelse(
+      cpt_cd %in% c(44140:44147, 44160), 'open', 'lap'
+    ))
+  ) 
+
+# outcomes desc
+milestone_medicare_pc %>% 
+  summarise(n_case = n(),
+            n_surgeon = length(unique(id_physician_npi)),
+            n_hosp = length(unique(facility_prvnumgrp)),
+            n_patient = length(unique(member_id)),
+            POA_severe_complication_rate = sum(flg_cmp_po_severe_not_poa)/n_case,
+            # severe_complication_rate = sum(flg_cmp_po_severe)/n_case,
+            POA_any_complication_rate = sum(flg_cmp_po_any_not_poa)/n_case,
+            # any_complication_rate = sum(flg_cmp_po_any)/n_case,
+            death_rate = sum(flg_death_30d)/n_case,
+            readmit_rate = sum(flg_readmit_30d)/n_case,
+            reop_rate = sum(flg_util_reop)/n_case) %>% 
+  mutate_at(vars(contains("rate")), scales::percent_format()) %>% 
+  t() %>% 
+  kable()
+
+
+```
+
+**case level characteristics**
+
+```{r case_desc}
+# case characters
+milestone_medicare_pc %>% 
+  select(flg_male, age_at_admit, race_white,AHRQ_score, flg_admit_emerg,
+         hosp_beds_2grp, colectomy_type) %>% 
+  tbl_summary(missing = "no")
+```
+
+Note: 
+- hosp_beds_2grp :(0.<349, 1: >=350)
+
+## 2. Milestone ratings
+
+### 2.1 overall mean
+
+#### Descriptive table
+
+```{r overall_mean}
+sum_tbl_by_rating(data = milestone_medicare_pc,
+                  rating_var = mean_ge_8) 
+```
+
+
+#### model summary for any complication
+
+```{r mean}
+mean_ge_8 = results$Par_any_cmp_mean_ge_8
+
+fe(mean_ge_8,pdf = F) %>% 
+  select(term, contains("OR"), p_value) %>% 
+  filter(term != "Intercept") %>% 
+  kable(digits = 2, caption = "Fixed Effects")
+
+
+extract_vc(mean_ge_8, ci_level = 0)  %>% 
+    kable(digits = 2, caption = "Random Effects")
+```
+
+#### Odds ratios and predicted values for all outcomes
+
+![](~/Documents/Repo/Milestone_Medicare_Outcomes/images/comb_overall_mean.png) 
+
+
+
+### 2.2 professional ratings 
+
+#### Descriptive table
+
+```{r prof}
+sum_tbl_by_rating(data = milestone_medicare_pc,
+                  rating_var = prof_rating_ge8)
+```
+
+#### model summary for any complication
+
+```{r prof_model}
+mean_ge_8 = results$Par_any_cmp_prof_ge8
+
+fe(mean_ge_8,pdf = F) %>% 
+  select(term, contains("OR"), p_value) %>% 
+  filter(term != "Intercept") %>% 
+  kable(digits = 2, caption = "Fixed Effects")
+
+
+extract_vc(mean_ge_8, ci_level = 0)  %>% 
+    kable(digits = 2, caption = "Random Effects")
+```
+
+### 2.3 Operative ratings
+
+#### Descriptive table
+
+```{r operative_desc}
+sum_tbl_by_rating(data = milestone_medicare_pc,
+                  rating_var = operative_rating_ge8)
+```
+
+#### model summary for any complication
+
+```{r op_model}
+mean_ge_8 = results$Par_any_cmp_operative_ge8
+
+fe(mean_ge_8,pdf = F) %>% 
+  select(term, contains("OR"), p_value) %>% 
+  filter(term != "Intercept") %>% 
+  kable(digits = 2, caption = "Fixed Effects")
+
+
+extract_vc(mean_ge_8, ci_level = 0)  %>% 
+    kable(digits = 2, caption = "Random Effects")
+```
+
+### 2.4 leadership ratings
+
+#### Descriptive table
+
+```{r lead_desc}
+sum_tbl_by_rating(data = milestone_medicare_pc,
+                  rating_var = leadership_rating_ge8)
+```
+
+#### model summary for any complication
+
+```{r lead_model}
+mean_ge_8 = results$Par_any_cmp_leadership_ge8
+
+fe(mean_ge_8,pdf = F) %>% 
+  select(term, contains("OR"), p_value) %>% 
+  filter(term != "Intercept") %>% 
+  kable(digits = 2, caption = "Fixed Effects")
+
+
+extract_vc(mean_ge_8, ci_level = 0)  %>% 
+    kable(digits = 2, caption = "Random Effects")
+```
+
