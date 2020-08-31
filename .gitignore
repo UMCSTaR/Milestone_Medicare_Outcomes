@@ -57,3 +57,5 @@ vignettes/*.pdf
 *.graffle
 
 *.png
+
+code/model_summary/brief_sum_analysis.docx

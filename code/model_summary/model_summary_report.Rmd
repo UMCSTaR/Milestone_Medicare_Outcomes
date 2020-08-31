@@ -52,8 +52,6 @@ load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_final_yea
 
 results = params$data
 
-
-
 milestone_medicare_pc = milestone_medicare_ratings %>%
   filter(proc_Partial_Colectomy == 1) %>%
   mutate(
@@ -64,11 +62,11 @@ milestone_medicare_pc = milestone_medicare_ratings %>%
 
 # Description
 
-This document uses the end-year milestone evaluations at the last year of residency from ACGME. Milestone rating for each resident is the mean of all questions. We only used Partial Colectomy procedure.
+This document uses the end-year milestone evaluations at the last year of residency from ACGME. Milestone rating for each resident is the mean of all questions. We used Partial Colectomy procedure as our cohort.
 
+
+```{r milestone eval, eval=F}
 ## Milestone question keys and descriptions
-
-```{r milestone eval}
 milestone_final_year %>% 
   distinct(ReportCategory, QuestionKey, QuestionText) %>% 
   filter(!is.na(ReportCategory)) %>% 
@@ -93,13 +91,10 @@ milestone_medicare_pc = milestone_medicare_pc %>%
     facility_clm_yr = facility_clm_yr + 2007,
     hosp_beds_2grp = factor(hosp_beds_2grp, labels = c('<350', '>=350')),
   )
-
-
-table_one <- tableby( ~ flg_male + age_at_admit + factor(e_race_wbho_lable) + AHRQ_score + ses_2grp + colectomy_type + factor(facility_clm_yr) + factor(flg_multi_surgeon) + factor(flg_assistant_surgeon)  + hosp_beds_2grp + val_hosp_mcday2inptday_ratio + val_hosp_rn2bed_ratio, data = milestone_medicare_pc)
-
-mylabels <- list(val_hosp_mcday2inptday_ratio = "medicaid/inpatient days ratio", val_hosp_rn2bed_ratio = "Registered nurse to bed ratios")
-
-summary(table_one, labelTranslations = mylabels)
+milestone_medicare_pc %>%
+  select(flg_male, age_at_admit, e_race_wbho_lable, AHRQ_score, ses_2grp,
+colectomy_type, facility_clm_yr, flg_multi_surgeon, flg_assistant_surgeon, hosp_beds_2grp, val_hosp_mcday2inptday_ratio, val_hosp_rn2bed_ratio) %>%
+  gtsummary::tbl_summary(missing = "no")
 ```
 
 
@@ -139,9 +134,9 @@ extract_vc(mean_ge_8, ci_level = 0) %>%
 
 
 
-### 1.3 Any rating greater or equal to 8
 
-```{r ever_lt8}
+```{r ever_lt8, eval=FALSE}
+### 1.3 Any rating greater or equal to 8
 never_lt_8 = results$Par_never_less_8
 
 fe(never_lt_8)
