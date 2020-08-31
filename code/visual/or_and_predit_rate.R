@@ -5,6 +5,8 @@ library(mixedup)
 library(purrr)
 library(ggeffects)
 library(kableExtra)
+library(gridExtra)
+
 
 my_color = c("#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3")
 
@@ -290,10 +292,11 @@ for (i in seq_along(milestone_terms)) {
       linetype = 2
     ) +
     geom_pointrange(aes(ymin = OR_lower, 
-                        ymax = OR_upper,
-                        color = outcome),
-                    fatten = 5, size = 1, show.legend = F) +
-    scale_color_manual(values = my_color) +
+                        ymax = OR_upper),
+                    fatten = 5, size = 1, 
+                    color = "darkgray",
+                    show.legend = F) +
+    # scale_color_manual(values = my_color) +
     labs(x = "", y = "Odds Ratio (95% CI)",
          title = str_to_title(milestone_terms[[i]])) +
     visibly::theme_trueMinimal(center_axis_labels = T) +
@@ -303,7 +306,7 @@ for (i in seq_along(milestone_terms)) {
           strip.text.y = element_text(size = 13),
           legend.position="bottom",
           legend.title = element_blank()) 
-  
+
   assign(p_or[i], p)
   
   # save image
