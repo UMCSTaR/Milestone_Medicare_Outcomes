@@ -13,6 +13,7 @@ my_color = c("#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3")
 # load 24 months ------
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month24_pc.rdata")
 
+# round1------
 #1. OR ------
 # data process----
 mean_rating = map_df(results, extract_fixed_effects, .id = "outcome")  %>%
@@ -270,7 +271,7 @@ bin_mean_pred_tbl %>%
   visibly::theme_trueMinimal(center_axis_labels = T) 
   
 
-# round 2------
+# round2 improve the images from round1----
 # 1. OR--------
 milestone_terms = unique(mean_rating_tbl$term)
 p_or = paste0("p_or", 1:4)

@@ -7,6 +7,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
+# this report was used for the purpose of communication with external collaborators like ACGME
 knitr::opts_chunk$set(
   echo = F,                                     # code
   message = F,

@@ -1,3 +1,9 @@
+# combine evaluation data to milestone persons info
+# details: we get milestone evaluation and person info in two files. so we need to merge them
+# processing
+# - only include PGY5  valuations
+# - some checks to evaluate what other year milestone data we have
+
 library(tidyverse)
 library(tidyext)
 
