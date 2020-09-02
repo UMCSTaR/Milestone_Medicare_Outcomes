@@ -1,9 +1,10 @@
 ---
 title: "Milestones and Medicare Outcome Analysis Summary"
-date: "8/31/2020"
+date: "`r Sys.Date()`"
 output: 
   word_document:
         toc: yes
+        toc_depth: 5
 ---
 
 ```{r setup, include=FALSE}
@@ -41,22 +42,28 @@ sum_tbl_by_rating <- function(data = milestone_medicare_pc,
       race_white,
       AHRQ_score,
       flg_admit_emerg,
-      hosp_beds_2grp,
+      flg_multi_surgeon,
+      hosp_beds,
       colectomy_type
     ) %>% 
+    rename(emergent_admission = flg_admit_emerg,
+           multi_surgeon = flg_multi_surgeon) %>% 
     mutate({{rating_var}} := ifelse({{rating_var}} == 0 , "mean<8", "mean>=8")) %>% 
     tbl_summary(by = {{rating_var}},
                 missing = "no") %>%
+    add_overall() %>%
     add_p()
 }
 
 ```
 
-Milestones vs medicare outcomes cohort details
+Milestones vs Medicare outcomes cohort details
 
-- Medicare cases: inpatient
-- Procedure: Partial Colectomy
-- Practice months after graduation: 24 months
+-	Medicare cases: inpatient from 2015-2017
+-	Milestone graduates: 2015-2017
+-	Procedure: Partial Colectomy
+-	Practice months after graduation: 24 months
+
 
 ```{r load_data, cache=TRUE}
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_ratings.rdata")
@@ -66,6 +73,8 @@ load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month2
 
 # keep valid rating score
 milestone_medicare_pc = milestone_medicare_ratings %>% 
+  mutate(hosp_beds = case_when(hosp_beds_2grp == 0 ~ "<350",
+                               hosp_beds_2grp == 1 ~ ">=350")) %>% 
   filter(!is.na(IntResponseValue_mean),
          month <= 24)
 ```
@@ -100,27 +109,27 @@ milestone_medicare_pc %>%
             reop_rate = sum(flg_util_reop)/n_case) %>% 
   mutate_at(vars(contains("rate")), scales::percent_format()) %>% 
   t() %>% 
-  kable()
+  kable(align = 'c')
 
 
 ```
 
-**case level characteristics**
+**Case level characteristics**
 
 ```{r case_desc}
 # case characters
 milestone_medicare_pc %>% 
   select(flg_male, age_at_admit, race_white,AHRQ_score, flg_admit_emerg,
-         hosp_beds_2grp, colectomy_type) %>% 
-  tbl_summary(missing = "no")
+         flg_multi_surgeon,
+         hosp_beds, colectomy_type) %>% 
+  tbl_summary(statistic = list(all_continuous() ~ "{mean} ({sd})[{p25}, {p75}]"),
+              missing = "no")
 ```
 
-Note: 
-- hosp_beds_2grp :(0.<349, 1: >=350)
 
 ## 2. Milestone ratings
 
-### 2.1 overall mean
+### 2.1 Overall mean
 
 #### Descriptive table
 
@@ -129,29 +138,36 @@ sum_tbl_by_rating(data = milestone_medicare_pc,
                   rating_var = mean_ge_8) 
 ```
 
+#### Odds ratios and predicted values for all outcomes
 
-#### model summary for any complication
+#### Model summary for any complication
 
 ```{r mean}
 mean_ge_8 = results$Par_any_cmp_mean_ge_8
 
 fe(mean_ge_8,pdf = F) %>% 
-  select(term, contains("OR"), p_value) %>% 
-  filter(term != "Intercept") %>% 
-  kable(digits = 2, caption = "Fixed Effects")
-
-
-extract_vc(mean_ge_8, ci_level = 0)  %>% 
-    kable(digits = 2, caption = "Random Effects")
+  kable(digits = 2,)
 ```
 
-#### Odds ratios and predicted values for all outcomes
+<br>
 
-![](~/Documents/Repo/Milestone_Medicare_Outcomes/images/comb_overall_mean.png) 
+```{r mean_re}
+extract_vc(mean_ge_8, ci_level = 0)  %>%
+  rename("Random Effects" = group) %>% 
+  select(-sd) %>% 
+  mutate(var_prop = scales::percent(var_prop)) %>% 
+  kable(digits = 2, caption = "    ")
+
+
+```
 
 
 
-### 2.2 professional ratings 
+<!-- ![](../images/comb_overall_mean.png)  -->
+
+
+
+### 2.2 Professional ratings 
 
 #### Descriptive table
 
@@ -160,20 +176,29 @@ sum_tbl_by_rating(data = milestone_medicare_pc,
                   rating_var = prof_rating_ge8)
 ```
 
-#### model summary for any complication
+#### Odds ratios and predicted values for all outcomes
+
+
+#### Model summary for any complication
 
 ```{r prof_model}
 mean_ge_8 = results$Par_any_cmp_prof_ge8
 
-fe(mean_ge_8,pdf = F) %>% 
-  select(term, contains("OR"), p_value) %>% 
-  filter(term != "Intercept") %>% 
-  kable(digits = 2, caption = "Fixed Effects")
-
-
-extract_vc(mean_ge_8, ci_level = 0)  %>% 
-    kable(digits = 2, caption = "Random Effects")
+fe(mean_ge_8, pdf = F) %>%
+  kable(digits = 2)
 ```
+
+<br>
+
+```{r prof_model_re}
+extract_vc(mean_ge_8, ci_level = 0)  %>%
+  rename("Random Effects" = group) %>% 
+  select(-sd) %>% 
+  mutate(var_prop = scales::percent(var_prop)) %>% 
+  kable(digits = 2, caption = "")
+
+```
+
 
 ### 2.3 Operative ratings
 
@@ -184,22 +209,32 @@ sum_tbl_by_rating(data = milestone_medicare_pc,
                   rating_var = operative_rating_ge8)
 ```
 
-#### model summary for any complication
+#### Odds ratios and predicted values for all outcomes
+
+
+#### Model summary for any complication
 
 ```{r op_model}
 mean_ge_8 = results$Par_any_cmp_operative_ge8
 
 fe(mean_ge_8,pdf = F) %>% 
-  select(term, contains("OR"), p_value) %>% 
-  filter(term != "Intercept") %>% 
-  kable(digits = 2, caption = "Fixed Effects")
-
-
-extract_vc(mean_ge_8, ci_level = 0)  %>% 
-    kable(digits = 2, caption = "Random Effects")
+  kable(digits = 2)
 ```
 
-### 2.4 leadership ratings
+<br>
+
+```{r op_model_re}
+extract_vc(mean_ge_8, ci_level = 0) %>% 
+  rename("Random Effects" = group) %>% 
+  select(-sd) %>% 
+  mutate(var_prop = scales::percent(var_prop)) %>% 
+  kable(digits = 2)
+
+```
+
+
+
+### 2.4 Leadership ratings
 
 #### Descriptive table
 
@@ -208,18 +243,26 @@ sum_tbl_by_rating(data = milestone_medicare_pc,
                   rating_var = leadership_rating_ge8)
 ```
 
-#### model summary for any complication
+#### Odds ratios and predicted values for all outcomes
+
+
+#### Model summary for any complication
 
 ```{r lead_model}
 mean_ge_8 = results$Par_any_cmp_leadership_ge8
 
 fe(mean_ge_8,pdf = F) %>% 
-  select(term, contains("OR"), p_value) %>% 
-  filter(term != "Intercept") %>% 
-  kable(digits = 2, caption = "Fixed Effects")
-
-
-extract_vc(mean_ge_8, ci_level = 0)  %>% 
-    kable(digits = 2, caption = "Random Effects")
+  kable(digits = 2)
 ```
+
+<br>
+
+```{r lead_model_re}
+extract_vc(mean_ge_8, ci_level = 0)  %>%
+  rename("Random Effects" = group) %>% 
+  select(-sd) %>% 
+  mutate(var_prop = scales::percent(var_prop)) %>% 
+  kable(digits = 2)
+```
+
 
