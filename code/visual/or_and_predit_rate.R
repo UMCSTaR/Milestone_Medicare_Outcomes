@@ -322,6 +322,7 @@ for (i in seq_along(milestone_terms)) {
 milestone_terms = unique(bin_mean_pred_tbl$term)
 p_prob = paste0("p_prob", 1:4)
 
+my_color2 = c("#8da0cb", "#e78ac3")
 
 for (i in seq_along(milestone_terms)) {
  p = bin_mean_pred_tbl %>%
@@ -334,7 +335,7 @@ for (i in seq_along(milestone_terms)) {
              position = position_dodge(width = 0.55), width = 0.5) +
     # scale_color_manual(values = my_color) +
     geom_errorbar(aes(ymin = conf.low, ymax = conf.high), alpha = 0.7, position = position_dodge(width = 0.55), width = .2,show.legend = FALSE) +
-    scale_fill_manual(values = c('firebrick', 'darkgrey'))+
+    scale_fill_manual(values = my_color2)+
     
     labs(title = str_to_title(milestone_terms[i]),
          y = "",
@@ -353,8 +354,6 @@ for (i in seq_along(milestone_terms)) {
 }
 
 # 3. combine OR and Prob -----
-
-
 g = grid.arrange(p_or1, p_prob1 ,ncol=2)
 ggsave(file="images/comb_overall_mean.png", g)
 
