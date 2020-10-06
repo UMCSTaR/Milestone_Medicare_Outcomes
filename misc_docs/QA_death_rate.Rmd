@@ -224,12 +224,12 @@ data.frame(yoe = c(1, 5, 10, 15),
 
 4% predicted probabilities were based on model and assumed fixed values for each covariate. It's different from the observed mortality rate.
 
-To get predicted death probability of an *Average Patient*, all the covariates values are fixed at average values. For Categorical variables, it's fixed at the reference level. So the predicted probabilities can vary. For example, if the the emergency admission status was fixed at elective surgery, then the predicted probability would probability be lower than observed rate.
+To get predicted death probability of an *Average Patient*, all the covariates values are fixed at average values. For Categorical variables, it's fixed at the reference level. So the predicted probabilities can vary. For example, if the the emergency admission status was fixed at elective surgery, the predicted probability would be lower than observed rate.
 
 ## 3. Reasons why mortality rates are so high in medicare
 
 Just some thoughts of why mortality rates are high in our medicare cohort
 
--   Medicare >65 yr
--   30-days mortality is not defined by procedure at all. So the death can be totally unrelated to the procedure.
--   The medicare claim files we used are inpatient MedPAR. So all the patients in medicare analytic file were inpatient. So their conditional are usually more severe than outpatient.
+-   Medicare \>65 yr
+-   30-days mortality is not defined by procedures at all. So the death can be totally unrelated to the procedure.
+-   The medicare claim files we used are inpatient MedPAR. So all the patients in medicare analytic file had inpatient stays. So their conditions are usually more severe.
