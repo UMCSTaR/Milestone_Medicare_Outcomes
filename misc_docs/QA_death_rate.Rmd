@@ -1,0 +1,235 @@
+---
+title: "QA_death_rate"
+subtitle: "QA the mortality rate in milestone medicare outcomes"
+author: "Xilin Chen"
+date: "10/6/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = F,                                     # code
+  message = F,
+  warning = F,
+  error = F,
+  comment = NA,
+  R.options = list(width = 220),
+  dev.args = list(bg = 'transparent'),          # viz
+  fig.align = 'center',
+  cache = F
+)
+
+kable_df <- function(..., digits = 3) {
+  kable(
+    ...,
+    format = 'latex',
+    booktabs = TRUE,
+    linesep = '',  # removes spacing every 5 lines
+    digits = digits
+  ) %>%
+    kable_styling(full_width = FALSE)
+}
+
+source("~/Documents/Repo/Medicare_analytics_ECS/code/functions/prep_data_for_model.R")
+
+library(tidyverse)
+library(kableExtra)
+```
+
+## 1. Compare descriptive stats among different cohorts
+
+### Cohort Description
+
+-   Milestone Medicare
+
+    -   2015-2017 medicare cases by milestone graduates from 2015-2017 within 24 months after graduation
+    -   Partial Colectomy
+
+-   ECV
+
+    -   2006 - 2016 medicare cases by general surgery surgeons within 35 years of practice
+    -   Partial Colectomy
+
+-   Medicare 2007-2016
+
+    -   Medicare 5 procedures from 2007 to 2016 standardized using SAS
+
+-   Medicare 2007-2017
+
+    -   Medicare 5 procedures from 2007 to 2017 standardized using R
+
+```{r load_data, cache=TRUE}
+# milestone -------
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_ratings.rdata")
+
+# ECV-------
+ecv =  qs::qread('/Volumes/George_Surgeon_Projects/early_career_variability/medicare_ecv_model_ready.qs')
+
+# medicare 06-16------
+medicare_06_16 = load("/Volumes/George_Surgeon_Projects/archived_projects/medicare_data/xilin_analytic_file/add_cmb_and_selected_vars/full_analytic_data.rdata")
+
+# medicare 07-17------
+medicare_06_17 = data.table::fread("/Volumes/George_Surgeon_Projects/standardized_medicare_data_using_R/analysis_ready_data/analytic_selected_vars.csv")
+
+```
+
+```{r data_process}
+# milestone ------
+milestone_medicare_pc = milestone_medicare_ratings %>% 
+  mutate(hosp_beds = case_when(hosp_beds_2grp == 0 ~ "<350",
+                               hosp_beds_2grp == 1 ~ ">=350")) %>% 
+  filter(!is.na(IntResponseValue_mean),
+         month <= 24)
+
+milestone_medicare_pc = milestone_medicare_pc %>% 
+  mutate(flg_cmp_po_any_not_poa = as.numeric(flg_cmp_po_any_not_poa),
+         flg_cmp_po_severe_not_poa = as.numeric(flg_cmp_po_severe_not_poa)) 
+
+# medicare 2006-2017 ------
+medicare_06_17 = medicare_06_17 %>%
+  mutate(
+    flg_cmp_po_any_not_poa = as.numeric(flg_cmp_po_any_not_poa),
+    flg_cmp_po_severe_not_poa = as.numeric(flg_cmp_po_severe_not_poa)
+  )
+
+# medicare 2006-2016 ------
+medicare_06_16 = analytic_data
+
+#ECV -------
+ecv = ecv %>% 
+      prep_data_for_model(
+        cohort = c(
+          "id_physician_npi != ''",
+          '!is.na(val_yr_practice)',
+          # 'surgeon_N_cases >= 10',
+          'val_yr_practice >= 0 & val_yr_practice <= 35',
+          "proc_Partial_Colectomy == 1"
+        ),
+        one_hot = NULL,
+        standardize = NULL
+      ) 
+```
+
+**Descriptive Stats**
+
+```{r cmp_tbl}
+milestone_tbl1 = milestone_medicare_pc %>%
+  summarise(
+    n_case = n(),
+    n_surgeon = length(unique(id_physician_npi)),
+    n_hosp = length(unique(facility_prvnumgrp)),
+    n_patient = length(unique(member_id)),
+    POA_severe_cmp_rate = mean(flg_cmp_po_severe_not_poa, na.rm = T),
+    # severe_cmp_rate = sum(flg_cmp_po_severe)/n_case,
+    # any_cmp_rate = sum(flg_cmp_po_any)/n_case,
+    death_rate = sum(flg_death_30d) / n_case,
+    readmit_rate = sum(flg_readmit_30d) / n_case,
+    reop_rate = sum(flg_util_reop) / n_case
+  ) %>%
+  mutate_at(vars(contains("rate")), scales::percent_format()) %>% 
+  mutate(cohort = "milestone") %>% 
+  select(cohort, everything())
+
+# medicare 2006-2017
+medicare_06_17_tbl1 = medicare_06_17 %>%
+  summarise(
+    n_case = n(),
+    n_surgeon = length(unique(id_physician_npi)),
+    n_hosp = length(unique(facility_prvnumgrp)),
+    n_patient = length(unique(member_id)),
+    POA_severe_cmp_rate = mean(flg_cmp_po_severe_not_poa, na.rm = T),
+    # severe_cmp_rate = sum(flg_cmp_po_severe)/n_case,
+    # any_cmp_rate = sum(flg_cmp_po_any)/n_case,
+    death_rate = sum(flg_death_30d) / n_case,
+    readmit_rate = sum(flg_readmit_30d) / n_case,
+    reop_rate = sum(flg_util_reop) / n_case
+  ) %>%
+  mutate_at(vars(contains("rate")), scales::percent_format()) %>% 
+  mutate(cohort = "medicare_06_17") %>% 
+  select(cohort, everything())
+
+
+ecv_tbl1 = ecv %>%
+  mutate(flg_cmp_po_severe_poa = ifelse(facility_clm_yr<2010, NA, flg_cmp_po_severe_poa),
+         flg_cmp_po_any = ifelse(facility_clm_yr<2010, NA, flg_cmp_po_any)) %>% 
+  summarise(
+    n_case = n(),
+    n_surgeon = length(unique(id_physician_npi)),
+    n_hosp = length(unique(facility_prvnumgrp)),
+    n_patient = length(unique(member_id)),
+    POA_severe_cmp_rate = mean(flg_cmp_po_severe_poa, na.rm = T),
+    # severe_cmp_rate = sum(flg_cmp_po_severe)/n_case,
+    # any_cmp_rate = sum(flg_cmp_po_any)/n_case,
+    death_rate = sum(flg_death_30d) / n_case,
+    readmit_rate = sum(flg_readmit_30d) / n_case,
+    reop_rate = sum(flg_util_reop) / n_case
+  ) %>%
+  mutate_at(vars(contains("rate")), scales::percent_format()) %>% 
+  mutate(cohort = "ecv") %>% 
+  select(cohort, everything()) 
+  
+# medicare 06-16
+medicare_06_16_tbl1 = medicare_06_16 %>% 
+  mutate(flg_cmp_po_severe_poa = ifelse(facility_clm_yr<2010, NA, flg_cmp_po_severe_poa),
+         flg_cmp_po_any = ifelse(facility_clm_yr<2010, NA, flg_cmp_po_any)) %>% 
+  summarise(
+    n_case = n(),
+    n_surgeon = length(unique(id_physician_npi)),
+    n_hosp = length(unique(facility_prvnumgrp)),
+    n_patient = length(unique(member_id)),
+    POA_severe_cmp_rate = mean(flg_cmp_po_severe_poa, na.rm = T),
+    # severe_cmp_rate = sum(flg_cmp_po_severe)/n_case,
+    # any_cmp_rate = sum(flg_cmp_po_any)/n_case,
+    death_rate = sum(flg_death_30d) / n_case,
+    readmit_rate = sum(flg_readmit_30d) / n_case,
+    reop_rate = sum(flg_util_reop) / n_case
+  ) %>%
+  mutate_at(vars(contains("rate")), scales::percent_format()) %>% 
+  mutate(cohort = "medicare06_16") %>% 
+  select(cohort, everything()) 
+
+
+```
+
+compare descriptive stats among different datasets
+
+```{r combine}
+df = rbind(milestone_tbl1 ,ecv_tbl1, medicare_06_16_tbl1, medicare_06_17_tbl1)
+
+as_tibble(cbind(` ` = names(df), t(df))) %>%
+  rename(milestone = V2, ecv = V3, medicare06_16 = V4, medicare06_17 = V5) %>%
+  slice(-1) %>%
+  kable() %>%
+  kable_styling(full_width = F)
+```
+
+\pagebreak
+
+## 2. Compare with ECV predicted probabilities of 30-days mortality
+
+```{r load_pred}
+death_30days_pred = read_rds("~/Documents/Repo/Medicare_analytics_ECS/other_docs/model_docs/death_30d/partial_colectomy/prediction_results_gam.RDS")
+```
+
+I think the 4% mortality rate Brian was referring to for the ECV project was from the predicted probabilities as below. The full report can be found at [**repo**](https://github.com/UMCSTaR/Medicare_analytics_ECS/blob/master/other_docs/model_docs/death_30d/partial_colectomy/death_30d_pc_gam_results.pdf).
+
+```{r pred_tbl}
+data.frame(yoe = c(1, 5, 10, 15),
+           death_30days_pred) %>%
+  rename(`Years Experience` = yoe,
+         predicted = fit) %>%
+  kable(digits = 3) %>%
+  kable_styling(full_width = F)
+```
+
+4% predicted probabilities were based on model and assumed fixed values for each covariate. It's different from the observed mortality rate.
+
+To get predicted death probability of an *Average Patient*, all the covariates values are fixed at average values. For Categorical variables, it's fixed at the reference level. So the predicted probabilities can vary. For example, if the the emergency admission status was fixed at elective surgery, then the predicted probability would probability be lower than observed rate.
+
+## 3. Reasons why mortality rates are so high in medicare
+
+Just some thoughts of why mortality rates are high in our medicare cohort
+
+-   Medicare >65 yr
+-   30-days mortality is not defined by procedure at all. So the death can be totally unrelated to the procedure.
+-   The medicare claim files we used are inpatient MedPAR. So all the patients in medicare analytic file were inpatient. So their conditional are usually more severe than outpatient.
