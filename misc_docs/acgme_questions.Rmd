@@ -1,0 +1,85 @@
+---
+title: "ACGME Summary Questions"
+author: "Xilin Chen"
+date: "11/18/2020"
+output: pdf_document
+---
+```{r setup, include=FALSE}
+# this report was to answer questions from acgme base on the summary we shared with them
+knitr::opts_chunk$set(
+  echo = F,                                     # code
+  message = F,
+  warning = F,
+  error = F,
+  comment = NA,
+  R.options = list(width = 220),
+  dev.args = list(bg = 'transparent'),          # viz
+  fig.align = 'center',
+  cache = F
+)
+
+library(tidyverse)
+library(gtsummary)
+```
+
+```{r data}
+load("data/person_values.rdata")
+```
+
+
+## Q1: Differences between excluded milestone cohort and cohort included in analysis
+
+*Milestones rating for each sub-competency is different between the 3001 (=3521-520) and 520 residents in terms of distribution.  Were the latter residents rated lower or higher than the former group?*
+
+
+```{r}
+person_values %>% 
+  select(final_cohort, IntResponseValue_mean, mean_ge_8,prof_rating_mean,
+         prof_rating_ge8, operative_rating_mean, operative_rating_ge8,
+         leadership_rating_mean, leadership_rating_ge8) %>% 
+  mutate(final_cohort = ifelse(final_cohort ==1, "Included", "Excluded")) %>% 
+  tbl_summary(by = final_cohort,
+              missing = "no",
+              label = list(IntResponseValue_mean ~ "Overall",
+                           mean_ge_8 ~ "Overall >=8",
+                           prof_rating_mean ~ "Professional",
+                           prof_rating_ge8 ~ "Professional >=8",
+                           operative_rating_mean ~ "Operative",
+                           operative_rating_ge8 ~ "Operative >=8",
+                           leadership_rating_mean~ "Leadership",
+                           leadership_rating_ge8~ "Leadership >=8")) %>% 
+  modify_header(label = "**Rating**") %>% # update the column header
+  bold_labels() %>% 
+  add_p() %>% 
+  as_gt() %>%
+  gt::tab_source_note(gt::md("*>=8: dichotomizing the mean ratings as 1: >=8; 0:<8.*"))
+```
+
+
+
+The reason the excluded from original cohort had 2,978 trainees instead of 3,001 was that 23 trainees didn't have "Year-end" ratings when they are at PGY5. So they were excluded.
+
+We eventually decided to use the binary milestone ratings for our model analysis. I think from the table comparison above, there were no significant differences between the original group and the cohort we used. 
+
+
+## Q2: How did we define the ratings at the time of their graduation?
+
+*We examined the most proximal Milestone ratings for each trainee to the time of their graduation. Does this mean that there were missing Milestones ratings for some trainees at the time of graduation? *
+
+A small number of trainees didn't have last year graduation ratings and were excluded. The way we defined the time of graduation was *resident year = 5* and *eval period = "Year-End Milestone Evaluations"*.  Also, about 2% trainees in the original cohort had 2 academic years associated with PGY5, we kept the most recent academic year as their final graduation year. In our final cohort, 3/520 had 2 PGY5 academic year in the raw data. Overall, the data quality was pretty good.
+
+\pagebreak
+
+## Q3: How did we define the clustering stucture in our data?
+
+*Are patients completed nested within surgeons, who in turn are completely nested within hospitals?  Could surgeons join multiple hospitals?  Could patients be seen by multiple physicians and those data be included in the dataset?*
+
+Patients were not considered completely nested within surgeons, or surgeons within hospitals. We simply hypothesized that the observations within the same hospital or the same physician are not independent. So, no observations were excluded based on their clustering structure. 
+
+In the mixed model setting, it doesn't matter if the data are strictly hierarchical, which is a special case of clustering, or crossed. The mixed model package lme4 and some other tools doesn't treat "nested" or "crossed" data any differently. The same computational methods are used whether the patients nested or not nested within physicians and hospitals.
+
+
+
+
+
+

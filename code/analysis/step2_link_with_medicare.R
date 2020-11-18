@@ -46,6 +46,9 @@ person_year %>%
 person_year_15_17 = person_year %>% 
   filter(grad_year <=2017)
 
+# save data
+write_csv(person_year_15_17, "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/all_grads_15_17.csv")
+
 person_year_15_17 %>% 
   count(grad_year, name = "n trainees")
 
@@ -53,6 +56,7 @@ n_distinct(person_year_15_17$PersonID) #3521
 
 milestone_person_15_17 = milestone_person %>% 
   filter(PersonID %in% person_year_15_17$PersonID)
+
 
 
 # # load medicare data
