@@ -1,0 +1,169 @@
+---
+title: "PGY4 Ratings"
+author: "Xilin Chen"
+date: "11/19/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+# this report was to answer questions from acgme base on the summary we shared with them
+knitr::opts_chunk$set(
+  echo = F,                                     # code
+  message = F,
+  warning = F,
+  error = F,
+  comment = NA,
+  R.options = list(width = 220),
+  dev.args = list(bg = 'transparent'),          # viz
+  fig.align = 'center',
+  cache = F
+)
+
+library(tidyverse)
+library(kableExtra)
+library(gtsummary)
+
+source("~/Documents/Repo/Milestone_Medicare_Outcomes/code/functions/milestone_rating.R")
+```
+
+
+
+
+```{r lod_data}
+# before filter raw data
+raw_pgy4 = read_csv("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/pgy4_ratings/all_grads_15_17.csv")
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/pgy4_ratings/milestone_pgy4_year.rdata")
+
+# after filtered data
+# milestone ratings wit medicare
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/pgy4_ratings/milestone_medicare_ratings.rdata")
+```
+
+
+## 1. Data source
+
+### Milestones
+
+From ACGME
+
+*Data for the residents who graduated in 2015, 2016, 2017, and 2018 (all PGY 5 residents in June of each year) (along with their corresponding previous years’ ratings).  This means that if residents started as PGY 1 resident in July 2015, for example, their expected graduation is in June 2020.  Since their graduation is after June 2018, this cohort of residents’ data is not included in the dataset.*
+
+year of graduation = academic year + 2
+
+### Medicare
+
+Partial Colectomy up to 2017
+
+## 2. Descriptive
+
+<!-- ### 2.1 Raw person data before filters -->
+
+<!-- ```{r raw_person} -->
+<!-- raw_pgy4 %>% -->
+<!--   count(residentyear, grad_year, name = "n surgeons") %>%  -->
+<!--   kable() %>%  -->
+<!--   kable_paper(full_width = F) -->
+
+<!-- # ratings -->
+<!-- # only keep end year evaluations -->
+<!-- person_values = milestone_pgy4_year %>%  -->
+<!--   mutate(IntResponseValue = ifelse(IntResponseValue ==0, NA, IntResponseValue)) %>%  -->
+<!--   filter(grepl("Year-End",eval_peroid), -->
+<!--          PersonID %in% raw_pgy4$PersonID) %>%  -->
+<!--   milestone_ratings() -->
+<!-- ``` -->
+
+<!-- **Year-end ratings for all PGY4 trainees by category** -->
+
+<!-- ```{r} -->
+<!-- person_values %>% -->
+<!--   select( -->
+<!--     IntResponseValue_mean, -->
+<!--     mean_ge_8, -->
+<!--     prof_rating_mean, -->
+<!--     prof_rating_ge8, -->
+<!--     operative_rating_mean, -->
+<!--     operative_rating_ge8, -->
+<!--     leadership_rating_mean, -->
+<!--     leadership_rating_ge8 -->
+<!--   ) %>% -->
+<!--   tbl_summary( -->
+<!--     missing = "no", -->
+<!--     label = list( -->
+<!--       IntResponseValue_mean ~ "Overall", -->
+<!--       mean_ge_8 ~ "Overall >=8", -->
+<!--       prof_rating_mean ~ "Professional", -->
+<!--       prof_rating_ge8 ~ "Professional >=8", -->
+<!--       operative_rating_mean ~ "Operative", -->
+<!--       operative_rating_ge8 ~ "Operative >=8", -->
+<!--       leadership_rating_mean ~ "Leadership", -->
+<!--       leadership_rating_ge8 ~ "Leadership >=8" -->
+<!--     ) -->
+<!--   ) %>% -->
+<!--   modify_header(label = "**Rating**") %>% # update the column header -->
+<!--   bold_labels() %>%  -->
+<!--   as_gt() -->
+
+<!-- ggplot(data =person_values) + -->
+<!--   geom_bar(aes(x = IntResponseValue_mean), stat = "count", color = "blue") + -->
+<!--   labs(x = "overall ratings", -->
+<!--        y = "n trainees") + -->
+<!--   theme_minimal() -->
+
+<!-- ``` -->
+
+
+### 2.2 After filtered milestone data with linked medicare 
+
+```{r}
+milestone_medicare_ratings %>% 
+  distinct(residentyear, grad_year, id_physician_npi) %>% 
+  count(residentyear, grad_year, name = "n_surg") %>% 
+  kable() %>% 
+  kable_paper(full_width = F)
+```
+
+```{r}
+person_values_flg = person_values %>%
+  mutate(included = ifelse(PersonID %in% milestone_medicare_ratings$PersonID, "included", "excluded")) 
+
+person_values_flg %>%  
+  select(
+    included,
+    IntResponseValue_mean,
+    mean_ge_8,
+    prof_rating_mean,
+    prof_rating_ge8,
+    operative_rating_mean,
+    operative_rating_ge8,
+    leadership_rating_mean,
+    leadership_rating_ge8
+  ) %>%
+  tbl_summary(
+    by = "included",
+    missing = "no",
+    label = list(
+      IntResponseValue_mean ~ "Overall",
+      mean_ge_8 ~ "Overall >=8",
+      prof_rating_mean ~ "Professional",
+      prof_rating_ge8 ~ "Professional >=8",
+      operative_rating_mean ~ "Operative",
+      operative_rating_ge8 ~ "Operative >=8",
+      leadership_rating_mean ~ "Leadership",
+      leadership_rating_ge8 ~ "Leadership >=8"
+    )
+  ) %>%
+  modify_header(label = "**Rating**") %>% # update the column header
+  bold_labels() %>% 
+  add_p() %>% 
+  as_gt()
+# 
+# ggplot(data = person_values_flg %>% filter(included == "included")) +
+#   geom_bar(aes(x = IntResponseValue_mean), stat = "count", color = "blue") +
+#   labs(x = "overall ratings",
+#        y = "n trainees") +
+#   theme_minimal()
+```
+
+
+

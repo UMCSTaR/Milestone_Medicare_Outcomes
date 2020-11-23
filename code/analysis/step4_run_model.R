@@ -6,23 +6,24 @@ library(tidyverse)
 library(purrr)
 
 # load data
-load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_ratings.rdata")
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/pgy4_ratings/milestone_medicare_ratings.rdata")
 
-# # fix AHRQ score
-# ahrq = read_csv("/Volumes/George_Surgeon_Projects/standardized_medicare_data_using_R/analytic/full_data/archive/ahrq.csv")
+# fix AHRQ score
+# only need once
+# ahrq = read_csv("/Volumes/George_Surgeon_Projects/standardized_medicare_data_using_R/analytic/full_data/Archived/ahrq.csv")
 # 
-# milestone_medicare_ratings = milestone_medicare_ratings %>% 
+# milestone_medicare_ratings = milestone_medicare_ratings %>%
 #   select(-AHRQ_score) %>%
-#   left_join(ahrq) 
+#   left_join(ahrq)
 # 
-# milestone_medicare_ratings = milestone_medicare_ratings %>% 
+# milestone_medicare_ratings = milestone_medicare_ratings %>%
 #   mutate(AHRQ_score_scale = scale(AHRQ_score),
 #          AHRQ_score_scale = as.numeric(AHRQ_score_scale))
 # 
-# save(milestone_medicare_ratings, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_ratings.rdata")
+# save(milestone_medicare_ratings, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/pgy4_ratings/milestone_medicare_ratings.rdata")
 
 # data process
-n_months = 36
+n_months = 24
 
 main_data = milestone_medicare_ratings %>% 
   filter(month<=n_months)
@@ -91,17 +92,17 @@ source("code/functions/run_model.R")
 
 # milestone ratings --------
 primaries = c(
-  "IntResponseValue_mean",
-  "never_less_8_rating",
+  # "IntResponseValue_mean",
+  # "never_less_8_rating",
   "mean_ge_8",  
   
-  "prof_rating_mean",
+  # "prof_rating_mean",
   "prof_rating_ge8",    
   
-  "operative_rating_mean",
+  # "operative_rating_mean",
   "operative_rating_ge8",        
                    
-  "leadership_rating_mean",
+  # "leadership_rating_mean",
   "leadership_rating_ge8"     
 )
 
@@ -175,7 +176,8 @@ model_name = model_ls %>%
   mutate(model_name = paste(proc_name, outcome, pred, sep = "_")) %>% 
   pull(model_name)
 
-
+# note only for binary outcomes
+# family was fixed at binomial
 results = pmap(list(formula = model_ls$fs,
                     method = model_ls$ml,
                     proc = model_ls$proc), run_models)
@@ -183,18 +185,18 @@ results = pmap(list(formula = model_ls$fs,
 names(results) = model_name
 
 # example
-summary(results$Par_severe_cmp_all_mean)
+summary(results$Par_severe_cmp_prof_ge8)
 
 # save model ---------
 if (n_months == 12) {
   save(results,
-       file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month12_pc.rdata")
+       file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/pgy4_ratings/model/models_month12_pc.rdata")
 } else if (n_months == 24) {
   save(results,
-       file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month24_pc.rdata")
+       file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/pgy4_ratings/model/models_month24_pc.rdata")
 } else if (n_months == 36) {
   save(results,
-       file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_non_limit_pc.rdata")
+       file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/pgy4_ratings/model/models_non_limit_pc.rdata")
 }
 
 # QA death-------
@@ -207,6 +209,6 @@ model_univariate_death = glm(
 
 
 uni_death_model_no_limit_model_sum = broom::tidy(model_univariate_death)
-
-save(uni_death_model_no_limit, file = "data/uni_death_model_no_limit_model.rdata")
+# 
+# save(uni_death_model_no_limit, file = "data/uni_death_model_no_limit_model.rdata")
 

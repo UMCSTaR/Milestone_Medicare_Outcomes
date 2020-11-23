@@ -1,0 +1,195 @@
+---
+title: "PGY4 Ratings"
+author: "Xilin Chen"
+date: "11/20/2020"
+output: pdf_document
+---
+
+
+```{r setup, include=FALSE}
+# this report was to answer questions from acgme base on the summary we shared with them
+knitr::opts_chunk$set(
+  echo = F,                                     # code
+  message = F,
+  warning = F,
+  error = F,
+  comment = NA,
+  R.options = list(width = 220),
+  dev.args = list(bg = 'transparent'),          # viz
+  fig.align = 'center',
+  cache = F
+)
+
+library(tidyverse)
+library(kableExtra)
+library(gtsummary)
+library(glmmTMB)
+library(mixedup)
+
+source("~/Documents/Repo/Milestone_Medicare_Outcomes/code/functions/milestone_rating.R")
+
+tbl1 <- function(data) {
+  data %>% 
+    mutate(flg_cmp_po_severe_not_poa = as.numeric(flg_cmp_po_severe_not_poa),
+           flg_cmp_po_any_not_poa = as.numeric(flg_cmp_po_any_not_poa)) %>% 
+    summarise(n_case = n(),
+              n_surgeon = length(unique(id_physician_npi)),
+              n_hosp = length(unique(facility_prvnumgrp)),
+              n_patient = length(unique(member_id)),
+              POA_severe_complication_rate = sum(flg_cmp_po_severe_not_poa)/n_case,
+              # severe_complication_rate = sum(flg_cmp_po_severe)/n_case,
+              POA_any_complication_rate = sum(flg_cmp_po_any_not_poa)/n_case,
+              # any_complication_rate = sum(flg_cmp_po_any)/n_case,
+              death_rate = sum(flg_death_30d)/n_case,
+              readmit_rate = sum(flg_readmit_30d)/n_case,
+              reop_rate = sum(flg_util_reop)/n_case) %>% 
+    mutate_at(vars(contains("rate")), scales::percent_format()) 
+}
+
+```
+
+## Case differences PGY4 vs PGY5
+
+
+```{r}
+# PGY4
+load(
+  "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/pgy4_ratings/milestone_medicare_ratings.rdata"
+)
+pgy4 = milestone_medicare_ratings %>%
+  mutate(hosp_beds = case_when(hosp_beds_2grp == 0 ~ "<350",
+                               hosp_beds_2grp == 1 ~ ">=350")) %>%
+  filter(!is.na(IntResponseValue_mean),
+         month <= 24)
+
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/pgy4_ratings/model/models_month24_pc.rdata")
+model_pgy4 = results
+
+# PGY5
+load(
+  "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_ratings.rdata"
+)
+pgy5 = milestone_medicare_ratings %>%
+  mutate(hosp_beds = case_when(hosp_beds_2grp == 0 ~ "<350",
+                               hosp_beds_2grp == 1 ~ ">=350")) %>%
+  filter(!is.na(IntResponseValue_mean),
+         month <= 24) 
+
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month24_pc.rdata")
+model_pgy5 = results
+
+
+rm(milestone_medicare_ratings)
+rm(results)
+```
+
+
+```{r}
+rbind(tbl1(data = pgy5) %>%
+        mutate(` ` = "PGY5"),
+      tbl1(data = pgy4) %>%
+        mutate(` ` = "PGY4")) %>% 
+  select(` `, everything()) %>% 
+  t() %>% 
+  kable() %>% 
+  kable_paper(full_width = F)
+```
+
+
+## Rating differences PGY4 vs PGY5
+
+```{r}
+ratings_var = c("PersonID",
+    "IntResponseValue_mean",
+    "mean_ge_8",
+    "prof_rating_mean",
+    "prof_rating_ge8",
+    "operative_rating_mean",
+    "operative_rating_ge8",
+    "leadership_rating_mean",
+    "leadership_rating_ge8")
+
+
+
+rbind(
+  pgy4 %>%
+    select(ratings_var) %>%
+    distinct() %>%
+    mutate(PGY = "PGY4"),
+  
+  pgy5 %>%
+    select(ratings_var) %>%
+    distinct() %>%
+    mutate(PGY = "PGY5")
+) %>%
+  select(-PersonID) %>%
+  tbl_summary(
+    by = PGY,
+    missing = "no",
+    label = list(
+      IntResponseValue_mean ~ "Overall",
+      mean_ge_8 ~ "Overall >=8",
+      prof_rating_mean ~ "Professional",
+      prof_rating_ge8 ~ "Professional >=8",
+      operative_rating_mean ~ "Operative",
+      operative_rating_ge8 ~ "Operative >=8",
+      leadership_rating_mean ~ "Leadership",
+      leadership_rating_ge8 ~ "Leadership >=8"
+    )
+  ) %>%
+  modify_header(label = "**Rating**") %>% # update the column header
+  bold_labels() %>%
+  as_gt()
+```
+
+\pagebreak
+
+## Model results for binary ratings
+
+Compare PGY4 vs. PGY5 milestone ratings vs. outcomes.
+Outcome: Binary 1: >=8 vs. 0: <8
+
+
+```{r}
+pgy5_or = map_df(model_pgy5, extract_fixed_effects, .id = "outcome") %>% 
+  filter(str_detect(term, "ge8|ge_8")) %>% 
+  mutate(
+    OR = exp(value),
+    OR_lower = exp(lower_2.5),
+    OR_upper = exp(upper_97.5)
+  ) %>% 
+   mutate(outcome = str_remove_all(outcome, pattern = c("Par_|_mean_ge_8|_ge8|_prof|_leadership|_operative")),
+         term = case_when(term == "mean_ge_8" ~ "overall_mean",
+                          term == "prof_rating_ge8" ~ "professional",
+                          term == "operative_rating_ge8" ~ "operative",
+                          term == "leadership_rating_ge8" ~ "leadership")) %>%
+  mutate(year = "PGY5") %>% 
+  select(outcome, year, term, OR, contains("OR"), p_value) 
+
+pgy4_or = map_df(model_pgy4, extract_fixed_effects, .id = "outcome") %>% 
+  filter(str_detect(term, "ge8|ge_8")) %>% 
+  mutate(
+    OR = exp(value),
+    OR_lower = exp(lower_2.5),
+    OR_upper = exp(upper_97.5)
+  ) %>% 
+   mutate(outcome = str_remove_all(outcome, pattern = c("Par_|_mean_ge_8|_ge8|_prof|_leadership|_operative")),
+         term = case_when(term == "mean_ge_8" ~ "overall_mean",
+                          term == "prof_rating_ge8" ~ "professional",
+                          term == "operative_rating_ge8" ~ "operative",
+                          term == "leadership_rating_ge8" ~ "leadership")) %>%
+  mutate(year = "PGY4") %>% 
+  select(outcome, year, term, OR, contains("OR"), p_value)
+```
+
+
+```{r}
+rbind(pgy4_or, pgy5_or) %>% 
+  mutate_if(is.numeric,~round(.,2)) %>% 
+  mutate(`95% CI` = paste0("[", OR_lower, ", ", OR_upper, "]")) %>% 
+  select(outcome, year, rating = term, OR, `95% CI`, p_value) %>% 
+  kable(digits = 2) %>% 
+  kable_paper(full_width = F) %>% 
+  collapse_rows(columns = 1, valign = "top") 
+```
+

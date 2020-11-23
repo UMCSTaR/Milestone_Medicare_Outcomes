@@ -22,32 +22,34 @@ load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/abs_fellowship_npi.
 # non-us medical school students flag from AMA and ABS
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/non_us_npi.rdata")
 
-# milestone evaluation data
-load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_final_year.rdata")
+# milestone evaluation data for PGY 5
+# load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_final_year.rdata")
+
+# milestone evaluation data for PGY 4
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_pgy4_year.rdata")
 
 # keep pgy5 student
-person_year = milestone_final_year %>% 
-  filter(residentyear == 5) %>% 
+person_year = milestone_pgy4_year %>% 
   distinct(PersonID, residentyear, AcademicYear) %>% 
   arrange(PersonID, desc(AcademicYear)) %>% 
   group_by(PersonID) %>% 
   slice(1) %>% ungroup()
 
 # add graduation year
-# after checking, gradution year is academicyear+1
+# after checking, graduation year is academicyear+1
 person_year = person_year %>% 
   mutate(AcademicYear = as.numeric(AcademicYear)) %>% 
-  mutate(grad_year = AcademicYear+1)
+  mutate(grad_year = AcademicYear+2)
 
 person_year %>% 
-  count(grad_year, AcademicYear)
+  count(grad_year, AcademicYear, residentyear)
 
 # delete milestone grad year 2018, because no medicare data
 person_year_15_17 = person_year %>% 
   filter(grad_year <=2017)
 
 # save data
-write_csv(person_year_15_17, "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/all_grads_15_17.csv")
+write_csv(person_year_15_17, "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/pgy4_ratings/all_grads_15_17.csv")
 
 person_year_15_17 %>% 
   count(grad_year, name = "n trainees")
@@ -103,7 +105,7 @@ milestone_person_us_no_fellow %>%
 
 
 # 2.4 exclude fellowship from Carrier Specialty list -----
-load("/Volumes/George_Surgeon_Projects/standardized_medicare_data_using_R/analysis_ready_data/all_gs_splty.rdata")
+load("/Volumes/George_Surgeon_Projects/Surgeon Profile data/all_gs_splty.rdata")
 
 milestone_person_us_no_fellow =  milestone_person_us_no_fellow %>% 
   mutate(carrier_nppes_gs = ifelse(npi.linked %in% gs_splty_only,
@@ -124,6 +126,11 @@ milestone_person_us_nppes %>%
 # 
 # save(milestone_person_us_no_fellow, file = "data/milestone_person_us_no_fellow.rdata")
 
+
+# load medicare data
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/medicare_gs_by_abs.rdata")
+
+analytic_data = medicare_gs
 
 # join medicare with milestone by npi
 milestone_medicare = analytic_data %>% 
@@ -265,7 +272,7 @@ n_distinct(milestone_medicare$id_physician_npi) #951
 
 milestone_medicare_gs = milestone_medicare
 
-save(milestone_medicare_gs, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_gs.rdata")
+save(milestone_medicare_gs, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/pgy4_ratings/milestone_medicare_gs.rdata")
 
 # check graduation year
 milestone_medicare_gs %>% 
@@ -281,7 +288,7 @@ ggplot(data = milestone_medicare_gs, aes(x = month)) +
   # coord_cartesian(xlim = c(10, 15)) +
   theme_minimal()
 
-ggsave(filename = "images/month_after_grad_cases.png")
+# ggsave(filename = "images/month_after_grad_cases.png")
 
 # facility claim year and graduation 
 n_distinct(milestone_medicare_gs$id_physician_npi)
@@ -332,7 +339,7 @@ quantile(first12_cases$n)
 milestone_medicare_gs_1case = milestone_medicare_gs %>% 
   filter(id_physician_npi %in% first12_cases$id_physician_npi) 
 
-save(milestone_medicare_gs_1case, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/data_08_03/milestone_medicare_all_procedure_1case.rdata")
+save(milestone_medicare_gs_1case, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/pgy4_ratings/milestone_medicare_all_procedure_1case.rdata")
 
 # 6. only keep partial colectomy ------
 milestone_medicare_pc = milestone_medicare_gs_1case %>% 
@@ -341,29 +348,29 @@ milestone_medicare_pc = milestone_medicare_gs_1case %>%
 n_distinct(milestone_medicare_pc$id_physician_npi) #535
 nrow(milestone_medicare_pc)
 
-save(milestone_medicare_pc, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/data_08_03/milestone_medicare_pc.rdata")
+save(milestone_medicare_pc, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/pgy4_ratings/milestone_medicare_pc.rdata")
 
 
 # 6.1 partial colectomy by year------
 # 12 month-----
-milestone_medicare_pc_year1 = milestone_medicare_pc %>% 
-  filter(month<=12)
-
-n_distinct(milestone_medicare_pc_year1$id_physician_npi) #483; at least 1 case was based on 5 procedures; here is only PC
-
-nrow(milestone_medicare_pc_year1)
-
-save(milestone_medicare_pc_year1, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/data_08_03/milestone_medicare_pc_year1.rdata")
+# milestone_medicare_pc_year1 = milestone_medicare_pc %>% 
+#   filter(month<=12)
+# 
+# n_distinct(milestone_medicare_pc_year1$id_physician_npi) #483; at least 1 case was based on 5 procedures; here is only PC
+# 
+# nrow(milestone_medicare_pc_year1)
+# 
+# save(milestone_medicare_pc_year1, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/data_08_03/milestone_medicare_pc_year1.rdata")
 
 
 # 24 months-----
-milestone_medicare_pc_year2 = milestone_medicare_pc %>% 
-  filter(month<=24)
-
-n_distinct(milestone_medicare_pc_year2$id_physician_npi) #527; at least 1 case was based on 5 procedures; here is only PC
-
-nrow(milestone_medicare_pc_year2)
-
-save(milestone_medicare_pc_year2, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/data_08_03/milestone_medicare_pc_year2.rdata")
+# milestone_medicare_pc_year2 = milestone_medicare_pc %>% 
+#   filter(month<=24)
+# 
+# n_distinct(milestone_medicare_pc_year2$id_physician_npi) #527; at least 1 case was based on 5 procedures; here is only PC
+# 
+# nrow(milestone_medicare_pc_year2)
+# 
+# save(milestone_medicare_pc_year2, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/data_08_03/milestone_medicare_pc_year2.rdata")
 
 

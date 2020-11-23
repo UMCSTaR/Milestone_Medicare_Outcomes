@@ -7,12 +7,13 @@ library(tidyverse)
 
 # load data ------
 # medicare gs for colectomy
-load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/data_08_03/milestone_medicare_pc.rdata")
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/pgy4_ratings/milestone_medicare_pc.rdata")
 
 # milestone data
-load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_final_year.rdata")
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/pgy4_ratings/milestone_pgy4_year.rdata")
+milestone_final_year = milestone_pgy4_year
 
-n_distinct(milestone_medicare_pc$id_physician_npi) #534
+n_distinct(milestone_medicare_pc$id_physician_npi) #302
 
 # select last milestone records for medicare physician -------
 milestone_person_in_medicare = milestone_final_year %>% 
@@ -22,8 +23,8 @@ milestone_end_person_in_medicare  = milestone_person_in_medicare %>%
   filter(grepl("Year-End",eval_peroid))
 
 # check
-n_distinct(milestone_person_in_medicare$PersonID)  # 535
-n_distinct(milestone_end_person_in_medicare$PersonID)  #529
+n_distinct(milestone_person_in_medicare$PersonID)  # 302
+n_distinct(milestone_end_person_in_medicare$PersonID)  #301
 
 no_end_eval_person = milestone_person_in_medicare %>% 
   filter(!PersonID %in% milestone_end_person_in_medicare$PersonID) %>% 
@@ -31,7 +32,7 @@ no_end_eval_person = milestone_person_in_medicare %>%
   pull()
 
 length(no_end_eval_person)
-# 6 people don't have year-end eval, only mid-year eval
+# 1 people don't have year-end eval, only mid-year eval
 
 milestone_end_person_in_medicare$IntResponseValue = as.numeric(milestone_end_person_in_medicare$IntResponseValue)
 
@@ -152,5 +153,5 @@ milestone_medicare_ratings = milestone_medicare_ratings %>%
 
 n_distinct(milestone_medicare_ratings$PersonID) #529
 
-save(milestone_medicare_ratings, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_ratings.rdata")
+save(milestone_medicare_ratings, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/pgy4_ratings/milestone_medicare_ratings.rdata")
 

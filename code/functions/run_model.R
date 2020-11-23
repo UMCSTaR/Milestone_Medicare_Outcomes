@@ -51,7 +51,7 @@ run_models <- function(
     model = brms::brm(
       formula = f,
       data = data,
-      family = 'binomial',
+      family = 'bernoulli',
       cores = 2,  # this will max out total cores used given 6 outcomes
       verbose = FALSE,
       ...

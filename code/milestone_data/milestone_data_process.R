@@ -73,8 +73,13 @@ n_distinct(milestone$PersonID)  #4720
 milestone_final_year = milestone %>% 
   filter(residentyear == 5)
 
+# PGY 4 milestone rating
+milestone_pgy4_year = milestone %>% 
+  filter(residentyear == 4)
+
 # check
 n_distinct(milestone_final_year$PersonID)  # 4718
+n_distinct(milestone_pgy4_year$PersonID)  # 3553
 
 # any duplicate
 milestone_final_year %>% 
@@ -82,6 +87,13 @@ milestone_final_year %>%
   add_count(PersonID) %>% 
   filter(n>1)
 
+milestone_pgy4_year %>% 
+  distinct(PersonID, residentyear) %>% 
+  add_count(PersonID) %>% 
+  filter(n>1)
 
+# PHY5 evaluations
 save(milestone_final_year, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_final_year.rdata")
+# PGY4 evaluations
+save(milestone_pgy4_year, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/pgy4_ratings/milestone_pgy4_year.rdata")
 

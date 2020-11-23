@@ -2,7 +2,7 @@
 title: "Milestones and Medicare Outcome Analysis Summary"
 date: "`r Sys.Date()`"
 output: 
-  word_document:
+  pdf_document:
         toc: yes
         toc_depth: 5
 ---
@@ -66,9 +66,9 @@ Milestones vs Medicare outcomes cohort details
 
 
 ```{r load_data, cache=TRUE}
-load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_ratings.rdata")
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/pgy4_ratings/milestone_medicare_ratings.rdata")
 # model
-load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month24_pc.rdata")
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/pgy4_ratings/model/models_month24_pc.rdata")
 
 
 # keep valid rating score
