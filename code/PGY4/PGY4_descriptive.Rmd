@@ -56,61 +56,61 @@ Partial Colectomy up to 2017
 
 ## 2. Descriptive
 
-<!-- ### 2.1 Raw person data before filters -->
+### 2.1 Raw person data before filters
 
-<!-- ```{r raw_person} -->
-<!-- raw_pgy4 %>% -->
-<!--   count(residentyear, grad_year, name = "n surgeons") %>%  -->
-<!--   kable() %>%  -->
-<!--   kable_paper(full_width = F) -->
+```{r raw_person}
+raw_pgy4 %>%
+  count(residentyear, grad_year, name = "n surgeons") %>%
+  kable() %>%
+  kable_paper(full_width = F)
 
-<!-- # ratings -->
-<!-- # only keep end year evaluations -->
-<!-- person_values = milestone_pgy4_year %>%  -->
-<!--   mutate(IntResponseValue = ifelse(IntResponseValue ==0, NA, IntResponseValue)) %>%  -->
-<!--   filter(grepl("Year-End",eval_peroid), -->
-<!--          PersonID %in% raw_pgy4$PersonID) %>%  -->
-<!--   milestone_ratings() -->
-<!-- ``` -->
+# ratings
+# only keep end year evaluations
+person_values = milestone_pgy4_year %>%
+  mutate(IntResponseValue = ifelse(IntResponseValue ==0, NA, IntResponseValue)) %>%
+  filter(grepl("Year-End",eval_peroid),
+         PersonID %in% raw_pgy4$PersonID) %>%
+  milestone_ratings()
+```
 
-<!-- **Year-end ratings for all PGY4 trainees by category** -->
+**Year-end ratings for all PGY4 trainees by category**
 
-<!-- ```{r} -->
-<!-- person_values %>% -->
-<!--   select( -->
-<!--     IntResponseValue_mean, -->
-<!--     mean_ge_8, -->
-<!--     prof_rating_mean, -->
-<!--     prof_rating_ge8, -->
-<!--     operative_rating_mean, -->
-<!--     operative_rating_ge8, -->
-<!--     leadership_rating_mean, -->
-<!--     leadership_rating_ge8 -->
-<!--   ) %>% -->
-<!--   tbl_summary( -->
-<!--     missing = "no", -->
-<!--     label = list( -->
-<!--       IntResponseValue_mean ~ "Overall", -->
-<!--       mean_ge_8 ~ "Overall >=8", -->
-<!--       prof_rating_mean ~ "Professional", -->
-<!--       prof_rating_ge8 ~ "Professional >=8", -->
-<!--       operative_rating_mean ~ "Operative", -->
-<!--       operative_rating_ge8 ~ "Operative >=8", -->
-<!--       leadership_rating_mean ~ "Leadership", -->
-<!--       leadership_rating_ge8 ~ "Leadership >=8" -->
-<!--     ) -->
-<!--   ) %>% -->
-<!--   modify_header(label = "**Rating**") %>% # update the column header -->
-<!--   bold_labels() %>%  -->
-<!--   as_gt() -->
+```{r}
+person_values %>%
+  select(
+    IntResponseValue_mean,
+    mean_ge_8,
+    prof_rating_mean,
+    prof_rating_ge8,
+    operative_rating_mean,
+    operative_rating_ge8,
+    leadership_rating_mean,
+    leadership_rating_ge8
+  ) %>%
+  tbl_summary(
+    missing = "no",
+    label = list(
+      IntResponseValue_mean ~ "Overall",
+      mean_ge_8 ~ "Overall >=8",
+      prof_rating_mean ~ "Professional",
+      prof_rating_ge8 ~ "Professional >=8",
+      operative_rating_mean ~ "Operative",
+      operative_rating_ge8 ~ "Operative >=8",
+      leadership_rating_mean ~ "Leadership",
+      leadership_rating_ge8 ~ "Leadership >=8"
+    )
+  ) %>%
+  modify_header(label = "**Rating**") %>% # update the column header
+  bold_labels() %>%
+  as_gt()
 
-<!-- ggplot(data =person_values) + -->
-<!--   geom_bar(aes(x = IntResponseValue_mean), stat = "count", color = "blue") + -->
-<!--   labs(x = "overall ratings", -->
-<!--        y = "n trainees") + -->
-<!--   theme_minimal() -->
+ggplot(data =person_values) +
+  geom_bar(aes(x = IntResponseValue_mean), stat = "count", color = "blue") +
+  labs(x = "overall ratings",
+       y = "n trainees") +
+  theme_minimal()
 
-<!-- ``` -->
+```
 
 
 ### 2.2 After filtered milestone data with linked medicare 

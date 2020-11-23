@@ -11,7 +11,7 @@ library(gridExtra)
 my_color = c("#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3")
 
 # load 24 months ------
-load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/pgy4_ratings/model/models_month24_pc.rdata")
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month24_pc.rdata")
 
 # round1------
 #1. OR ------
