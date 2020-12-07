@@ -22,7 +22,7 @@ load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_
 # save(milestone_medicare_ratings, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_ratings.rdata")
 
 # data process
-n_months = 36
+n_months = 24
 
 main_data = milestone_medicare_ratings %>% 
   filter(month<=n_months)
@@ -40,6 +40,43 @@ main_data =  main_data %>%
                     varname = 'flg_any_but_death') %>% 
   mutate(flg_any_but_death = as.integer(flg_any_but_death > 0),
          flg_any_but_death = ifelse(flg_death_30d, NA, flg_any_but_death))
+
+
+# GEE try------------------
+# library(geepack)
+# gee_dt = main_data %>% select(
+#   flg_cmp_po_severe_not_poa,
+#   mean_ge_8,
+#   flg_male,
+#   age_at_admit_scale,
+#   race_white,
+#   race_hisp_other,
+#   flg_admit_emerg,
+#   AHRQ_score_scale,
+#   ses_2grp,
+#   facility_clm_yr,
+#   flg_multi_surgeon,
+#   flg_assistant_surgeon,
+#   hosp_beds_2grp,
+#   val_hosp_mcday2inptday_ratio,
+#   val_hosp_rn2bed_ratio,
+#   id_physician_npi,
+#   cpt_cd
+# )
+# 
+# gee_mod = geeglm(
+#   flg_cmp_po_severe_not_poa ~ mean_ge_8 + flg_male + age_at_admit_scale
+#   + race_white + race_hisp_other + flg_admit_emerg + AHRQ_score_scale
+#   + ses_2grp + facility_clm_yr + flg_multi_surgeon + flg_assistant_surgeon
+#   + hosp_beds_2grp + val_hosp_mcday2inptday_ratio + val_hosp_rn2bed_ratio
+#   ,
+#   data = na.omit(gee_dt),  corstr = 'ar1',
+#   id = id_physician_npi*cpt_cd,
+#   family = binomial(link = "logit")
+# )
+# 
+# broom::tidy(gee_mod, conf.int = T, conf.level = 0.95, exponentiate = T)
+
 
 
 # Outcome list ------------------------------------------------------------
