@@ -95,7 +95,7 @@ milestone_medicare_pc = milestone_medicare_pc %>%
   ) 
 
 # outcomes desc
-milestone_medicare_pc %>% 
+summary_tbl = milestone_medicare_pc %>% 
   summarise(n_case = n(),
             n_surgeon = length(unique(id_physician_npi)),
             n_hosp = length(unique(facility_prvnumgrp)),
@@ -108,8 +108,12 @@ milestone_medicare_pc %>%
             readmit_rate = sum(flg_readmit_30d)/n_case,
             reop_rate = sum(flg_util_reop)/n_case) %>% 
   mutate_at(vars(contains("rate")), scales::percent_format()) %>% 
-  t() %>% 
+  t() 
+
+summary_tbl %>% 
   kable(align = 'c')
+
+save(summary_tbl, file = "data/summary_tbl.rdata")
 
 
 ```
