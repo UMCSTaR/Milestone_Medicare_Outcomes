@@ -3,7 +3,6 @@
 # milestone rating: overall mean, operative mean, professional mean, >8 binary
 
 library(tidyverse)
-library(purrr)
 
 # load data
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_pc_primary.rdata")
@@ -24,8 +23,10 @@ load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_
 # data process
 n_months = 24
 
-main_data = milestone_medicare_ratings %>% 
+main_data = milestone_medicare_pc_primary %>% 
   filter(month<=n_months)
+
+n_distinct(main_data$id_physician_npi)
 
 # create patient outcomes variables
 main_data =  main_data %>% 
@@ -42,43 +43,6 @@ main_data =  main_data %>%
          flg_any_but_death = ifelse(flg_death_30d, NA, flg_any_but_death))
 
 
-# GEE try------------------
-# library(geepack)
-# gee_dt = main_data %>% select(
-#   flg_cmp_po_severe_not_poa,
-#   mean_ge_8,
-#   flg_male,
-#   age_at_admit_scale,
-#   race_white,
-#   race_hisp_other,
-#   flg_admit_emerg,
-#   AHRQ_score_scale,
-#   ses_2grp,
-#   facility_clm_yr,
-#   flg_multi_surgeon,
-#   flg_assistant_surgeon,
-#   hosp_beds_2grp,
-#   val_hosp_mcday2inptday_ratio,
-#   val_hosp_rn2bed_ratio,
-#   id_physician_npi,
-#   cpt_cd
-# )
-# 
-# gee_mod = geeglm(
-#   flg_cmp_po_severe_not_poa ~ mean_ge_8 + flg_male + age_at_admit_scale
-#   + race_white + race_hisp_other + flg_admit_emerg + AHRQ_score_scale
-#   + ses_2grp + facility_clm_yr + flg_multi_surgeon + flg_assistant_surgeon
-#   + hosp_beds_2grp + val_hosp_mcday2inptday_ratio + val_hosp_rn2bed_ratio
-#   ,
-#   data = na.omit(gee_dt),  corstr = 'ar1',
-#   id = id_physician_npi*cpt_cd,
-#   family = binomial(link = "logit")
-# )
-# 
-# broom::tidy(gee_mod, conf.int = T, conf.level = 0.95, exponentiate = T)
-
-
-
 # Outcome list ------------------------------------------------------------
 
 outcomes = c(
@@ -86,9 +50,6 @@ outcomes = c(
   'flg_cmp_po_any_not_poa',
   'flg_readmit_30d',
   'flg_death_30d'
-  # 'flg_util_reop',
-  # 'los_gt_75perc',
-  # 'flg_any_but_death'
 )
 
 
@@ -106,7 +67,7 @@ covariates = c(
   # 'cpt_cd',
   'facility_clm_yr',
   'flg_multi_surgeon',
-  'flg_assistant_surgeon',
+  'had_assist_surg',
   'hosp_beds_2grp',
   # 'flg_hosp_ICU_hosp',
   'val_hosp_mcday2inptday_ratio',
@@ -129,7 +90,7 @@ source("code/functions/run_model.R")
 # milestone ratings --------
 primaries = c(
   "IntResponseValue_mean",
-  "never_less_8_rating",
+  # "never_less_8_rating",
   "mean_ge_8",  
   
   "prof_rating_mean",
@@ -174,8 +135,8 @@ fs = create_formulas(
   other_covariates = covariates,
   interaction_term = NULL,
   # random_effects = c('id_physician_npi', 'facility_prvnumgrp')
-  # random_effects = c('id_physician_npi', 'facility_prvnumgrp', 'cpt_cd')
-  random_effects = c('id_physician_npi', 'cpt_cd')
+  random_effects = c('id_physician_npi', 'facility_prvnumgrp', 'cpt_cd')
+  # random_effects = c('id_physician_npi', 'cpt_cd')
 )
 
 names(fs) = outcomes
