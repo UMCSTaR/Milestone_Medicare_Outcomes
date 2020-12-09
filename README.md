@@ -9,7 +9,7 @@ Use Milestone rating data from ACGME to look at the its association with Medicar
 -   ACGME Milestone
 -   Medicare Partial Colectomy
 
-# Lab notbooks
+# Lab notebooks
 
 ## December
 

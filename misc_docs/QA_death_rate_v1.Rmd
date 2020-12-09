@@ -1,0 +1,283 @@
+---
+title: "QA the mortality rates in milestone medicare outcomes"
+author: "Xilin Chen"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 2
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = F,                                     # code
+  message = F,
+  warning = F,
+  error = F,
+  comment = NA,
+  R.options = list(width = 220),
+  dev.args = list(bg = 'transparent'),          # viz
+  fig.align = 'center',
+  cache = F
+)
+
+kable_df <- function(..., digits = 3) {
+  kable(
+    ...,
+    format = 'latex',
+    booktabs = TRUE,
+    linesep = '',  # removes spacing every 5 lines
+    digits = digits
+  ) %>%
+    kable_styling(full_width = FALSE)
+}
+
+source("~/Documents/Repo/Medicare_analytics_ECS/code/functions/prep_data_for_model.R")
+source("~/Documents/Repo/Milestone_Medicare_Outcomes/code/functions/my_summary.R")
+
+library(tidyverse)
+library(kableExtra)
+```
+
+updated in December 2020.
+
+- only keep partial colectomy procedure
+- death rate stratify by age and case emergecy status
+- QA 10 patients death
+
+## 1. Compare descriptive stats among different cohorts
+
+### Cohort Description
+
+-   Milestone Medicare
+
+    -   2015-2017 medicare cases by milestone graduates from 2015-2017 within 24 months after graduation
+    -   Partial Colectomy
+
+-   ECV
+
+    -   2006 - 2016 medicare cases by general surgery surgeons within 35 years of practice
+    -   Partial Colectomy
+
+-   Medicare 2007-2017
+
+    -   Medicare 5 procedures from 2007 to 2017 standardized using R
+    -   Partial Colectomy
+
+```{r load_data, cache=TRUE}
+# milestone -------
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_pc_primary.rdata")
+
+# ECV-------
+ecv =  qs::qread('/Volumes/George_Surgeon_Projects/early_career_variability/medicare_ecv_model_ready.qs') 
+
+ecv = ecv %>%
+  mutate(
+    flg_cmp_po_severe_not_poa = ifelse(facility_clm_yr < 2010, NA, flg_cmp_po_severe_poa),
+    flg_cmp_po_any = ifelse(facility_clm_yr < 2010, NA, flg_cmp_po_any)
+  ) 
+
+
+# medicare 07-17------
+medicare_07_17 = data.table::fread("/Volumes/George_Surgeon_Projects/standardized_medicare_data_using_R/analysis_ready_data/analytic_selected_vars.csv")
+# keep partial colectomy
+medicare_07_17_pc = medicare_07_17[e_proc_grp_lbl == "Partial Colectomy"]
+
+```
+
+```{r data_process}
+# milestone 24 months------
+milestone_medicare_pc = milestone_medicare_pc_primary %>% 
+  filter(!is.na(IntResponseValue_mean),
+         month <= 24)
+
+milestone_medicare_pc = milestone_medicare_pc %>%  # for later to get mean rate
+  mutate(flg_cmp_po_any_not_poa = as.numeric(flg_cmp_po_any_not_poa),
+         flg_cmp_po_severe_not_poa = as.numeric(flg_cmp_po_severe_not_poa)) 
+
+# medicare 2007-2017 ------
+medicare_07_17_pc = medicare_07_17_pc %>%
+  mutate(
+    flg_cmp_po_any_not_poa = as.numeric(flg_cmp_po_any_not_poa),
+    flg_cmp_po_severe_not_poa = as.numeric(flg_cmp_po_severe_not_poa)
+  )
+
+#ECV -------
+ecv = ecv %>% 
+      prep_data_for_model(
+        cohort = c(
+          "id_physician_npi != ''",
+          '!is.na(val_yr_practice)',
+          # 'surgeon_N_cases >= 10',
+          'val_yr_practice >= 0 & val_yr_practice <= 35',
+          "proc_Partial_Colectomy == 1"
+        ),
+        one_hot = NULL,
+        standardize = NULL
+      ) 
+```
+
+**Descriptive Stats**
+
+```{r cmp_tbl}
+milestone_tbl1 = milestone_medicare_pc %>%
+  my_summary() %>% 
+  mutate(cohort = "milestone") %>% 
+  select(cohort, everything())
+
+# medicare 2007-2017
+medicare_tbl1 = medicare_07_17_pc %>%
+  my_summary() %>% 
+  mutate(cohort = "medicare_06_17") %>% 
+  select(cohort, everything())
+
+
+ecv_tbl1 = ecv %>%
+  my_summary() %>% 
+  mutate(cohort = "ecv") %>% 
+  select(cohort, everything()) 
+
+```
+
+compare descriptive stats among different datasets
+
+```{r combine}
+df = rbind(milestone_tbl1 ,ecv_tbl1, medicare_tbl1)
+
+as_tibble(cbind(` ` = names(df), t(df))) %>%
+  rename(milestone = V2, ecv = V3, medicare07_17 = V4) %>%
+  slice(-1) %>%
+  kable() %>%
+  kable_styling(full_width = F)
+```
+
+\pagebreak
+
+## 2. Stratify death rate by patient age
+
+```{r}
+# milestone -----
+milestone_medicare_pc = milestone_medicare_pc %>%
+  # one pt can have multiple ages due to claim year, so don't distinct patient
+  mutate(
+    age_grp = case_when(
+      age_at_admit <= 80 ~ "65-80",
+      age_at_admit > 80 &
+        age_at_admit <= 99 ~ "81-99"
+      # age_at_admit > 99 ~ "99+" # no >99 group
+    )
+  )
+
+by_age_milestone = milestone_medicare_pc %>% 
+  group_by(age_grp) %>% 
+  my_summary() %>% 
+  mutate(cohort = "milestone") %>% 
+  select(cohort, everything())
+
+# ecv -------
+ecv = ecv %>%
+  mutate(
+    age_grp = case_when(
+      age_at_admit <= 80 ~ "65-80",
+      age_at_admit > 80 &
+        age_at_admit <= 99 ~ "81-99"
+      # age_at_admit > 99 ~ "99+" # no >99 group
+    )
+  )
+
+by_age_ecv = ecv %>% 
+  group_by(age_grp) %>% 
+  my_summary() %>% 
+  mutate(cohort = "ecv") %>% 
+  select(cohort, everything())
+
+
+# medicare -----
+medicare_07_17_pc = medicare_07_17_pc %>%
+  mutate(
+    age_grp = case_when(
+      age_at_admit <= 80 ~ "65-80",
+      age_at_admit > 80 &
+        age_at_admit <= 99 ~ "81-99"
+      # age_at_admit > 99 ~ "99+" # no >99 group
+    )
+  )
+
+by_age_medicare = medicare_07_17_pc %>% 
+  group_by(age_grp) %>% 
+  my_summary() %>% 
+  mutate(cohort = "medicare") %>% 
+  select(cohort, everything())
+
+# combine 3 datasets
+age_df = rbind(by_age_milestone ,by_age_ecv, by_age_medicare)
+
+as_tibble(age_df) %>%
+  arrange(age_grp) %>% 
+  rename(complication = POA_severe_cmp_rate) %>% 
+  select(age_grp, cohort, death_rate, everything()) %>% 
+  kable() %>%
+  kable_styling(full_width = F)
+```
+
+81-99 age group had higher 30 day's mortality rates.
+
+
+## 3. Stratify death rate by case emergency
+
+```{r}
+medicare_07_17_pc = medicare_07_17_pc %>% 
+  mutate(flg_admit_emerg = case_when(e_admit_type %in% c("1_Emergency", "2_Urgent") ~ 1,
+                                     e_admit_type %in% c("3_Elective") ~ 0)) 
+
+data_list = list(milestone_medicare_pc, ecv, medicare_07_17_pc)
+names(data_list) = c("milestone", "ecv", "medicare")
+
+by_emerg_death_rate = imap_dfr(data_list, function(data, name) {
+  data %>% 
+  group_by(flg_admit_emerg) %>% 
+  my_summary() %>% 
+  mutate(cohort = name) %>% 
+  select(cohort, everything())
+})
+
+by_emerg_death_rate %>% 
+  arrange(flg_admit_emerg) %>% 
+  rename(complication = POA_severe_cmp_rate) %>% 
+  select(emergent = flg_admit_emerg, cohort, death_rate, everything()) %>% 
+  kable() %>%
+  kable_styling(full_width = F)
+
+```
+
+Emergent cases had higher 30 days mortality rates.
+
+## 4. check 10 patients death manually
+
+- step1: find 10 different cases that death =1
+- step2: extract facility claim ID for the cases
+- step3: find facility claim in original MedPAR using facility claim ID
+- step4: find the status at discharge. [BENE_DSCHRG_STUS_CD](https://www.resdac.org/cms-data/variables/medpar-beneficiary-discharge-status-code)
+
+```{r}
+set.seed(123)
+sample_10 = milestone_medicare_pc %>% 
+  filter(flg_death_30d ==1, str_detect(dt_facclm_adm, "2015")) %>% 
+  distinct(id, member_id, dt_facclm_adm) %>% sample_n(10)
+# save(sample_10, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/sample_10.rdata")
+# sample original Medpar 2015
+medpar_sample = read_csv("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/sample10_medpar.csv")
+
+medpar_sample %>% 
+  select(BENE_ID, BENE_DSCHRG_STUS_CD) %>% 
+  mutate(BENE_ID = hashed_id(BENE_ID, "somesalt1234")) %>% 
+  mutate(discharge_loc = case_when(BENE_DSCHRG_STUS_CD == "A" ~ "Discharged alive",
+                                   BENE_DSCHRG_STUS_CD == "B" ~ "Discharged dead",
+                                   BENE_DSCHRG_STUS_CD == "C" ~ "Still a patient")) %>% 
+  select(-BENE_DSCHRG_STUS_CD) %>% 
+  kable() %>%
+  kable_styling(full_width = F)
+
+```
+
+6 out of 9 patients were dead at hospital discharge.
