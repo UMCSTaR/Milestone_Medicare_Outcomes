@@ -60,13 +60,13 @@ covariates = c(
   'flg_male',
   'age_at_admit_scale',
   'race_white',
-  'race_hisp_other',
+  # 'race_hisp_other',
   'flg_admit_emerg',
   'AHRQ_score_scale',
   'ses_2grp',
   # 'cpt_cd',
   'facility_clm_yr',
-  'flg_multi_surgeon',
+  # 'flg_multi_surgeon', # do not use this var
   'had_assist_surg',
   'hosp_beds_2grp',
   # 'flg_hosp_ICU_hosp',
@@ -135,8 +135,8 @@ fs = create_formulas(
   other_covariates = covariates,
   interaction_term = NULL,
   # random_effects = c('id_physician_npi', 'facility_prvnumgrp')
-  random_effects = c('id_physician_npi', 'facility_prvnumgrp', 'cpt_cd')
-  # random_effects = c('id_physician_npi', 'cpt_cd')
+  # random_effects = c('id_physician_npi', 'facility_prvnumgrp', 'cpt_cd')
+  random_effects = c('id_physician_npi', 'cpt_cd')
 )
 
 names(fs) = outcomes
@@ -184,16 +184,16 @@ names(results) = model_name
 summary(results$Par_severe_cmp_all_mean)
 
 # save model ---------
-if (n_months == 12) {
-  save(results,
-       file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month12_pc.rdata")
-} else if (n_months == 24) {
+# if (n_months == 12) {
+#   save(results,
+#        file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month12_pc.rdata")
+# } else if (n_months == 24) {
   save(results,
        file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month24_pc.rdata")
-} else if (n_months == 36) {
-  save(results,
-       file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_non_limit_pc.rdata")
-}
+# } else if (n_months == 36) {
+#   save(results,
+#        file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_non_limit_pc.rdata")
+# }
 
 # QA death-------
 # univariate model for death ----

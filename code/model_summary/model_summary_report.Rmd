@@ -12,7 +12,7 @@ output:
 params:
   data: results
   outcome_name: outcome_name
-  n_month: 12
+  n_month: 24
 ---
 
 ```{r setup, include=FALSE}
@@ -44,16 +44,12 @@ source("/Users/xilinchen/Documents/Repo/Milestone_Medicare_Outcomes/code/functio
 
 
 ```{r load_data}
-load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_ratings.rdata")
-# load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/pc/rating_model.rdata")
-
 # milestone data
-load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_final_year.rdata")
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_pc_primary.rdata")
 
 results = params$data
 
-milestone_medicare_pc = milestone_medicare_ratings %>%
-  filter(proc_Partial_Colectomy == 1) %>%
+milestone_medicare_pc = milestone_medicare_pc_primary %>%
   mutate(
     flg_cmp_po_any_not_poa = as.numeric(flg_cmp_po_any_not_poa),
     flg_cmp_po_severe_not_poa = as.numeric(flg_cmp_po_severe_not_poa)
@@ -62,16 +58,8 @@ milestone_medicare_pc = milestone_medicare_ratings %>%
 
 # Description
 
-This document uses the end-year milestone evaluations at the last year of residency from ACGME. Milestone rating for each resident is the mean of all questions. We used Partial Colectomy procedure as our cohort.
+This document uses the end-year milestone evaluations at the last year of residency from ACGME. Milestone rating for each resident is the mean of all questions. We used Partial Colectomy procedure as our cohort. Only primary surgeon cases were included.
 
-
-```{r milestone eval, eval=F}
-## Milestone question keys and descriptions
-milestone_final_year %>% 
-  distinct(ReportCategory, QuestionKey, QuestionText) %>% 
-  filter(!is.na(ReportCategory)) %>% 
-  DT::datatable()
-```
 
 ## Table1 for model variables
 
@@ -91,9 +79,21 @@ milestone_medicare_pc = milestone_medicare_pc %>%
     facility_clm_yr = facility_clm_yr + 2007,
     hosp_beds_2grp = factor(hosp_beds_2grp, labels = c('<350', '>=350')),
   )
+
 milestone_medicare_pc %>%
-  select(flg_male, age_at_admit, e_race_wbho_lable, AHRQ_score, ses_2grp,
-colectomy_type, facility_clm_yr, flg_multi_surgeon, flg_assistant_surgeon, hosp_beds_2grp, val_hosp_mcday2inptday_ratio, val_hosp_rn2bed_ratio) %>%
+  select(
+    flg_male,
+    age_at_admit,
+    e_race_wbho_lable,
+    AHRQ_score,
+    ses_2grp,
+    colectomy_type,
+    facility_clm_yr,
+    had_assist_surg,
+    hosp_beds_2grp,
+    val_hosp_mcday2inptday_ratio,
+    val_hosp_rn2bed_ratio
+  ) %>%
   gtsummary::tbl_summary(missing = "no")
 ```
 
@@ -113,8 +113,6 @@ extract_vc(overall_mean, ci_level = 0) %>%
 
 # # predicted probability for surgeons
 # model_vis(results$Par_severe_cmp_all_mean)
-
-
 ```
 
 
@@ -132,19 +130,6 @@ extract_vc(mean_ge_8, ci_level = 0) %>%
 
 ```
 
-
-
-
-```{r ever_lt8, eval=FALSE}
-### 1.3 Any rating greater or equal to 8
-never_lt_8 = results$Par_never_less_8
-
-fe(never_lt_8)
-
-extract_vc(never_lt_8, ci_level = 0) %>%
-    kable_df()
-
-```
 
 
 ### 2.1 Professional Mean

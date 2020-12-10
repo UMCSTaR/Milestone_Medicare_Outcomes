@@ -6,23 +6,16 @@ library(tidyverse)
 source("code/functions/multi_reports_by_outcome.R")
 
 # choose how many months of practice after graduation
-n_month = 12
+n_month = 24
 
-if (n_month == 12) {
-  load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month12_pc.rdata")
-} else if (n_month == 24) {
-  load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month24_pc.rdata")
-} else if (n_month > 24) {
-  load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_non_limit_pc.rdata")
-}
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month24_pc.rdata")
+
 
 # severe complication -----
 model_reports_by_outcome(results = results,
                          outcome = "severe_cmp", 
                          outcome_name = "Severe Complication (exclude POA)",
                          n_month = n_month)
-
-
 
 # death ------
 model_reports_by_outcome(results = results,

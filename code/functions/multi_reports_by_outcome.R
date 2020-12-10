@@ -8,7 +8,7 @@
 model_reports_by_outcome <- function(results, 
                                      outcome = "severe_cmp", 
                                      outcome_name = "Severe Complication (exclude POA)",
-                                     n_month = 12) {
+                                     n_month = 24) {
   outcome_all = names(results) %>% 
     as_tibble() %>% 
     filter(str_detect(value, outcome)) %>% 
