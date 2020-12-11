@@ -8,10 +8,8 @@ library(ggeffects)
 
 
 my_color = c("#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3")
-my_color32 = rep(c(rep("#66c2a5",2), 
-             rep("#fc8d62",2), 
-             rep("#8da0cb",2), 
-             rep("#e78ac3",2)), 4)
+# my_color = scico::scico(4, palette = "batlow", end = 0.7)
+
 source("code/functions/or_plot.R")
 source("code/functions/predicted_probs_all_models.R")
 
@@ -140,22 +138,32 @@ bin_mean_pred_tbl %>%
 bin_mean_pred_tbl %>%
   ggplot(aes(x = outcome, y = predicted)) +
   facet_wrap(~term, ncol =2) +
-  geom_col(aes(fill = outcome, group = binary_rating),
-           position = position_dodge(width = 0.55), width = 0.5,
-           show.legend = FALSE) +
-  geom_pointrange(aes(ymin = conf.low, ymax = conf.high, group = binary_rating,
-                      shape = binary_rating), 
-                alpha = 0.7, position = position_dodge(width = 0.55)) +
-  
-  # geom_errorbar(aes(ymin = conf.low, ymax = conf.high, group = binary_rating), 
-  #               alpha = 0.7, position = position_dodge(width = 0.55),
-  #               width = .2,show.legend = FALSE) +
+  # diffrent patterns to indicate binary scale------
+  geom_col_pattern(aes(fill = outcome, group = binary_rating, pattern = binary_rating),
+           position = position_dodge(width = 0.55), width = 0.4,
+           colour = 'gray',
+           pattern_fill    = 'white',
+           pattern_colour  = 'white',
+           pattern_spacing = 0.08
+           ) +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high, group = binary_rating),
+                alpha = 0.7, position = position_dodge(width = 0.55),
+                width = .2, show.legend = FALSE) +
+  guides(fill = FALSE) +
+  # diffrent symble to indicate binary scale------
+  # geom_col(aes(fill = outcome, group = binary_rating),
+  #        position = position_dodge(width = 0.55), width = 0.5,
+  #        show.legend = FALSE) +
+  # geom_pointrange(aes(ymin = conf.low, ymax = conf.high, group = binary_rating,
+  #                     shape = binary_rating),
+  #                 alpha = 0.7, position = position_dodge(width = 0.55)) +
   scale_color_manual(values = my_color, aesthetics = c("fill")) +
   scale_shape_manual(values = c(3,4)) +
   labs(title = "Predicted probabilities by patient outcomes",
        y = "",
        x = "") +
   scale_y_continuous(labels = scales::percent) +
+  # scale_fill_grey() +
   visibly::theme_trueMinimal(center_axis_labels = T) +
   theme(plot.title = element_text(size=12),
         axis.text.x = element_text(size = 10),
@@ -165,7 +173,8 @@ bin_mean_pred_tbl %>%
         axis.ticks.y=element_blank(),
         strip.text.y = element_text(size = 13),
         legend.position="bottom",
-        legend.title = element_blank())
+        legend.title = element_blank()) 
+  
 
 ggsave("images/prob_2by2_binary_rating.png")
 ggsave("/Volumes/GoogleDrive/My Drive/EQUIP Lab- Documents/Active Projects/2020.01 Milestone vs. Medicare Outcomes-Dan/Visualizations/prob_2by2_binary_rating.svg")
