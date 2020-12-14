@@ -2,7 +2,7 @@
 title: "Interaction"
 author: "Xilin Chen"
 date: "12/14/2020"
-output: html_document
+output: pdf_document
 ---
 
 Explore interactions between milestone ratings and whether had assistant surgeon in the case.
@@ -31,7 +31,7 @@ library(emmeans)
 
 ```
 
-```{r data_prep}
+```{r data_prep, cache=T}
 # explore interactions
 # load 24 months ------
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month24_pc_interaction.rdata")
@@ -54,6 +54,7 @@ model_tables = model_tables %>%
 
 ## 1. Summary table for all ratings and had_assist_surgeon interactions model results
 
+- interaction term for ratings and assistant surgeon
 
 ```{r}
 # interaction ----
@@ -72,36 +73,33 @@ all_inter_terms = model_tables  %>%
   )
 
 all_inter_terms %>% 
-  kable(digits = 2, caption = "interaction term for ratings and assitant surgeon") %>%
+  kable(digits = 2) %>%
   kable_styling(full_width = F) %>% 
   collapse_rows(columns = 1, valign = "top") 
 ```
 
 ## 2. Example model: overall rating binary vs. severe complication model
 
-32 models were used for the table summary above. We explore one example from all the models above. 
+32 models were used for the table summary above. We explore one example from all the models above.
 
-model:
-- outcome: severe complication
-- rating: milestone overall (0:<8; 1≥8)
-- interaction: milestone rating*had_assist_surgeon
 
 ### Model summary
 
+- binary milestone ratings for severe complications
+
 ```{r}
-# example model interpretation
-# overall mean ≥8
-sever_cmp_overall_bin8 = results$Par_severe_cmp_mean_ge_8
+ # example model interpretation
+ # overall mean ≥8
+ sever_cmp_overall_bin8 = results$Par_severe_cmp_mean_ge_8
 
+ # coef table
+ extract_fixed_effects(sever_cmp_overall_bin8) %>%
+     kable(digits = 2) %>%
+     kable_styling(full_width = F)
 
-# coef table
-extract_fixed_effects(sever_cmp_overall_bin8) %>% 
-    kable(digits = 2, caption = "binary milestone ratings for severe complications") %>%
-    kable_styling(full_width = F)
-
-extract_vc(sever_cmp_overall_bin8) %>% 
-    kable(digits = 2) %>%
-    kable_styling(full_width = F)
+ extract_vc(sever_cmp_overall_bin8) %>%
+     kable(digits = 2) %>%
+     kable_styling(full_width = F)
 ```
 
 ### interaction interpretations
@@ -141,7 +139,5 @@ ggplot(data = p$data,
        color = "Had assist surg (0:no, 1:yes)") +
   theme_classic() +
   theme(legend.position = "bottom")
-
-
 ```
 

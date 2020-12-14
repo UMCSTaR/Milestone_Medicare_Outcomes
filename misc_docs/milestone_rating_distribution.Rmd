@@ -1,0 +1,63 @@
+---
+title: "Distribution for continuous milestone ratings"
+author: "Xilin Chen"
+date: "12/8/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = F,                                     # code
+  message = F,
+  warning = F,
+  error = F,
+  comment = NA,
+  R.options = list(width = 220),
+  dev.args = list(bg = 'transparent'),          # viz
+  dev = 'png',
+  fig.align = 'center',
+  cache = F
+  # out.width = '100%',
+  # fig.asp = .5,
+)    
+
+library(tidyverse)
+library(kableExtra)
+library(lubridate)
+library(tidyext)
+```
+
+```{r}
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_pc_primary.rdata")
+
+# filter only 24 after graduation cases
+main_data = milestone_medicare_pc_primary %>% 
+  filter(month<=24)
+
+person_milestone_rating = main_data %>% 
+  distinct(PersonID, IntResponseValue_mean, operative_rating_mean, leadership_rating_mean, prof_rating_mean) %>% 
+  rename(overall_mean = IntResponseValue_mean)
+
+```
+
+```{r}
+histogram_rating <- function(data, rating_var) {
+  rating_var = enquo(rating_var)
+  
+  ggplot(data = data,
+         aes(x = !!rating_var)) +
+    geom_bar(stat = "count") +
+    labs(y = "number of trainees") +
+    theme_bw()
+}
+
+histogram_rating(data = person_milestone_rating,
+                  rating_var = overall_mean)
+
+rating_vars = c("overall_mean", "operative_rating_mean", "leadership_rating_mean", "prof_rating_mean")
+
+map(rating_vars, ~histogram_rating(rating_var = .x), person_milestone_rating)
+
+
+```
+
