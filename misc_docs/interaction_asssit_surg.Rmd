@@ -1,0 +1,147 @@
+---
+title: "Interaction"
+author: "Xilin Chen"
+date: "12/14/2020"
+output: html_document
+---
+
+Explore interactions between milestone ratings and whether had assistant surgeon in the case.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = F,                                     # code
+  message = F,
+  warning = F,
+  error = F,
+  comment = NA,
+  R.options = list(width = 220),
+  dev.args = list(bg = 'transparent'),          # viz
+  dev = 'png',
+  fig.align = 'center',
+  cache = F
+  # out.width = '100%',
+  # fig.asp = .5,
+)    
+
+library(tidyverse)
+library(glmmTMB)
+library(mixedup)
+library(kableExtra)
+library(emmeans)
+
+```
+
+```{r data_prep}
+# explore interactions
+# load 24 months ------
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month24_pc_interaction.rdata")
+
+# 1. OR ----------------------------------------------------------------------
+# ratings by category
+model_tables = map_df(results, extract_fixed_effects, .id = "outcome")
+
+# process
+model_tables = model_tables %>%
+  mutate(
+    OR = exp(value),
+    OR_lower = exp(lower_2.5),
+    OR_upper = exp(upper_97.5)
+  ) %>%
+  mutate(outcome = str_remove_all(outcome, pattern = c("Par_"))) %>%
+  select(outcome, term, value, OR, contains("OR"), p_value) 
+
+```
+
+## 1. Summary table for all ratings and had_assist_surgeon interactions model results
+
+
+```{r}
+# interaction ----
+all_inter_terms = model_tables  %>%
+  filter(str_detect(term, ":")) %>% 
+  rename(coef = value) %>% 
+  mutate_if(is.numeric,~round(.,2))  %>% 
+  mutate(
+    outcome = case_when(
+      str_detect(outcome, "severe_cmp") ~ "severe_cmp",
+      str_detect(outcome, "any_cmp") ~ "any_cmp",
+      str_detect(outcome, "readmit") ~ "readmit",
+      str_detect(outcome, "death") ~ "death",
+      TRUE ~ as.character(term)
+    )
+  )
+
+all_inter_terms %>% 
+  kable(digits = 2, caption = "interaction term for ratings and assitant surgeon") %>%
+  kable_styling(full_width = F) %>% 
+  collapse_rows(columns = 1, valign = "top") 
+```
+
+## 2. Example model: overall rating binary vs. severe complication model
+
+32 models were used for the table summary above. We explore one example from all the models above. 
+
+model:
+- outcome: severe complication
+- rating: milestone overall (0:<8; 1≥8)
+- interaction: milestone rating*had_assist_surgeon
+
+### Model summary
+
+```{r}
+# example model interpretation
+# overall mean ≥8
+sever_cmp_overall_bin8 = results$Par_severe_cmp_mean_ge_8
+
+
+# coef table
+extract_fixed_effects(sever_cmp_overall_bin8) %>% 
+    kable(digits = 2, caption = "binary milestone ratings for severe complications") %>%
+    kable_styling(full_width = F)
+
+extract_vc(sever_cmp_overall_bin8) %>% 
+    kable(digits = 2) %>%
+    kable_styling(full_width = F)
+```
+
+### interaction interpretations
+
+1. table of effects by category
+
+```{r}
+em_model <- emmeans(sever_cmp_overall_bin8, "mean_ge_8", by = "had_assist_surg", type = "response")
+
+# contrast of odds ratio
+em_model_pw <- emmeans(sever_cmp_overall_bin8, pairwise ~ mean_ge_8*had_assist_surg, type = "response")
+
+em_model_pw
+```
+
+- when a sugeon had <8 overall rating and didn't have assistant surgeon in the case, the probability of the patient having severe complication is 16.57%, fixing all covariates at average level.
+
+
+2. plot
+
+predicted prob by had vs didn't have assistant surgeon in the case.
+
+```{r}
+p = emmip(sever_cmp_overall_bin8, as.factor(mean_ge_8) ~ as.factor(had_assist_surg),CIs=TRUE, type = "response")
+# p
+
+ggplot(data = p$data,
+       aes(
+         x = as.factor(mean_ge_8),
+         y = yvar,
+         colour = as.factor(had_assist_surg)
+       ))+
+  geom_pointrange(aes(ymin = LCL,
+                      ymax = UCL), position = position_dodge(width = 0.1)) +
+  labs(y = "Predicted Prob",
+       x = "Overall rating (0 <8; 1≥8)",
+       color = "Had assist surg (0:no, 1:yes)") +
+  theme_classic() +
+  theme(legend.position = "bottom")
+
+
+```
+

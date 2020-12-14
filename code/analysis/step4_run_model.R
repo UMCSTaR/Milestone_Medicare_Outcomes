@@ -22,6 +22,10 @@ load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_
 
 # data process
 n_months = 24
+# interaction term ----
+interaction_term = "had_assist_surg"
+# interaction_term = NULL # no interaction
+
 
 main_data = milestone_medicare_pc_primary %>% 
   filter(month<=n_months)
@@ -139,6 +143,19 @@ fs = create_formulas(
   random_effects = c('id_physician_npi', 'cpt_cd')
 )
 
+# interaction with assistant surgeon case
+if(!is.null(interaction_term)){
+  fs = create_formulas(
+    y = outcomes,
+    primary_covariate = primaries,
+    other_covariates = covariates,
+    interaction_term = interaction_term,
+    # random_effects = c('id_physician_npi', 'facility_prvnumgrp')
+    # random_effects = c('id_physician_npi', 'facility_prvnumgrp', 'cpt_cd')
+    random_effects = c('id_physician_npi', 'cpt_cd')
+  )
+}
+
 names(fs) = outcomes
 
 # make model formula lists with different procedures
@@ -159,7 +176,7 @@ model_name = model_ls %>%
          outcome = ifelse(str_detect(fs, "but_death"), "but_death", outcome)
          ) %>% 
   mutate(pred = ifelse(str_detect(fs, "IntResponseValue_mean"), "all_mean", NA),
-         pred = ifelse(str_detect(fs, "never_less_8_rating"), "never_less_8", pred),
+         # pred = ifelse(str_detect(fs, "never_less_8_rating"), "never_less_8", pred),
          pred = ifelse(str_detect(fs, "mean_ge_8"), "mean_ge_8", pred),
          
          pred = ifelse(str_detect(fs, "prof_rating_mean"), "prof", pred),
@@ -184,16 +201,15 @@ names(results) = model_name
 summary(results$Par_severe_cmp_all_mean)
 
 # save model ---------
-# if (n_months == 12) {
-#   save(results,
-#        file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month12_pc.rdata")
-# } else if (n_months == 24) {
+if (is.null(interaction_term)) {
   save(results,
        file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month24_pc.rdata")
-# } else if (n_months == 36) {
-#   save(results,
-#        file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_non_limit_pc.rdata")
-# }
+} else {
+  save(results,
+       file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month24_pc_interaction.rdata")
+}
+
+
 
 # QA death-------
 # univariate model for death ----
