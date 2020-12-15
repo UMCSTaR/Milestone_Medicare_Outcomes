@@ -48,14 +48,12 @@ vignettes/*.pdf
 *.knit.md
 
 *.log
-<<<<<<< master
+
 
 *.tex
-=======
->>>>>>> ignore
+
 
 *.graffle
 
-*.png
 
 code/model_summary/brief_sum_analysis.docx
