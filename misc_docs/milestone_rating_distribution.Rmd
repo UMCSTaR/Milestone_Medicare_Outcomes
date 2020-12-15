@@ -2,7 +2,10 @@
 title: "Distribution for continuous milestone ratings"
 author: "Xilin Chen"
 date: "12/14/2020"
-output: pdf_document
+output: 
+  pdf_document:
+    toc: true
+    toc_depth: 3
 ---
 
 ```{r setup, include=FALSE}
@@ -30,6 +33,10 @@ library(tidyext)
 ```{r}
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_pc_primary.rdata")
 
+# original milestone
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_final_year.rdata")
+
+
 # filter only 24 after graduation cases
 main_data = milestone_medicare_pc_primary %>% 
   filter(month<=24)
@@ -37,12 +44,12 @@ main_data = milestone_medicare_pc_primary %>%
 person_milestone_rating = main_data %>% 
   distinct(PersonID, IntResponseValue_mean, operative_rating_mean, leadership_rating_mean, prof_rating_mean) %>% 
   rename(overall_mean = IntResponseValue_mean)
-
 ```
 
-- Cohort summary
+## summary
 
 Partial Colectomy medicare cases by milestone graduates within 24 of graduation.
+
 
 ```{r}
 main_data %>% 
@@ -53,6 +60,18 @@ main_data %>%
   kable() %>% 
   kable_styling(full_width = F)
 ```
+
+
+
+content
+
+- Explore cutoffs for % Trainees Overall Mean Milestone ratings  (0-7, 8, 9 vs. 0-8, 9)
+- Histogram for continuous milestone ratings
+- Critical deficiency group (using all pgy 5 milestone group)
+  - how many residents have 1,2,3, end-year evaluation at PGY5 (n)
+  - check 1,2,3 for outliers
+  - meaning of 0 rating (NA vs. critical deficiency)
+
 
 ## Binary milestone rating tables
 
@@ -98,6 +117,8 @@ bin9
 
 ```
 
+In the subcategory rating groups, half of the trainees had perfect 9 rating.
+
 \break
 
 ## Plot: Distribution of 4 mean milestone ratings
@@ -105,12 +126,22 @@ bin9
 
 ```{r}
 histogram_rating <- function(data, rating_var) {
-  ggplot(data = data,
-         aes(x = !!rlang::sym(rating_var))) +
-    geom_bar(stat = "count") +
+  cnt = data %>%
+    count(!!rlang::sym(rating_var))
+
+  ggplot(data = cnt,
+         aes(x = !!rlang::sym(rating_var), y = n,
+             label = n)) +
+    geom_col() +
+    geom_text(check_overlap = TRUE,
+              vjust = -0.5,
+              angle = 45) +
     labs(y = "number of trainees") +
     theme_bw()
 }
+
+# histogram_rating(data = person_milestone_rating,
+#                                    rating_var = "overall_mean")
 
 rating_vars = c("overall_mean", "operative_rating_mean", "leadership_rating_mean", "prof_rating_mean")
 
@@ -121,4 +152,52 @@ names(histo_plots) = rating_vars
 
 histo_plots 
 ```
+
+
+## Critical deficiency group
+
+Cohort
+
+- original milestone ratings (without linking to medicare)
+- end-year evals at PGY5
+
+
+```{r}
+year_end_evals = milestone_final_year %>% 
+  filter(str_detect(eval_peroid, "Year-End"))
+
+year_end_evals %>% 
+  group_by(eval_peroid) %>% 
+  summarise(n_evals = n(),
+            n_person = length(unique(PersonID))) %>% 
+  kable() %>% 
+  kable_styling(full_width = F)
+```
+
+### Overall ratings distribution
+
+```{r}
+histogram_rating(data = year_end_evals,
+                 rating_var = "IntResponseValue") +
+  labs(caption = "1 person with 16 evals")
+```
+
+```{r}
+mean_cnt = year_end_evals %>%
+  mutate(IntResponseValue = as.integer(IntResponseValue)) %>%
+  group_by(PersonID) %>%
+  summarise(mean_eval = mean(IntResponseValue, na.rm = T))
+
+histogram_rating(data = mean_cnt,
+                 rating_var = "mean_eval") +
+  scale_x_continuous(breaks = c(0, 1,2, 3,4,5, 6, 7,8,9)) +
+  labs(caption = "mean over 16 eval ratings per person")
+```
+
+
+There are very few outliers.
+
+In our analysis, we treated rating 0 as NA based on the milestone rating definition. There are very few cases having 0 ratings.
+
+
 
