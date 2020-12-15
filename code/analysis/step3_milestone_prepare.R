@@ -21,9 +21,14 @@ milestone_person_in_medicare = milestone_final_year %>%
 milestone_end_person_in_medicare  = milestone_person_in_medicare %>% 
   filter(grepl("Year-End",eval_peroid))
 
+milestone_mid_person_in_medicare  = milestone_person_in_medicare %>% 
+  filter(grepl("Mid-Year",eval_peroid))
+
 # check
 n_distinct(milestone_person_in_medicare$PersonID)  # 535
+n_distinct(milestone_mid_person_in_medicare$PersonID)  #535
 n_distinct(milestone_end_person_in_medicare$PersonID)  #529
+
 
 no_end_eval_person = milestone_person_in_medicare %>% 
   filter(!PersonID %in% milestone_end_person_in_medicare$PersonID) %>% 

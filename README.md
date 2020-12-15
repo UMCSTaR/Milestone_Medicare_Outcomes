@@ -13,6 +13,10 @@ Use Milestone rating data from ACGME to look at the its association with Medicar
 
 ## December
 
+-   [PGY4 end year ratings explore](code/PGY4/PGY4_rating_brief.pdf)
+
+Using PGY4 end year evaluation ratings to explore medicare outcomes. Same model and approach as PGY5 ratings.
+
 -   [QA Death rate repot](misc_docs/QA_death_rate_v1.pdf)
 
 Why death rate is high in our partial colectomy cohort report, including 10 sample patients from checking back to MedPAR.
