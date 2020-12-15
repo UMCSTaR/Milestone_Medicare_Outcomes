@@ -1,7 +1,7 @@
 ---
 title: "Distribution for continuous milestone ratings"
 author: "Xilin Chen"
-date: "12/8/2020"
+date: "12/14/2020"
 output: pdf_document
 ---
 
@@ -40,24 +40,85 @@ person_milestone_rating = main_data %>%
 
 ```
 
+- Cohort summary
+
+Partial Colectomy medicare cases by milestone graduates within 24 of graduation.
+
+```{r}
+main_data %>% 
+  summarise(n_case = n(),
+            n_surgeon = length(unique(id_physician_npi)),
+            n_hosp = length(unique(facility_prvnumgrp)),
+            n_patient = length(unique(member_id))) %>% 
+  kable() %>% 
+  kable_styling(full_width = F)
+```
+
+## Binary milestone rating tables
+
+```{r}
+binay_summary <- function(data, rating_var, score) {
+  bin_var = paste0(rating_var, "_bin", score)
+  
+  data %>%
+    mutate(!!bin_var := ifelse(!!rlang::sym(rating_var) >= score,
+                               1, 0)) %>% 
+    group_by(!!rlang::sym(bin_var)) %>% 
+    summarise(n_case = n(),
+            n_surgeon = length(unique(id_physician_npi)),
+            n_patient = length(unique(member_id)))
+    # kable() %>% 
+    # kable_styling(full_width = F)
+}
+
+var_list = c("IntResponseValue_mean", "operative_rating_mean", "leadership_rating_mean", "prof_rating_mean")
+```
+
+### Binary by rating 8
+
+```{r}
+bin8 = map(var_list, ~binay_summary(data = main_data,
+              rating_var = .x,
+              score = 8) )
+
+names(bin8) = var_list
+bin8
+```
+
+
+### Binary by rating 9
+
+```{r}
+bin9 = map(var_list, ~binay_summary(data = main_data,
+              rating_var = .x,
+              score = 9))
+
+names(bin9) = var_list
+bin9
+
+```
+
+\break
+
+## Plot: Distribution of 4 mean milestone ratings
+
+
 ```{r}
 histogram_rating <- function(data, rating_var) {
-  rating_var = enquo(rating_var)
-  
   ggplot(data = data,
-         aes(x = !!rating_var)) +
+         aes(x = !!rlang::sym(rating_var))) +
     geom_bar(stat = "count") +
     labs(y = "number of trainees") +
     theme_bw()
 }
 
-histogram_rating(data = person_milestone_rating,
-                  rating_var = overall_mean)
-
 rating_vars = c("overall_mean", "operative_rating_mean", "leadership_rating_mean", "prof_rating_mean")
 
-map(rating_vars, ~histogram_rating(rating_var = .x), person_milestone_rating)
+histo_plots = map(rating_vars, ~histogram_rating(data = person_milestone_rating,
+                                   rating_var = .x))
 
+names(histo_plots) = rating_vars
 
+histo_plots 
 ```
 
