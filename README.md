@@ -24,4 +24,8 @@ Explore if had assistant surgeon in the case and milestone ratings had significa
 
 -   [Milestone ratings distribution](misc_docs/milestone_rating_distribution.pdf)
 
-Descriptive stats to look at continuous milestone ratings distributions by table and plot. This report also looks at the distribution of binary milestone ratong by "≥8" and "≥9"
+Descriptive stats to look at continuous milestone ratings distributions by table and plot. This report also looks at the distribution of binary milestone ratong by "≥8" and "≥9". Critical deficiency and outliers descriptive are also included.
+
+- [model summary for (=9 vs <9) ratings](images/model_cutoff9_coef_summary.png)
+
+ORs and p values for binary ratings =9 vs. <9. Same covariates as other models.

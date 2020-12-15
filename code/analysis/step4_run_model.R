@@ -7,6 +7,13 @@ library(tidyverse)
 # load data
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_pc_primary.rdata")
 
+# add cutt of 9 binary rating indicator
+milestone_medicare_pc_primary = milestone_medicare_pc_primary %>% 
+  mutate(overall_eql9 = ifelse(IntResponseValue_mean == 9, "=9","<9"),
+         prof_eql9 = ifelse(prof_rating_mean == 9, "=9","<9"),
+         op_eql9 = ifelse(operative_rating_mean == 9, "=9","<9"),
+         leader_eql9 = ifelse(leadership_rating_mean == 9, "=9","<9"))
+
 # # fix AHRQ score
 # ahrq = read_csv("/Volumes/George_Surgeon_Projects/standardized_medicare_data_using_R/analytic/full_data/archive/ahrq.csv")
 # 
@@ -20,13 +27,17 @@ load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_
 # 
 # save(milestone_medicare_ratings, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_ratings.rdata")
 
-# data process
+# input-----
 n_months = 24
-# interaction term ----
-interaction_term = "had_assist_surg"
-# interaction_term = NULL # no interaction
+# interaction term --
+# interaction_term = "had_assist_surg"
+interaction_term = NULL # no interaction
+# cutoff year
+cutoff = 9
+# cutoff = 8
 
 
+# data process
 main_data = milestone_medicare_pc_primary %>% 
   filter(month<=n_months)
 
@@ -92,20 +103,32 @@ source("code/functions/run_model.R")
 # Run models --------------------------------------------------
 
 # milestone ratings --------
-primaries = c(
-  "IntResponseValue_mean",
-  # "never_less_8_rating",
-  "mean_ge_8",  
-  
-  "prof_rating_mean",
-  "prof_rating_ge8",    
-  
-  "operative_rating_mean",
-  "operative_rating_ge8",        
-                   
-  "leadership_rating_mean",
-  "leadership_rating_ge8"     
-)
+
+
+# milestone ratings for 9 cutoff--------
+if(cutoff == 8){
+  primaries = c(
+    "IntResponseValue_mean",
+    "mean_ge_8",  
+    
+    "prof_rating_mean",
+    "prof_rating_ge8",    
+    
+    "operative_rating_mean",
+    "operative_rating_ge8",        
+    
+    "leadership_rating_mean",
+    "leadership_rating_ge8"     
+  )
+} else if (cutoff == 9) {
+  primaries = c(
+    "overall_eql9",
+    "prof_eql9",
+    "op_eql9",
+    "leader_eql9"
+  )
+}
+
 
 # check if all vars in the data
 all(primaries %in% names(main_data))
@@ -178,15 +201,19 @@ model_name = model_ls %>%
   mutate(pred = ifelse(str_detect(fs, "IntResponseValue_mean"), "all_mean", NA),
          # pred = ifelse(str_detect(fs, "never_less_8_rating"), "never_less_8", pred),
          pred = ifelse(str_detect(fs, "mean_ge_8"), "mean_ge_8", pred),
+         pred = ifelse(str_detect(fs, "overall_eql9"), "overall_eql9", pred),
          
          pred = ifelse(str_detect(fs, "prof_rating_mean"), "prof", pred),
          pred = ifelse(str_detect(fs, "prof_rating_ge8"), "prof_ge8", pred),
+         pred = ifelse(str_detect(fs, "prof_eql9"), "prof_eql9", pred),
          
          pred = ifelse(str_detect(fs, "operative_rating_mean"), "operative", pred),
          pred = ifelse(str_detect(fs, "operative_rating_ge8"), "operative_ge8", pred),
+         pred = ifelse(str_detect(fs, "op_eql9"), "op_eql9", pred),
          
          pred = ifelse(str_detect(fs, "leadership_rating_mean"), "leadership", pred),
-         pred = ifelse(str_detect(fs, "leadership_rating_ge8"), "leadership_ge8", pred)) %>% 
+         pred = ifelse(str_detect(fs, "leadership_rating_ge8"), "leadership_ge8", pred),
+         pred = ifelse(str_detect(fs, "leader_eql9"), "leader_eql9", pred)) %>% 
   mutate(model_name = paste(proc_name, outcome, pred, sep = "_")) %>% 
   pull(model_name)
 
@@ -198,15 +225,18 @@ results = pmap(list(formula = model_ls$fs,
 names(results) = model_name
 
 # example
-summary(results$Par_severe_cmp_all_mean)
+summary(results$Par_severe_cmp_overall_eql9)
 
 # save model ---------
-if (is.null(interaction_term)) {
+if (is.null(interaction_term & cutoff == 8)) {
   save(results,
        file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month24_pc.rdata")
-} else {
+} else if (!is.null(interaction_term) & cutoff == 8) {
   save(results,
        file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month24_pc_interaction.rdata")
+} else if (cutoff == 9) {
+  save(results,
+       file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month24_pc_cutoff9.rdata")
 }
 
 
