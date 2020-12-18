@@ -1,0 +1,172 @@
+---
+title: "Milestones and Medicare Outcome Descriptives"
+date: "`r Sys.Date()`"
+output: 
+  pdf_document:
+        toc: yes
+        toc_depth: 5
+---
+
+```{r setup, include=FALSE}
+# this report was used for the purpose of communication with external collaborators like ACGME
+knitr::opts_chunk$set(
+  echo = F,                                     # code
+  message = F,
+  warning = F,
+  error = F,
+  comment = NA,
+  R.options = list(width = 220),
+  dev.args = list(bg = 'transparent'),          # viz
+  fig.align = 'center',
+  cache = F
+)
+
+library(tidyverse)
+library(knitr)
+library(gtsummary)
+
+sum_tbl_by_rating <- function(data = milestone_medicare_pc,
+                              rating_var = mean_ge_8) {
+  
+  data %>%
+    select(
+      {{rating_var}},
+      flg_male,
+      age_at_admit,
+      race_white,
+      AHRQ_score,
+      flg_admit_emerg,
+      had_assist_surg,
+      colectomy_type,
+      hosp_beds,
+      val_hosp_mcday2inptday_ratio,
+      val_hosp_rn2bed_ratio
+    ) %>% 
+    rename(emergent_admission = flg_admit_emerg) %>% 
+    mutate({{rating_var}} := ifelse({{rating_var}} == 0 , "mean<8", "mean>=8")) %>% 
+    tbl_summary(by = {{rating_var}},
+                missing = "no") %>%
+    add_overall() %>%
+    add_p()
+}
+
+```
+
+Milestones vs Medicare outcomes cohort details
+
+-	Medicare cases: inpatient from 2015-2017
+-	Milestone graduates: 2015-2017
+-	Procedure: Partial Colectomy
+-	Practice months after graduation: 24 months
+
+
+```{r load_data, cache=TRUE}
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_pc_primary.rdata")
+# model
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month24_pc.rdata")
+
+
+# keep valid rating score
+milestone_medicare_pc = milestone_medicare_pc_primary %>% 
+  mutate(hosp_beds = case_when(hosp_beds_2grp == 0 ~ "<350",
+                               hosp_beds_2grp == 1 ~ ">=350")) %>% 
+  filter(!is.na(IntResponseValue_mean),
+         month <= 24)
+```
+
+## 1. Cohort Description
+
+**Overall Cohort**
+```{r cohort_desc}
+milestone_medicare_pc = milestone_medicare_pc %>% 
+  mutate(flg_cmp_po_any_not_poa = as.numeric(flg_cmp_po_any_not_poa),
+         flg_cmp_po_severe_not_poa = as.numeric(flg_cmp_po_severe_not_poa)) %>% 
+  mutate(
+    open_colectomy = cpt_cd %in% c(44140:44147, 44160),
+    lap_colectomy  = cpt_cd %in% 44204:44208,
+    colectomy_type = factor(ifelse(
+      cpt_cd %in% c(44140:44147, 44160), 'open', 'lap'
+    ))
+  ) 
+
+# outcomes desc
+summary_tbl = milestone_medicare_pc %>% 
+  summarise(n_case = n(),
+            n_surgeon = length(unique(id_physician_npi)),
+            n_hosp = length(unique(facility_prvnumgrp)),
+            n_patient = length(unique(member_id)),
+            POA_severe_complication_rate = sum(flg_cmp_po_severe_not_poa)/n_case,
+            # severe_complication_rate = sum(flg_cmp_po_severe)/n_case,
+            POA_any_complication_rate = sum(flg_cmp_po_any_not_poa)/n_case,
+            # any_complication_rate = sum(flg_cmp_po_any)/n_case,
+            death_rate = sum(flg_death_30d)/n_case,
+            readmit_rate = sum(flg_readmit_30d)/n_case,
+            reop_rate = sum(flg_util_reop)/n_case) %>% 
+  mutate_at(vars(contains("rate")), scales::percent_format()) %>% 
+  t() 
+
+summary_tbl %>% 
+  kable(align = 'c')
+
+
+```
+
+**Case level characteristics**
+
+```{r case_desc}
+# case characters
+milestone_medicare_pc %>% 
+  select(flg_male, age_at_admit, race_white,AHRQ_score, flg_admit_emerg,
+         had_assist_surg, colectomy_type,
+         hosp_beds,  val_hosp_mcday2inptday_ratio,
+      val_hosp_rn2bed_ratio) %>% 
+  tbl_summary(statistic = list(all_continuous() ~ "{mean} ({sd})[{p25}, {p75}]"),
+              missing = "no")
+```
+* val_hosp_mcday2inptday_ratio: Total facility medicaid days/total facility inpatient days ratio
+* val_hosp_rn2bed_ratio: Registered nurse to  bed ratios
+
+## 2. Milestone ratings
+
+### 2.1 Overall mean
+
+#### Descriptive table
+
+```{r overall_mean}
+sum_tbl_by_rating(data = milestone_medicare_pc,
+                  rating_var = mean_ge_8) 
+```
+
+
+
+### 2.2 Professional ratings 
+
+#### Descriptive table
+
+```{r prof}
+sum_tbl_by_rating(data = milestone_medicare_pc,
+                  rating_var = prof_rating_ge8)
+```
+
+
+### 2.3 Operative ratings
+
+#### Descriptive table
+
+```{r operative_desc}
+sum_tbl_by_rating(data = milestone_medicare_pc,
+                  rating_var = operative_rating_ge8)
+```
+
+
+### 2.4 Leadership ratings
+
+#### Descriptive table
+
+```{r lead_desc}
+sum_tbl_by_rating(data = milestone_medicare_pc,
+                  rating_var = leadership_rating_ge8)
+```
+
+
+
