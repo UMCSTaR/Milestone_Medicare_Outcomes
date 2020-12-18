@@ -125,6 +125,7 @@ milestone_medicare_pc %>%
 ```
 * val_hosp_mcday2inptday_ratio: Total facility medicaid days/total facility inpatient days ratio
 * val_hosp_rn2bed_ratio: Registered nurse to  bed ratios
+* for countious variables, the stats are *mean (sd)[p25, p75]*
 
 ## 2. Milestone ratings
 
