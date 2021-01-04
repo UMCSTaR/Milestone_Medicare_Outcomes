@@ -63,8 +63,10 @@ Descriptive stats to look at continuous milestone ratings distributions by table
 ORs and p values for binary ratings =9 vs. <9. Same covariates as other models. Models are saved on maize: George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month24_pc_cutoff9.rdata
 
 
--   [Had_assist_surg interation](misc_docs/interaction_asssit_surg.pdf)
+- [Had_assist_surg interation](misc_docs/interaction_asssit_surg.pdf)
 
 Explore if had assistant surgeon in the case and milestone ratings had significant different effects on the patient outcome. All interaction terms are summarized in one table. One example model was used to show more model details.
 
+- [Asana discussion: Post-hoc power analysis](https://app.asana.com/0/1183110919789797/1199379804396909)
 
+Several research and R simulation code to show the post-hoc power analyses were not recommended.
