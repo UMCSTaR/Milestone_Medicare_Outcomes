@@ -33,7 +33,7 @@ n_months = 24
 # interaction_term = "had_assist_surg"
 interaction_term = NULL # no interaction
 # cutoff year
-cutoff = 9
+cutoff = 8
 # cutoff = 8
 
 
