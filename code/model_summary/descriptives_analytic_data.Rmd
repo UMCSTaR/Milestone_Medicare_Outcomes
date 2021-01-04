@@ -25,30 +25,7 @@ library(tidyverse)
 library(knitr)
 library(gtsummary)
 
-sum_tbl_by_rating <- function(data = milestone_medicare_pc,
-                              rating_var = mean_ge_8) {
-  
-  data %>%
-    select(
-      {{rating_var}},
-      flg_male,
-      age_at_admit,
-      race_white,
-      AHRQ_score,
-      flg_admit_emerg,
-      had_assist_surg,
-      colectomy_type,
-      hosp_beds,
-      val_hosp_mcday2inptday_ratio,
-      val_hosp_rn2bed_ratio
-    ) %>% 
-    rename(emergent_admission = flg_admit_emerg) %>% 
-    mutate({{rating_var}} := ifelse({{rating_var}} == 0 , "mean<8", "mean>=8")) %>% 
-    tbl_summary(by = {{rating_var}},
-                missing = "no") %>%
-    add_overall() %>%
-    add_p()
-}
+source("code/functions/sum_tbl_by_rating.R")
 
 ```
 
@@ -168,6 +145,35 @@ sum_tbl_by_rating(data = milestone_medicare_pc,
 sum_tbl_by_rating(data = milestone_medicare_pc,
                   rating_var = leadership_rating_ge8)
 ```
+
+### 2.5 Assistant surgeon cases and hospital size across ratings
+
+#### Descriptive table
+
+Summary table to look across 4 different milestone ratings by if *had_assist_surgeon* and *hospital bed size*.
+
+```{r}
+# maybe because of using PDF output, if using map, the output is html code instead of tables. So I repeated code.
+
+sum_tbl_by_rating_assist(data = milestone_medicare_pc,
+                  rating_var = "mean_ge_8") %>% 
+  modify_header(label ~ "**overall_mean**")
+
+sum_tbl_by_rating_assist(data = milestone_medicare_pc,
+                  rating_var = "prof_rating_ge8") %>% 
+  modify_header(label ~ "**Professional**")
+
+sum_tbl_by_rating_assist(data = milestone_medicare_pc,
+                  rating_var = "operative_rating_ge8") %>% 
+  modify_header(label ~ "**Operative**")
+
+sum_tbl_by_rating_assist(data = milestone_medicare_pc,
+                  rating_var = "leadership_rating_ge8") %>% 
+  modify_header(label ~ "**Leadership**")
+
+
+```
+
 
 
 
