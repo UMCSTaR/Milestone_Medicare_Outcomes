@@ -70,3 +70,7 @@ Explore if had assistant surgeon in the case and milestone ratings had significa
 - [Asana discussion: Post-hoc power analysis](https://app.asana.com/0/1183110919789797/1199379804396909)
 
 Several research and R simulation code to show the post-hoc power analyses were not recommended.
+
+- [straigtlining ratings](code/data_QA/straightline.pdf)
+
+Explore what the percentages of having same ratings for trainees 16 ratings are. Looked at analysis cohort, whole cohort at end-year eval for PGY5, and also mid-year PGY5 evals.
