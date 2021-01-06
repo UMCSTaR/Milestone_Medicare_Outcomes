@@ -1,0 +1,136 @@
+---
+title: "Starigtlining effects"
+author: "Xilin Chen"
+date: "1/6/2021"
+output: pdf_document
+---
+
+Explore straightlining effects in the end-year evaluations in PGY5. 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = F,                                     # code
+  message = F,
+  warning = F,
+  error = F,
+  comment = NA,
+  R.options = list(width = 220),
+  dev.args = list(bg = 'transparent'),          # viz
+  dev = 'png',
+  fig.align = 'center',
+  cache = F
+  # out.width = '100%',
+  # fig.asp = .5,
+)    
+
+library(dplyr)
+library(stringr)
+library(ggplot2)
+library(kableExtra)
+
+```
+
+
+```{r load data}
+# filtered cohort for primary cases (for analysis)
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_pc_primary.rdata")
+# original milestone
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_final_year.rdata")
+```
+
+
+```{r data prep}
+milestone_24 = milestone_medicare_pc_primary %>% 
+  filter(month<=24)
+
+# persons included in analysis
+person <- milestone_24 %>%   
+  distinct(id_physician_npi, PersonID)
+
+# create flag to show if the residents were included in analyses
+milestone_end_year <- milestone_final_year %>% 
+  filter(str_detect(eval_peroid, "End")) %>% 
+  mutate(included_in_analysis = ifelse(PersonID %in% person$PersonID, 1, 0))
+```
+
+## straight lining for the analysis cohort
+
+n_rep: number of repeated ratings
+
+12.68% of trainees received all same ratings at the PGY5 end year evals; 4.26% of traines received same 15/16 ratings.
+```{r straigtline_assess}
+straightine_person = milestone_end_year %>% 
+  filter(included_in_analysis ==1 ) %>% 
+  select(PersonID, IntResponseValue) %>% 
+  add_count(PersonID, IntResponseValue, name = "n_rep") %>% 
+  distinct()
+
+straightine_person %>% 
+  tidyext::cat_by(n_rep) %>% 
+  filter(n_rep<17, n_rep>10) %>% 
+  kable(digits = 2) %>%
+  kable_styling(full_width = F)
+```
+
+
+Among the 122 straightlined trainees,  110% of them has received all 9 ratings.
+
+```{r}
+straightine_person %>% 
+  filter(n_rep == 16) %>% 
+  count(IntResponseValue) %>% 
+  kable(digits = 2) %>%
+  kable_styling(full_width = F)
+```
+
+
+## straight lining for the whole GS group
+
+```{r}
+straightine_person_gs = milestone_end_year %>% 
+  select(PersonID, IntResponseValue) %>% 
+  add_count(PersonID, IntResponseValue, name = "n_rep") %>% 
+  distinct()
+
+straightine_person_gs %>% 
+  tidyext::cat_by(n_rep) %>% 
+  filter(n_rep<17, n_rep>10) %>% 
+  kable(digits = 2) %>%
+  kable_styling(full_width = F)
+```
+
+```{r}
+straightine_person_gs %>% 
+  filter(n_rep == 16) %>% 
+  count(IntResponseValue) %>% 
+  kable(digits = 2) %>%
+  kable_styling(full_width = F)
+```
+
+
+## straight lining for the whole GS group for **Mid-year** PGY5
+
+```{r}
+straightine_person_gs_med = milestone_final_year %>% 
+  filter(str_detect(eval_peroid, "Mid")) %>% 
+  mutate(included_in_analysis = ifelse(PersonID %in% person$PersonID, 1, 0)) %>% 
+  select(PersonID, IntResponseValue) %>% 
+  add_count(PersonID, IntResponseValue, name = "n_rep") %>% 
+  distinct() 
+
+straightine_person_gs_med %>% 
+  tidyext::cat_by(n_rep) %>% 
+  filter(n_rep<17, n_rep>10) %>% 
+  kable(digits = 2) %>%
+  kable_styling(full_width = F)
+
+
+straightine_person_gs_med %>% 
+  filter(n_rep == 16) %>% 
+  count(IntResponseValue) %>% 
+  kable(digits = 2) %>%
+  kable_styling(full_width = F)
+  
+```
+
+
