@@ -5,7 +5,7 @@ date: "1/6/2021"
 output: pdf_document
 ---
 
-Explore straightlining effects in the end-year evaluations in PGY5. 
+Explore straight-lining effects in the end-year evaluations in PGY5. 
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
@@ -55,9 +55,10 @@ milestone_end_year <- milestone_final_year %>%
 
 ## straight lining for the analysis cohort
 
-n_rep: number of repeated ratings
+n_rep: number of repeated ratings. one evaluation has 16 total rating scores for one trainee.
 
-12.68% of trainees received all same ratings at the PGY5 end year evals; 4.26% of traines received same 15/16 ratings.
+12.68% of trainees received all same ratings at the PGY5 end year evals; 4.26% of trainees received same 15/16 ratings.
+
 ```{r straigtline_assess}
 straightine_person = milestone_end_year %>% 
   filter(included_in_analysis ==1 ) %>% 
@@ -73,7 +74,7 @@ straightine_person %>%
 ```
 
 
-Among the 122 straightlined trainees,  110% of them has received all 9 ratings.
+Among the 122 straightlined trainees,  110 of them has received all 9 ratings.
 
 ```{r}
 straightine_person %>% 
@@ -99,6 +100,9 @@ straightine_person_gs %>%
   kable_styling(full_width = F)
 ```
 
+
+Among trainees who received the same 16 ratings for end-year PGY5 evaluation, below is the values they received. 
+
 ```{r}
 straightine_person_gs %>% 
   filter(n_rep == 16) %>% 
@@ -123,8 +127,11 @@ straightine_person_gs_med %>%
   filter(n_rep<17, n_rep>10) %>% 
   kable(digits = 2) %>%
   kable_styling(full_width = F)
+```
 
+Among trainees who received the same 16 ratings for mid-year PGY5 evaluation, below is the values they received. 
 
+```{r}
 straightine_person_gs_med %>% 
   filter(n_rep == 16) %>% 
   count(IntResponseValue) %>% 
