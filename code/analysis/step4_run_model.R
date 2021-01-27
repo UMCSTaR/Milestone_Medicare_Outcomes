@@ -7,12 +7,14 @@ library(tidyverse)
 # load data
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_pc_primary.rdata")
 
-# add cutt of 9 binary rating indicator
-milestone_medicare_pc_primary = milestone_medicare_pc_primary %>% 
-  mutate(overall_eql9 = ifelse(IntResponseValue_mean == 9, "=9","<9"),
-         prof_eql9 = ifelse(prof_rating_mean == 9, "=9","<9"),
-         op_eql9 = ifelse(operative_rating_mean == 9, "=9","<9"),
-         leader_eql9 = ifelse(leadership_rating_mean == 9, "=9","<9"))
+
+# decided not to use 9
+# add cut off 9 binary rating indicator
+# milestone_medicare_pc_primary = milestone_medicare_pc_primary %>% 
+#   mutate(overall_eql9 = ifelse(IntResponseValue_mean == 9, "=9","<9"),
+#          prof_eql9 = ifelse(prof_rating_mean == 9, "=9","<9"),
+#          op_eql9 = ifelse(operative_rating_mean == 9, "=9","<9"),
+#          leader_eql9 = ifelse(leadership_rating_mean == 9, "=9","<9"))
 
 # # fix AHRQ score
 # ahrq = read_csv("/Volumes/George_Surgeon_Projects/standardized_medicare_data_using_R/analytic/full_data/archive/ahrq.csv")
@@ -83,6 +85,7 @@ covariates = c(
   'facility_clm_yr',
   # 'flg_multi_surgeon', # do not use this var
   'had_assist_surg',
+  'cases_per_12month',
   'hosp_beds_2grp',
   # 'flg_hosp_ICU_hosp',
   'val_hosp_mcday2inptday_ratio',
@@ -225,7 +228,7 @@ results = pmap(list(formula = model_ls$fs,
 names(results) = model_name
 
 # example
-summary(results$Par_severe_cmp_overall_eql9)
+summary(results$Par_any_cmp_leadership_ge8)
 
 # save model ---------
 if (is.null(interaction_term & cutoff == 8)) {
