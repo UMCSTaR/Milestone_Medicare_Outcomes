@@ -30,9 +30,11 @@ Model results details are save on [google drive](https://drive.google.com/drive/
 
 If you are interested to see only milestone ratings stats form the models, the summary tables are[Binary rating summary](images/bin_model_summary.png), [Continuous rating summary](images/mean_model_summary.png). After all, it's hard to go through all 64 models to check the coefficients of milestone ratings.
 
-- [Visualization discussion](https://app.asana.com/0/1183110919789797/1199373110557577)
+- Visualization
 
-Odds ratio and predicted probabilities plots based on the model outcomes. [plots on google drive](https://drive.google.com/drive/folders/14SgVkmbj_BfJKHGYXbST8iafauPtle7K)
+[Predicted probabilities plot](images/prob_2by2_binary_rating.png)
+
+[Actual predicted probability values used in the plots](images/pred_probs.png)
 
 
 
