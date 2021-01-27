@@ -90,6 +90,7 @@ milestone_medicare_pc %>%
     colectomy_type,
     facility_clm_yr,
     had_assist_surg,
+    cases_per_12month,
     hosp_beds_2grp,
     val_hosp_mcday2inptday_ratio,
     val_hosp_rn2bed_ratio

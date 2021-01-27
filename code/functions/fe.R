@@ -14,8 +14,8 @@ fe = function(model, pdf = TRUE) {
       select(term, starts_with('OR'), everything())  %>%
       kable_df() %>%
       pack_rows('Milestone Rating', 2, 2) %>%
-      pack_rows('Patient', 3, 10) %>%
-      pack_rows('Hospital', 11, 13)  
+      pack_rows('Patient', 3, 11) %>%
+      pack_rows('Hospital', 12, 14)  
   } else {
     fe %>%
       select(term, contains("OR"), se, p_value) %>%

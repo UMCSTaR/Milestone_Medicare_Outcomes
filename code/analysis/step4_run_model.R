@@ -231,7 +231,7 @@ names(results) = model_name
 summary(results$Par_any_cmp_leadership_ge8)
 
 # save model ---------
-if (is.null(interaction_term & cutoff == 8)) {
+if (is.null(interaction_term) & cutoff == 8) {
   save(results,
        file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month24_pc.rdata")
 } else if (!is.null(interaction_term) & cutoff == 8) {
