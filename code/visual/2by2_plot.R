@@ -5,13 +5,16 @@ library(glmmTMB)
 library(mixedup)
 library(kableExtra)
 library(ggeffects)
+library(ggpattern)
 
 
 my_color = c("#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3")
 # my_color = scico::scico(4, palette = "batlow", end = 0.7)
 
+source("code/functions/clean_or_table_lables.R")
 source("code/functions/or_plot.R")
 source("code/functions/predicted_probs_all_models.R")
+
 
 # load 24 months ------
 load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month24_pc.rdata")
@@ -59,12 +62,14 @@ mean_model_summary = mean_rating %>%
   mutate(`95% CI` = paste0("[", OR_lower, ", ", OR_upper, "]")) %>% 
   select(outcome, rating = term, OR, `95% CI`, p_value) 
 
-mean_model_summary %>% 
-  kable(digits = 2, caption = "Odds Ratios of Milestone Scores (mean)") %>% 
-  kable_styling(full_width = F) %>% 
+# change labels
+mean_model_summary %>%
+  clean_or_table_labels() %>%
+  kable(digits = 2, caption = "Odds Ratios of Milestone Scores (mean ratings)") %>%
+  kable_styling(full_width = F) %>%
   collapse_rows(columns = 1, valign = "top") %>% 
-  # save_kable("data/mean_model_summary.png") %>% 
-  save_kable("/Volumes/GoogleDrive/My Drive/EQUIP Lab- Documents/Active Projects/2020.01 Milestone vs. Medicare Outcomes-Dan/Visualizations/mean_or_summary.png")
+  save_kable("images/mean_model_summary.png") 
+  # save_kable("/Volumes/GoogleDrive/My Drive/EQUIP Lab- Documents/Active Projects/2020.01 Milestone vs. Medicare Outcomes-Dan/Visualizations/mean_or_summary.png")
 
 
 bin_model_summary = bin_rating %>% 
@@ -73,11 +78,12 @@ bin_model_summary = bin_rating %>%
   select(outcome, rating = term, OR, `95% CI`, p_value) 
 
 bin_model_summary %>% 
-  kable(digits = 2, caption = "Odds Ratios of Milestone Scores (ge 8)") %>% 
+  clean_or_table_labels() %>%
+  kable(digits = 2, caption = "Odds Ratios of Milestone Scores (<8 vs. ≥8 )") %>% 
   kable_styling(full_width = F) %>% 
   collapse_rows(columns = 1, valign = "top") %>% 
-  # save_kable("data/bin_model_summary.png")
-  save_kable("/Volumes/GoogleDrive/My Drive/EQUIP Lab- Documents/Active Projects/2020.01 Milestone vs. Medicare Outcomes-Dan/Visualizations/bin_or_summary.png")
+  save_kable("images/bin_model_summary.png")
+  # save_kable("/Volumes/GoogleDrive/My Drive/EQUIP Lab- Documents/Active Projects/2020.01 Milestone vs. Medicare Outcomes-Dan/Visualizations/bin_or_summary.png")
   
 
 # plot -------
@@ -136,15 +142,34 @@ bin_mean_pred_tbl %>%
 
 # plot----
 bin_mean_pred_tbl %>%
+  mutate(
+    outcome = case_when(
+      outcome == "any_cmp" ~ "Any Complication",
+      outcome == "readmit" ~ "Readmission",
+      outcome == "severe_cmp" ~ "Severe Complication",
+      outcome == "death" ~ "Death"
+    ),
+    outcome = factor(outcome, levels = c(
+      "Any Complication", "Readmission", "Severe Complication", "Death"
+    )),
+    binary_rating = ifelse(binary_rating == ">=8", "≥8", binary_rating),
+    term = str_to_title(term),
+    term = ifelse(term == "Overall_mean", "Overall", term),
+    term = factor(term, levels = c(
+      "Overall", "Leadership", "Operative", "Professional"
+    )),
+  ) %>% 
   ggplot(aes(x = outcome, y = predicted)) +
   facet_wrap(~term, ncol =2) +
-  # diffrent patterns to indicate binary scale------
-  geom_col_pattern(aes(fill = outcome, group = binary_rating, pattern = binary_rating),
+  # different patterns to indicate binary scale------
+  geom_col_pattern(aes(fill = outcome,
+                       group = binary_rating,
+                       pattern = binary_rating),
            position = position_dodge(width = 0.55), width = 0.4,
            colour = 'gray',
            pattern_fill    = 'white',
            pattern_colour  = 'white',
-           pattern_spacing = 0.08
+           pattern_spacing = 0.03
            ) +
   geom_errorbar(aes(ymin = conf.low, ymax = conf.high, group = binary_rating),
                 alpha = 0.7, position = position_dodge(width = 0.55),
@@ -159,20 +184,21 @@ bin_mean_pred_tbl %>%
   #                 alpha = 0.7, position = position_dodge(width = 0.55)) +
   scale_color_manual(values = my_color, aesthetics = c("fill")) +
   scale_shape_manual(values = c(3,4)) +
-  labs(title = "Predicted probabilities by patient outcomes",
+  labs(title = "Predicted probabilities of patient outcomes by milestone ratings",
        y = "",
        x = "") +
   scale_y_continuous(labels = scales::percent) +
-  # scale_fill_grey() +
+  scale_fill_grey() +
   visibly::theme_trueMinimal(center_axis_labels = T) +
   theme(plot.title = element_text(size=12),
-        axis.text.x = element_text(size = 10),
+        axis.text.x = element_text(size = 6),
         # axis.text.x = element_blank(),
         axis.ticks.x = element_blank(),
         axis.title.y = element_text(angle = 90, vjust = 0.5, size = 10),
         axis.ticks.y=element_blank(),
         strip.text.y = element_text(size = 13),
-        legend.position="bottom",
+        # legend.position="bottom",
+        legend.position = 'none',
         legend.title = element_blank()) 
   
 
