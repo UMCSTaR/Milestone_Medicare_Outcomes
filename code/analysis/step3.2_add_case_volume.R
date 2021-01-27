@@ -12,7 +12,8 @@ milestone_medicare_pc_primary = milestone_medicare_pc_primary %>%
                                             grad_year == 2016 ~ 17,
                                             grad_year == 2017 ~ 5)) %>% 
   add_count(id_physician_npi, name = "n_cases_tot") %>% 
-  mutate(cases_per_12month = (n_cases_tot/month_after_graduation)*12) 
+  mutate(cases_per_12month = (n_cases_tot/month_after_graduation)*12,
+         cases_per_12month = round(cases_per_12month, 2)) 
 
 
 save(milestone_medicare_pc_primary, file = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/milestone_medicare_pc_primary.rdata")
