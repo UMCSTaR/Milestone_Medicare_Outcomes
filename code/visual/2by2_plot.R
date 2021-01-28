@@ -132,6 +132,7 @@ bin_mean_pred_tbl <-  bin_mean_pred %>%
     )
   )
 
+# table
 bin_mean_pred_tbl %>% 
   mutate(`95% CI` = paste0("[", conf.low, ", ", conf.high, "]")) %>% 
   select(term, everything(), -contains(".")) %>% 
@@ -152,7 +153,8 @@ bin_mean_pred_tbl %>%
     outcome = factor(outcome, levels = c(
       "Any Complication", "Readmission", "Severe Complication", "Death"
     )),
-    binary_rating = ifelse(binary_rating == ">=8", "≥8", binary_rating),
+    binary_rating = ifelse(binary_rating == ">=8", "ge8", "lt8"),
+    binary_rating = as.factor(binary_rating),
     term = str_to_title(term),
     term = ifelse(term == "Overall_mean", "Overall", term),
     term = factor(term, levels = c(
@@ -160,16 +162,17 @@ bin_mean_pred_tbl %>%
     )),
   ) %>% 
   ggplot(aes(x = outcome, y = predicted)) +
-  facet_wrap(~term, ncol =2) +
+  facet_wrap(~term, ncol =2, scales = "free") +
   # different patterns to indicate binary scale------
   geom_col_pattern(aes(fill = outcome,
-                       group = binary_rating,
-                       pattern = binary_rating),
+                       pattern_fill = binary_rating,
+                       # pattern_type = binary_rating,
+                       pattern_density = binary_rating),
            position = position_dodge(width = 0.55), width = 0.4,
            colour = 'gray',
-           pattern_fill    = 'white',
-           pattern_colour  = 'white',
-           pattern_spacing = 0.03
+           pattern  = 'stripe',
+           pattern_fill    = 'gray',
+           pattern_colour  = 'gray'
            ) +
   geom_errorbar(aes(ymin = conf.low, ymax = conf.high, group = binary_rating),
                 alpha = 0.7, position = position_dodge(width = 0.55),
@@ -184,13 +187,17 @@ bin_mean_pred_tbl %>%
   #                 alpha = 0.7, position = position_dodge(width = 0.55)) +
   scale_color_manual(values = my_color, aesthetics = c("fill")) +
   scale_shape_manual(values = c(3,4)) +
-  labs(title = "Predicted probabilities of patient outcomes by milestone ratings",
+  labs(
+    # title = "Predicted probabilities of patient outcomes by milestone ratings",
        y = "",
        x = "") +
-  scale_y_continuous(labels = scales::percent) +
-  scale_fill_grey() +
+  scale_y_continuous(labels = scales::percent,
+                     limits = c(0,0.6),
+                     n.breaks = 5) +
+  # scale_fill_grey() +
   visibly::theme_trueMinimal(center_axis_labels = T) +
-  theme(plot.title = element_text(size=12),
+  theme(axis.line.x = element_line(colour="black"),
+        axis.line.y = element_line(colour="black"),
         axis.text.x = element_text(size = 6),
         # axis.text.x = element_blank(),
         axis.ticks.x = element_blank(),
@@ -202,6 +209,6 @@ bin_mean_pred_tbl %>%
         legend.title = element_blank()) 
   
 
-ggsave("images/prob_2by2_binary_rating.png")
+ggsave("images/prob_2by2_binary_rating_gray.png")
 ggsave("/Volumes/GoogleDrive/My Drive/EQUIP Lab- Documents/Active Projects/2020.01 Milestone vs. Medicare Outcomes-Dan/Visualizations/prob_2by2_binary_rating.svg")
 
