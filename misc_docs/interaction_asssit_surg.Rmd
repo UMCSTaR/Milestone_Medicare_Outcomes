@@ -126,18 +126,53 @@ predicted prob by had vs didn't have assistant surgeon in the case.
 p = emmip(sever_cmp_overall_bin8, as.factor(mean_ge_8) ~ as.factor(had_assist_surg),CIs=TRUE, type = "response")
 # p
 
-ggplot(data = p$data,
+ggplot(data = p$data %>%
+         mutate(had_assist_surg = factor(
+           had_assist_surg,
+           labels = c("No assistant surgeon", "Had assistant surgeon")
+         )),
        aes(
-         x = as.factor(mean_ge_8),
+         x = factor(mean_ge_8, labels = c("Overall rating <8", "Overall rating ≥8")),
          y = yvar,
-         colour = as.factor(had_assist_surg)
+         group = factor(had_assist_surg)
        ))+
-  geom_pointrange(aes(ymin = LCL,
-                      ymax = UCL), position = position_dodge(width = 0.1)) +
-  labs(y = "Predicted Prob",
-       x = "Overall rating (0 <8; 1≥8)",
-       color = "Had assist surg (0:no, 1:yes)") +
-  theme_classic() +
-  theme(legend.position = "bottom")
+  geom_col(
+  aes(
+    fill = factor(had_assist_surg),
+  ),
+  position = position_dodge(width = 0.55), width = 0.4
+) +
+  geom_errorbar(aes(ymin = LCL, ymax = UCL),
+                alpha = 0.7, position = position_dodge(width = 0.55),
+                width = .2, show.legend = FALSE) +
+  # diffrent symble to indicate binary scale------
+  # geom_col(aes(fill = outcome, group = binary_rating),
+  #        position = position_dodge(width = 0.55), width = 0.5,
+  #        show.legend = FALSE) +
+  # geom_pointrange(aes(ymin = conf.low, ymax = conf.high, group = binary_rating,
+  #                     shape = binary_rating),
+  #                 alpha = 0.7, position = position_dodge(width = 0.55)) +
+  # scale_color_manual(values = my_color, aesthetics = c("fill")) +
+  scale_color_manual(values = c("gray40", "gray85"), aesthetics = c("fill")) +
+  scale_y_continuous(labels = scales::percent) +
+  labs(y = "Estimated probabilities of severe complications",
+       caption = "The interaction effect of overall Milestone ratings with vs. without assistant surgeons",
+       color = "") +
+  visibly::theme_trueMinimal(center_axis_labels = T) +
+  theme(axis.line.x = element_line(colour="black"),
+        axis.line.y = element_line(colour="black"),
+        axis.text.x = element_text(size = 10),
+        axis.title.x=element_blank(),
+        # axis.ticks.x = element_blank(),
+        axis.title.y = element_text(angle = 90, vjust = 0.5, size = 10),
+        axis.ticks.y=element_blank(),
+        strip.text.y = element_text(size = 13),
+        plot.caption = element_text(size=10),
+        legend.position="bottom",
+        legend.key.size = unit(0.5, "cm"),
+        legend.title = element_blank()) 
+
+ggsave("images/interaction_assist_surg_overall_rating.png")
+  
 ```
 

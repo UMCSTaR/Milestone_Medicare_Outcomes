@@ -37,7 +37,11 @@ If you are interested to see only milestone ratings stats form the models, the s
 [Actual predicted probability values used in the plots](images/pred_probs.png)
 
 
+- [Had_assist_surg interation](misc_docs/interaction_asssit_surg.pdf)
 
+[the interaction plot](images/interaction_assist_surg_overall_rating.png)
+
+Explore if had assistant surgeon in the case and milestone ratings had significant different effects on the patient outcome. All interaction terms are summarized in one table. One example model was used to show more model details.
 
 ## Quality Assurance and Explore Ideas
 
@@ -64,10 +68,6 @@ Descriptive stats to look at continuous milestone ratings distributions by table
 
 ORs and p values for binary ratings =9 vs. <9. Same covariates as other models. Models are saved on maize: George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month24_pc_cutoff9.rdata
 
-
-- [Had_assist_surg interation](misc_docs/interaction_asssit_surg.pdf)
-
-Explore if had assistant surgeon in the case and milestone ratings had significant different effects on the patient outcome. All interaction terms are summarized in one table. One example model was used to show more model details.
 
 - [Asana discussion: Post-hoc power analysis](https://app.asana.com/0/1183110919789797/1199379804396909)
 
