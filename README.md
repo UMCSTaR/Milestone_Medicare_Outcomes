@@ -32,7 +32,7 @@ If you are interested to see only milestone ratings stats form the models, the s
 
 - Visualization
 
-[Predicted probabilities plot](images/prob_2by2_binary_rating.png)
+[Predicted probabilities plot](images/prob_2by2_binary_rating_gray.png)
 
 [Actual predicted probability values used in the plots](images/pred_probs.png)
 
