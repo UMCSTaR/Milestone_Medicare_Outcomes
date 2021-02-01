@@ -35,6 +35,7 @@ library(arsenal)
 library(glmmTMB)
 library(mixedup)
 library(ggeffects)
+library(gtsummary)
 
 
 source("/Users/xilinchen/Documents/Repo/Milestone_Medicare_Outcomes/code/functions/fe.r")
@@ -95,7 +96,13 @@ milestone_medicare_pc %>%
     val_hosp_mcday2inptday_ratio,
     val_hosp_rn2bed_ratio
   ) %>%
-  gtsummary::tbl_summary(missing = "no")
+  gtsummary::tbl_summary(
+    missing = "no",
+    statistic = list(
+      all_continuous() ~ "{mean} ({sd}) [{p25}, {p75}]",
+      all_categorical() ~ "{n} ({p}%)"
+    )
+  )
 ```
 
 

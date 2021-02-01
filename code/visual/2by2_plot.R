@@ -11,9 +11,9 @@ library(ggpattern)
 my_color = c("#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3")
 # my_color = scico::scico(4, palette = "batlow", end = 0.7)
 
-source("code/functions/clean_or_table_lables.R")
-source("code/functions/or_plot.R")
-source("code/functions/predicted_probs_all_models.R")
+source("~/Documents/Repo/Milestone_Medicare_Outcomes/code/functions/clean_or_table_lables.R")
+source("~/Documents/Repo/Milestone_Medicare_Outcomes/code/functions/or_plot.R")
+source("~/Documents/Repo/Milestone_Medicare_Outcomes/code/functions/predicted_probs_all_models.R")
 
 
 # load 24 months ------
@@ -132,7 +132,7 @@ bin_mean_pred_tbl <-  bin_mean_pred %>%
     )
   )
 
-# table
+# table -----
 bin_mean_pred_tbl %>% 
   mutate(`95% CI` = paste0("[", conf.low, ", ", conf.high, "]")) %>% 
   select(term, everything(), -contains(".")) %>% 
@@ -153,8 +153,8 @@ bin_mean_pred_tbl %>%
     outcome = factor(outcome, levels = c(
       "Any Complication", "Readmission", "Severe Complication", "Death"
     )),
-    binary_rating = ifelse(binary_rating == ">=8", "ge8", "lt8"),
-    binary_rating = as.factor(binary_rating),
+    binary_rating = ifelse(binary_rating == ">=8", "proficient(≥8)",
+                           "non-proficient(<8)"),
     term = str_to_title(term),
     term = ifelse(term == "Overall_mean", "Overall", term),
     term = factor(term, levels = c(
@@ -164,20 +164,25 @@ bin_mean_pred_tbl %>%
   ggplot(aes(x = outcome, y = predicted)) +
   facet_wrap(~term, ncol =2, scales = "free") +
   # different patterns to indicate binary scale------
-  geom_col_pattern(aes(fill = outcome,
-                       pattern_fill = binary_rating,
-                       # pattern_type = binary_rating,
-                       pattern_density = binary_rating),
-           position = position_dodge(width = 0.55), width = 0.4,
-           colour = 'gray',
-           pattern  = 'stripe',
-           pattern_fill    = 'gray',
-           pattern_colour  = 'gray'
-           ) +
+  # geom_col_pattern(aes(fill = outcome,
+  #                      pattern_fill = binary_rating,
+  #                      # pattern_type = binary_rating,
+  #                      pattern_density = binary_rating),
+  #          position = position_dodge(width = 0.55), width = 0.4,
+  #          colour = 'gray',
+  #          pattern  = 'stripe',
+  #          pattern_fill    = 'gray',
+  #          pattern_colour  = 'gray'
+  #          ) +
+geom_col(
+  aes(
+    fill = binary_rating,
+  ),
+  position = position_dodge(width = 0.55), width = 0.4
+) +
   geom_errorbar(aes(ymin = conf.low, ymax = conf.high, group = binary_rating),
                 alpha = 0.7, position = position_dodge(width = 0.55),
                 width = .2, show.legend = FALSE) +
-  guides(fill = FALSE) +
   # diffrent symble to indicate binary scale------
   # geom_col(aes(fill = outcome, group = binary_rating),
   #        position = position_dodge(width = 0.55), width = 0.5,
@@ -185,11 +190,11 @@ bin_mean_pred_tbl %>%
   # geom_pointrange(aes(ymin = conf.low, ymax = conf.high, group = binary_rating,
   #                     shape = binary_rating),
   #                 alpha = 0.7, position = position_dodge(width = 0.55)) +
-  scale_color_manual(values = my_color, aesthetics = c("fill")) +
-  scale_shape_manual(values = c(3,4)) +
+  # scale_color_manual(values = my_color, aesthetics = c("fill")) +
+  scale_color_manual(values = c("gray40", "gray85"), aesthetics = c("fill")) +
   labs(
     # title = "Predicted probabilities of patient outcomes by milestone ratings",
-       y = "",
+       y = "Estimated probabilities of complications",
        x = "") +
   scale_y_continuous(labels = scales::percent,
                      limits = c(0,0.6),
@@ -204,11 +209,11 @@ bin_mean_pred_tbl %>%
         axis.title.y = element_text(angle = 90, vjust = 0.5, size = 10),
         axis.ticks.y=element_blank(),
         strip.text.y = element_text(size = 13),
-        # legend.position="bottom",
-        legend.position = 'none',
+        legend.position="bottom",
+        legend.key.size = unit(0.5, "cm"),
         legend.title = element_blank()) 
   
 
-ggsave("images/prob_2by2_binary_rating_gray.png")
+ggsave("~/Documents/Repo/Milestone_Medicare_Outcomes/images/prob_2by2_binary_rating_gray.png")
 ggsave("/Volumes/GoogleDrive/My Drive/EQUIP Lab- Documents/Active Projects/2020.01 Milestone vs. Medicare Outcomes-Dan/Visualizations/prob_2by2_binary_rating.svg")
 
