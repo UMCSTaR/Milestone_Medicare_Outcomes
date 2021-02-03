@@ -5,7 +5,8 @@ library(glmmTMB)
 library(mixedup)
 library(kableExtra)
 library(ggeffects)
-library(ggpattern)
+# library(ggpattern)
+library(flextable)
 
 
 my_color = c("#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3")
@@ -57,6 +58,7 @@ bin_rating = model_tables  %>%
 
 
 # or table ------
+## mean-----
 mean_model_summary = mean_rating %>% 
   mutate_if(is.numeric,~round(.,2)) %>% 
   mutate(`95% CI` = paste0("[", OR_lower, ", ", OR_upper, "]")) %>% 
@@ -67,11 +69,12 @@ mean_model_summary %>%
   clean_or_table_labels() %>%
   kable(digits = 2, caption = "Odds Ratios of Milestone Scores (mean ratings)") %>%
   kable_styling(full_width = F) %>%
-  collapse_rows(columns = 1, valign = "top") %>% 
-  save_kable("images/mean_model_summary.png") 
+  collapse_rows(columns = 1, valign = "top") 
+  # save_kable("images/mean_model_summary.png") 
   # save_kable("/Volumes/GoogleDrive/My Drive/EQUIP Lab- Documents/Active Projects/2020.01 Milestone vs. Medicare Outcomes-Dan/Visualizations/mean_or_summary.png")
+  
 
-
+## binary----
 bin_model_summary = bin_rating %>% 
   mutate_if(is.numeric,~round(.,2)) %>% 
   mutate(`95% CI` = paste0("[", OR_lower, ", ", OR_upper, "]")) %>% 
@@ -85,6 +88,36 @@ bin_model_summary %>%
   save_kable("images/bin_model_summary.png")
   # save_kable("/Volumes/GoogleDrive/My Drive/EQUIP Lab- Documents/Active Projects/2020.01 Milestone vs. Medicare Outcomes-Dan/Visualizations/bin_or_summary.png")
   
+## excel output----
+mean_tbl = mean_model_summary %>%
+  clean_or_table_labels() %>% 
+  select(Rating, everything()) %>% 
+  rename(OR = "Odds ratio")
+
+bin_tbl = bin_model_summary %>%
+  clean_or_table_labels() %>% 
+  select(Rating, everything()) %>% 
+  rename(OR = "Odds ratio")
+
+two_tbl = full_join(mean_tbl, bin_tbl, by = c("Rating", "Patient outcomes"))
+
+two_tbl %>% 
+  mutate(Rating = factor(Rating, levels = c("Overall", "Leadership", "Operative", "Professional"))) %>% 
+  arrange(Rating) %>% 
+  flextable() %>% 
+  merge_v(j = "Rating") %>%
+  add_header('OR.x' = "Continuous",
+             '95% CI.x' = "Continuous",
+             'p-value.x' = "Continuous",
+             'OR.y' = "Binary",
+             '95% CI.y' = "Binary",
+             'p-value.y' = "Binary",
+             top = TRUE ) %>% 
+  merge_h(part = "header") %>% 
+  theme_box() %>% 
+  width(width = 1) %>% 
+  # autofit() %>% 
+  save_as_docx(path = "reports/or_table.docx")
 
 # plot -------
 # continuous milestone
