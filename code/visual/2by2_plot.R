@@ -84,8 +84,8 @@ bin_model_summary %>%
   clean_or_table_labels() %>%
   kable(digits = 2, caption = "Odds Ratios of Milestone Scores (<8 vs. ≥8 )") %>% 
   kable_styling(full_width = F) %>% 
-  collapse_rows(columns = 1, valign = "top") %>% 
-  save_kable("images/bin_model_summary.png")
+  collapse_rows(columns = 1, valign = "top") 
+  # save_kable("images/bin_model_summary.png")
   # save_kable("/Volumes/GoogleDrive/My Drive/EQUIP Lab- Documents/Active Projects/2020.01 Milestone vs. Medicare Outcomes-Dan/Visualizations/bin_or_summary.png")
   
 ## excel output----
@@ -115,9 +115,9 @@ two_tbl %>%
              top = TRUE ) %>% 
   merge_h(part = "header") %>% 
   theme_box() %>% 
-  width(width = 1) %>% 
+  width(width = 1) 
   # autofit() %>% 
-  save_as_docx(path = "reports/or_table.docx")
+  # save_as_docx(path = "reports/or_table.docx")
 
 # plot -------
 # continuous milestone
