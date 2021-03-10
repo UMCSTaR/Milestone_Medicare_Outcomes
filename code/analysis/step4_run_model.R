@@ -36,7 +36,8 @@ n_months = 24
 interaction_term = NULL # no interaction
 # cutoff year
 cutoff = 8
-# cutoff = 8
+# including case volume
+case_vol = T
 
 
 # data process
@@ -94,6 +95,12 @@ covariates = c(
 
 # check if all vars in the data
 all(covariates %in% names(main_data))
+
+# remove case volume covariate if desire
+if(case_vol == FALSE) {
+  n_val = grep("cases_per_12month", covariates)
+  covariates = covariates[-n_val]
+}
 
 
 # Model formula -----------------------------------------------------------
@@ -231,12 +238,25 @@ names(results) = model_name
 summary(results$Par_any_cmp_leadership_ge8)
 
 # save model ---------
-if (is.null(interaction_term) & cutoff == 8) {
-  save(results,
-       file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month24_pc.rdata")
+if (is.null(interaction_term) &
+    cutoff == 8) {
+  if (case_vol == TRUE) {
+    save(results,
+         file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month24_pc.rdata")
+  } else {
+    save(results,
+         file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month24_pc_no_case_vol.rdata")
+  }
+  
 } else if (!is.null(interaction_term) & cutoff == 8) {
-  save(results,
-       file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month24_pc_interaction.rdata")
+  
+  if (case_vol == TRUE) {
+    save(results,
+         file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month24_pc_interaction.rdata")
+  } else {
+    save(results,
+         file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month24_pc_interaction_no_case_vol.rdata")
+  }
 } else if (cutoff == 9) {
   save(results,
        file  = "/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month24_pc_cutoff9.rdata")

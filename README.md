@@ -29,8 +29,6 @@ This section summarize the major reports from this repo, and detailed discussion
 
 ![with error bar](images/interaction_assist_surg_overall_rating.png)
 
-![No error bar](images/interaction_assist_surg_overall_rating_no_error_bar.png)
-
 
 ### Tables
 
@@ -38,13 +36,14 @@ This section summarize the major reports from this repo, and detailed discussion
 
 [table1](manuscripts/table1.docx)
 
-- 2. Table3: Combined ORs Table of continuous and binary Milestone Ratings
-
-[summary OR table](reports/or_table_h_v1.docx)
-
 *code used to reproduce the table is [2by2_plot.R](code/visual/2by2_plot.R)*
 
-- 3. Regression table
+- 2. example regression table
+
+
+- 3. supplemental: Combined ORs Table of continuous and binary Milestone Ratings
+
+[summary OR table](reports/or_table_h_v1.docx)
 
 
 
