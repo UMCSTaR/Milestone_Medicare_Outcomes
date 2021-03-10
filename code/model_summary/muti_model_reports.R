@@ -3,7 +3,7 @@ library(knitr)
 library(readr)
 library(tidyverse)
 
-source("code/functions/multi_reports_by_outcome.R")
+source("code/functions/multi_reports_by_outcome.R") 
 
 # choose how many months of practice after graduation
 n_month = 24

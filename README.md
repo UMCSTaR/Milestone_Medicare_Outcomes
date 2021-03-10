@@ -13,6 +13,19 @@ Use Milestone rating data from ACGME to look at the its association with Medicar
 
 This section summarize the major reports from this repo, and detailed discussions on Asana project.
 
+## Publication ready 
+
+- Cohort selection plot
+
+![](misc_docs/cohort_flow_2-25.png)
+
+-Table1: cohort description by ≥8 vs. <8
+
+[table1](manuscripts/table1.docx)
+
+
+
+
 ## Main Results
 
 - [Cohort Definition](misc_docs/Milestone_Data_Process/update_12_18.png)

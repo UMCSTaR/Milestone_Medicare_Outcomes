@@ -123,10 +123,35 @@ milestone_medicare_pc %>%
 
 ```{r overall_mean}
 sum_tbl_by_rating(data = milestone_medicare_pc,
-                  rating_var = mean_ge_8) 
+                  rating_var = mean_ge_8)
 ```
 
-* for continuous variables, the stats are *mean (sd)[p25, p75]*
+**Mean Colectomy volume/year (SD)**
+
+```{r overall_mean_surgeon}
+# Mean Colectomy volume/year (SD) --
+# surgeon level
+milestone_medicare_pc %>% 
+  distinct(id_physician_npi, mean_ge_8, cases_per_12month) %>% 
+  mutate(Overall_rating = ifelse(mean_ge_8 == 0 , "mean<8", "mean>=8")) %>% 
+  # group_by(Overall_rating) %>% 
+  summarise(n_surgeon = n(),
+            mean_cole_volume_per_yr = mean(cases_per_12month),
+            sd_cole_volume_per_yr = sd(cases_per_12month)) %>% 
+  kableExtra::kable(digits = 2) %>% 
+  kableExtra::kable_styling(full_width = F)
+
+milestone_medicare_pc %>% 
+  distinct(id_physician_npi, mean_ge_8, cases_per_12month) %>% 
+  mutate(Overall_rating = ifelse(mean_ge_8 == 0 , "mean<8", "mean>=8")) %>% 
+  group_by(Overall_rating) %>% 
+  summarise(n_surgeon = n(),
+            mean_cole_volume_per_yr = mean(cases_per_12month),
+            sd_cole_volume_per_yr = sd(cases_per_12month)) %>% 
+  kableExtra::kable(digits = 2) %>% 
+  kableExtra::kable_styling(full_width = F)
+```
+
 
 
 ### 2.2 Professional ratings 
