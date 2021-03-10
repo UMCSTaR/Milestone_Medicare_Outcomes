@@ -15,13 +15,36 @@ This section summarize the major reports from this repo, and detailed discussion
 
 ## Publication ready 
 
-- Cohort selection plot
+### Figures
+
+- 1. Fig1: Cohort selection plot
 
 ![](misc_docs/cohort_flow_2-25.png)
 
--Table1: cohort description by ≥8 vs. <8
+- 2. Fig3: Estimated Probability of Complications based on Graduating Milestone Proficiency
+
+![](images/prob_2by2_binary_rating_gray.png)
+
+- 3. Fig4. Estimated Probability of Complications based on Presence of Assisting Surgeon in Relationship to Milestone Proficiency Status
+
+![with error bar](images/interaction_assist_surg_overall_rating.png)
+
+![No error bar](images/interaction_assist_surg_overall_rating_no_error_bar.png)
+
+
+### Tables
+
+- 1. Table1: cohort description by ≥8 vs. <8
 
 [table1](manuscripts/table1.docx)
+
+- 2. Table3: Combined ORs Table of continuous and binary Milestone Ratings
+
+[summary OR table](reports/or_table_h_v1.docx)
+
+*code used to reproduce the table is [2by2_plot.R](code/visual/2by2_plot.R)*
+
+- 3. Regression table
 
 
 

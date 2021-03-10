@@ -186,8 +186,8 @@ bin_mean_pred_tbl %>%
     outcome = factor(outcome, levels = c(
       "Any Complication", "Readmission", "Severe Complication", "Death"
     )),
-    binary_rating = ifelse(binary_rating == ">=8", "proficient(≥8)",
-                           "non-proficient(<8)"),
+    binary_rating = ifelse(binary_rating == ">=8", "Proficient",
+                           "Not Yet Proficient"),
     term = str_to_title(term),
     term = ifelse(term == "Overall_mean", "Overall", term),
     term = factor(term, levels = c(
@@ -248,5 +248,5 @@ geom_col(
   
 
 ggsave("~/Documents/Repo/Milestone_Medicare_Outcomes/images/prob_2by2_binary_rating_gray.png")
-ggsave("/Volumes/GoogleDrive/My Drive/EQUIP Lab- Documents/Active Projects/2020.01 Milestone vs. Medicare Outcomes-Dan/Visualizations/prob_2by2_binary_rating.svg")
+ggsave("/Volumes/GoogleDrive/My Drive/MED Lab- Documents/Active Projects/2020.01 Milestone vs. Medicare Outcomes-Dan/Visualizations/prob_2by2_binary_rating.png")
 

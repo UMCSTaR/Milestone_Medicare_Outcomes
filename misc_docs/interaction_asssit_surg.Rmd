@@ -132,7 +132,7 @@ ggplot(data = p$data %>%
            labels = c("No assistant surgeon", "Had assistant surgeon")
          )),
        aes(
-         x = factor(mean_ge_8, labels = c("Overall rating <8", "Overall rating ≥8")),
+         x = factor(mean_ge_8, labels = c("Not Yet Proficient", "Proficient")),
          y = yvar,
          group = factor(had_assist_surg)
        ))+
@@ -173,6 +173,7 @@ ggplot(data = p$data %>%
         legend.title = element_blank()) 
 
 ggsave("images/interaction_assist_surg_overall_rating.png")
+# ggsave("images/interaction_assist_surg_overall_rating_no_error_bar.png")
   
 ```
 
