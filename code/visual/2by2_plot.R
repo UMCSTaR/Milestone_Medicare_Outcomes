@@ -7,10 +7,12 @@ library(kableExtra)
 library(ggeffects)
 # library(ggpattern)
 library(flextable)
+library(glue)
 
 
 my_color = c("#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3")
 # my_color = scico::scico(4, palette = "batlow", end = 0.7)
+including_case_vol = TRUE # whether using model has case volume as covar
 
 source("~/Documents/Repo/Milestone_Medicare_Outcomes/code/functions/clean_or_table_lables.R")
 source("~/Documents/Repo/Milestone_Medicare_Outcomes/code/functions/or_plot.R")
@@ -18,7 +20,11 @@ source("~/Documents/Repo/Milestone_Medicare_Outcomes/code/functions/predicted_pr
 
 
 # load 24 months ------
-load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month24_pc.rdata")
+if (including_case_vol == TRUE){
+  load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month24_pc.rdata")
+} else {
+  load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month24_pc_no_case_vol.rdata")
+}
 
 # 1. OR ----------------------------------------------------------------------
 # ratings by category
@@ -67,7 +73,8 @@ mean_model_summary = mean_rating %>%
 # change labels
 mean_model_summary %>%
   clean_or_table_labels() %>%
-  kable(digits = 2, caption = "Odds Ratios of Milestone Scores (mean ratings)") %>%
+  kable(digits = 2, caption = glue("Odds Ratios of Milestone Scores (mean ratings)
+        including case volume == {including_case_vol}")) %>%
   kable_styling(full_width = F) %>%
   collapse_rows(columns = 1, valign = "top") 
   # save_kable("images/mean_model_summary.png") 
@@ -82,7 +89,8 @@ bin_model_summary = bin_rating %>%
 
 bin_model_summary %>% 
   clean_or_table_labels() %>%
-  kable(digits = 2, caption = "Odds Ratios of Milestone Scores (<8 vs. ≥8 )") %>% 
+  kable(digits = 2, caption = glue("Odds Ratios of Milestone Scores (<8 vs. ≥8 )
+        including case volume == {including_case_vol}")) %>% 
   kable_styling(full_width = F) %>% 
   collapse_rows(columns = 1, valign = "top") 
   # save_kable("images/bin_model_summary.png")
@@ -101,7 +109,7 @@ bin_tbl = bin_model_summary %>%
 
 two_tbl = full_join(mean_tbl, bin_tbl, by = c("Rating", "Patient outcomes"))
 
-two_tbl %>% 
+or_tbl = two_tbl %>% 
   mutate(Rating = factor(Rating, levels = c("Overall", "Leadership", "Operative", "Professional"))) %>% 
   arrange(Rating) %>% 
   flextable() %>% 
@@ -115,27 +123,31 @@ two_tbl %>%
              top = TRUE ) %>% 
   merge_h(part = "header") %>% 
   theme_box() %>% 
-  width(width = 1) 
-  # autofit() %>% 
-  # save_as_docx(path = "reports/or_table.docx")
+  width(width = 1) %>% 
+  add_header_lines(values = glue("model including case volume as covariate = {including_case_vol}")) %>% 
+  autofit() 
 
-# plot -------
-# continuous milestone
-or_plot(data = mean_rating,
-        title = "Mean milestone ratings by patient outcomes") +
-  facet_wrap(~term)
-  
-ggsave("images/or_2by2_mean_rating.png")
-ggsave("/Volumes/GoogleDrive/My Drive/EQUIP Lab- Documents/Active Projects/2020.01 Milestone vs. Medicare Outcomes-Dan/Visualizations/or_2by2_mean_rating.svg")
+if (including_case_vol == TRUE){
+  save_as_docx(or_tbl, path = "reports/or_table_inlcude_case_vol.docx")
+} else {
+  save_as_docx(or_tbl, path = "reports/or_table_no_case_vol.docx")
+}
 
-
+# # archive plot -------
+# # continuous milestone
+# or_plot(data = mean_rating,
+#         title = "Mean milestone ratings by patient outcomes") +
+#   facet_wrap(~term)
+#   
+# ggsave("images/or_2by2_mean_rating.png")
+# ggsave("/Volumes/GoogleDrive/My Drive/EQUIP Lab- Documents/Active Projects/2020.01 Milestone vs. Medicare Outcomes-Dan/Visualizations/or_2by2_mean_rating.svg")
 
 # bin miletone
-or_plot(data = bin_rating,
-        title = "binary (≥8) milestone ratings by patient outcomes") +
-  facet_wrap(~term)
-
-ggsave("images/or_2by2_bin_rating.png")
+# or_plot(data = bin_rating,
+#         title = "binary (≥8) milestone ratings by patient outcomes") +
+#   facet_wrap(~term)
+# 
+# ggsave("images/or_2by2_bin_rating.png")
 
 
 # 2. probability 2 by 2 ------------------------------------------------------
@@ -171,8 +183,8 @@ bin_mean_pred_tbl %>%
   select(term, everything(), -contains(".")) %>% 
   kable(digits = 2, caption = "Predicted Probabilities of Binay Milestone Scores") %>% 
   kable_styling(full_width = F) %>% 
-  collapse_rows(columns = 1:2, valign = "top") %>% 
-  save_kable("images/pred_probs.png")
+  collapse_rows(columns = 1:2, valign = "top") 
+  # save_kable("images/pred_probs.png")
 
 # plot----
 bin_mean_pred_tbl %>%
@@ -196,7 +208,7 @@ bin_mean_pred_tbl %>%
   ) %>% 
   ggplot(aes(x = outcome, y = predicted)) +
   facet_wrap(~term, ncol =2, scales = "free") +
-  # different patterns to indicate binary scale------
+  # different patterns to indicate binary scale
   # geom_col_pattern(aes(fill = outcome,
   #                      pattern_fill = binary_rating,
   #                      # pattern_type = binary_rating,
@@ -216,7 +228,7 @@ geom_col(
   geom_errorbar(aes(ymin = conf.low, ymax = conf.high, group = binary_rating),
                 alpha = 0.7, position = position_dodge(width = 0.55),
                 width = .2, show.legend = FALSE) +
-  # diffrent symble to indicate binary scale------
+  # different symbol to indicate binary scale
   # geom_col(aes(fill = outcome, group = binary_rating),
   #        position = position_dodge(width = 0.55), width = 0.5,
   #        show.legend = FALSE) +
@@ -246,7 +258,11 @@ geom_col(
         legend.key.size = unit(0.5, "cm"),
         legend.title = element_blank()) 
   
-
-ggsave("~/Documents/Repo/Milestone_Medicare_Outcomes/images/prob_2by2_binary_rating_gray.png")
-ggsave("/Volumes/GoogleDrive/My Drive/MED Lab- Documents/Active Projects/2020.01 Milestone vs. Medicare Outcomes-Dan/Visualizations/prob_2by2_binary_rating.png")
+if(including_case_vol == TRUE) {
+  ggsave("~/Documents/Repo/Milestone_Medicare_Outcomes/images/prob_2by2_binary_rating_gray_include_case_vol.png")
+  ggsave("/Volumes/GoogleDrive/My Drive/MED Lab- Documents/Active Projects/2020.01 Milestone vs. Medicare Outcomes-Dan/Visualizations/prob_2by2_binary_rating_include_case_vol.png")
+} else {
+  ggsave("~/Documents/Repo/Milestone_Medicare_Outcomes/images/prob_2by2_binary_rating_gray_include_no_case_vol.png")
+  ggsave("/Volumes/GoogleDrive/My Drive/MED Lab- Documents/Active Projects/2020.01 Milestone vs. Medicare Outcomes-Dan/Visualizations/prob_2by2_binary_rating_include_no_case_vol.png")
+}
 

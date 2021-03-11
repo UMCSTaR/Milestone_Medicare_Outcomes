@@ -37,7 +37,7 @@ interaction_term = NULL # no interaction
 # cutoff year
 cutoff = 8
 # including case volume
-case_vol = T
+case_vol = TRUE
 
 
 # data process
