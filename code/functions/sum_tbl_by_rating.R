@@ -15,12 +15,13 @@ sum_tbl_by_rating <- function(data = milestone_medicare_pc,
       `Race - White` = race_white,
       `Emergency Admission Status` = flg_admit_emerg,
       `Mean Age on admission, yr` = age_at_admit,
+      `High SES` = ses_2grp,
       `Mean AHRQ Elixhauser Index` = AHRQ_score,
-      `Hospital Beds ≥ 350` = hosp_beds,
+      `Hospital Beds` = hosp_beds,
       `Colectomy Type` = colectomy_type,
       `Presence of Assisting Surgeon` = had_assist_surg,
-      hosp_mcday2inptday = val_hosp_mcday2inptday_ratio,
-      hosp_rn2bed = val_hosp_rn2bed_ratio
+      `Facility Medicaid/Facility inpatient days ratio` = val_hosp_mcday2inptday_ratio,
+      `Registered nurse to bed ratio` = val_hosp_rn2bed_ratio
     ) %>% 
     mutate({{rating_var}} := ifelse({{rating_var}} == 0 , "mean<8", "mean>=8")) %>% 
     tbl_summary(by = {{rating_var}},

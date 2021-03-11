@@ -144,7 +144,9 @@ milestone_medicare_pc %>%
                   all_categorical() ~ "{n} ({p}%)"
                 ),
                 missing = "no") %>% 
-  add_p()
+  add_p() %>% 
+  as_flex_table() %>% 
+  save_as_docx(path= "manuscripts/table1_surgeon_level.docx")
 ```
 
 

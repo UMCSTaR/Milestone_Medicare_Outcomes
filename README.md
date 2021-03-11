@@ -36,7 +36,7 @@ This section summarize the major reports from this repo, and detailed discussion
 
 [table1](manuscripts/table1.docx)
 
-*code used to reproduce the table is [2by2_plot.R](code/visual/2by2_plot.R)*
+[table1 suregon level]("manuscripts/table1_surgeon_level.docx)
 
 - 2. example regression table
 
@@ -44,6 +44,8 @@ This section summarize the major reports from this repo, and detailed discussion
 - 3. supplemental: Combined ORs Table of continuous and binary Milestone Ratings
 
 [summary OR table](reports/or_table_h_v1.docx)
+
+*code used to reproduce the table is [2by2_plot.R](code/visual/2by2_plot.R)*
 
 
 
