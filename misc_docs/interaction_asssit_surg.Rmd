@@ -34,7 +34,7 @@ library(emmeans)
 ```{r data_prep, cache=T}
 # explore interactions
 # load 24 months ------
-load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month24_pc_interaction.rdata")
+load("/Volumes/George_Surgeon_Projects/Milestone_vs_Outcomes/model/models_month24_pc_interaction_no_case_vol.rdata")
 
 # 1. OR ----------------------------------------------------------------------
 # ratings by category
@@ -123,7 +123,8 @@ em_model_pw
 predicted prob by had vs didn't have assistant surgeon in the case.
 
 ```{r}
-p = emmip(sever_cmp_overall_bin8, as.factor(mean_ge_8) ~ as.factor(had_assist_surg),CIs=TRUE, type = "response")
+#p = emmip(sever_cmp_overall_bin8, as.factor(mean_ge_8) ~ as.factor(had_assist_surg),CIs=TRUE, type = "response")
+p = emmip(results$Par_any_cmp_mean_ge_8, as.factor(mean_ge_8) ~ as.factor(had_assist_surg),CIs=TRUE, type = "response")
 # p
 
 ggplot(data = p$data %>%
@@ -145,34 +146,28 @@ ggplot(data = p$data %>%
   geom_errorbar(aes(ymin = LCL, ymax = UCL),
                 alpha = 0.7, position = position_dodge(width = 0.55),
                 width = .2, show.legend = FALSE) +
-  # diffrent symble to indicate binary scale------
-  # geom_col(aes(fill = outcome, group = binary_rating),
-  #        position = position_dodge(width = 0.55), width = 0.5,
-  #        show.legend = FALSE) +
-  # geom_pointrange(aes(ymin = conf.low, ymax = conf.high, group = binary_rating,
-  #                     shape = binary_rating),
-  #                 alpha = 0.7, position = position_dodge(width = 0.55)) +
-  # scale_color_manual(values = my_color, aesthetics = c("fill")) +
   scale_color_manual(values = c("gray40", "gray85"), aesthetics = c("fill")) +
-  scale_y_continuous(labels = scales::percent) +
-  labs(y = "Estimated probabilities of severe complications",
-       caption = "The interaction effect of overall Milestone ratings with vs. without assistant surgeons",
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  labs(y = "Probabilities of having any complications",
+       caption = "The interaction effect of overall Milestone ratings and presence of assistant surgeons (p value = 0.28)",
        color = "") +
   visibly::theme_trueMinimal(center_axis_labels = T) +
   theme(axis.line.x = element_line(colour="black"),
         axis.line.y = element_line(colour="black"),
-        axis.text.x = element_text(size = 10),
         axis.title.x=element_blank(),
-        # axis.ticks.x = element_blank(),
-        axis.title.y = element_text(angle = 90, vjust = 0.5, size = 10),
+        axis.text.x = element_text(size = 13),
+        axis.text.y = element_text(size = 10),
+        # axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.title.y = element_text(angle = 90, vjust = 0.5, size = 13),
         axis.ticks.y=element_blank(),
-        strip.text.y = element_text(size = 13),
-        plot.caption = element_text(size=10),
+        strip.text = element_text(size = 13),
         legend.position="bottom",
         legend.key.size = unit(0.5, "cm"),
-        legend.title = element_blank()) 
+        legend.title = element_blank(),
+        plot.caption = element_text(size = 10)) 
 
-ggsave("images/interaction_assist_surg_overall_rating.png")
+ggsave("images/interaction_assist_surg_overall_rating_any_cmp.png")
 # ggsave("images/interaction_assist_surg_overall_rating_no_error_bar.png")
   
 ```

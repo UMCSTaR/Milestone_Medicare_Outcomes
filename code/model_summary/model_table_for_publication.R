@@ -52,8 +52,8 @@ bin_or_list = imap(results[bin], or_all)
 bin_or = reduce(bin_or_list, full_join, by = "Fixed Effects") 
   # rename(Characteristic = "Fixed Effects")
 
-
-newnames = c("Characteristic","Overall Mean", "Overall Mean P",
+newnames = c("Characteristic","Overall Mean",
+             "Overall Mean P",
              "Professional",
              "Professional P",
              "Operative",

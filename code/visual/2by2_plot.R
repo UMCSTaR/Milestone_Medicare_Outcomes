@@ -12,7 +12,7 @@ library(glue)
 
 my_color = c("#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3")
 # my_color = scico::scico(4, palette = "batlow", end = 0.7)
-including_case_vol = TRUE # whether using model has case volume as covar
+including_case_vol = FALSE # whether using model has case volume as covar
 
 source("~/Documents/Repo/Milestone_Medicare_Outcomes/code/functions/clean_or_table_lables.R")
 source("~/Documents/Repo/Milestone_Medicare_Outcomes/code/functions/or_plot.R")
@@ -67,7 +67,7 @@ bin_rating = model_tables  %>%
 ## mean-----
 mean_model_summary = mean_rating %>% 
   mutate_if(is.numeric,~round(.,2)) %>% 
-  mutate(`95% CI` = paste0("[", OR_lower, ", ", OR_upper, "]")) %>% 
+  mutate(`95% CI` = paste0("(", OR_lower, ", ", OR_upper, ")")) %>% 
   select(outcome, rating = term, OR, `95% CI`, p_value) 
 
 # change labels
@@ -84,7 +84,7 @@ mean_model_summary %>%
 ## binary----
 bin_model_summary = bin_rating %>% 
   mutate_if(is.numeric,~round(.,2)) %>% 
-  mutate(`95% CI` = paste0("[", OR_lower, ", ", OR_upper, "]")) %>% 
+  mutate(`95% CI` = paste0("(", OR_lower, ", ", OR_upper, ")")) %>% 
   select(outcome, rating = term, OR, `95% CI`, p_value) 
 
 bin_model_summary %>% 
@@ -99,13 +99,16 @@ bin_model_summary %>%
 ## excel output----
 mean_tbl = mean_model_summary %>%
   clean_or_table_labels() %>% 
-  select(Rating, everything()) %>% 
-  rename(OR = "Odds ratio")
+  rename(OR = "Odds ratio") %>% 
+  mutate(`OR(95% CI)` = paste0(OR, `95% CI`)) %>% 
+  select(Rating, `Patient outcomes`, `OR(95% CI)`, `p-value`) 
 
 bin_tbl = bin_model_summary %>%
   clean_or_table_labels() %>% 
-  select(Rating, everything()) %>% 
-  rename(OR = "Odds ratio")
+  rename(OR = "Odds ratio") %>% 
+  mutate(`OR(95% CI)` = paste0(OR, `95% CI`)) %>% 
+  select(Rating, `Patient outcomes`, `OR(95% CI)`, `p-value`) 
+  
 
 two_tbl = full_join(mean_tbl, bin_tbl, by = c("Rating", "Patient outcomes"))
 
@@ -114,11 +117,9 @@ or_tbl = two_tbl %>%
   arrange(Rating) %>% 
   flextable() %>% 
   merge_v(j = "Rating") %>%
-  add_header('OR.x' = "Continuous",
-             '95% CI.x' = "Continuous",
+  add_header('OR(95% CI).x' = "Continuous",
              'p-value.x' = "Continuous",
-             'OR.y' = "Binary",
-             '95% CI.y' = "Binary",
+             'OR(95% CI).y' = "Binary",
              'p-value.y' = "Binary",
              top = TRUE ) %>% 
   merge_h(part = "header") %>% 
@@ -179,7 +180,7 @@ bin_mean_pred_tbl <-  bin_mean_pred %>%
 
 # table -----
 bin_mean_pred_tbl %>% 
-  mutate(`95% CI` = paste0("[", conf.low, ", ", conf.high, "]")) %>% 
+  mutate(`95% CI` = paste0("(", conf.low, ", ", conf.high, ")")) %>% 
   select(term, everything(), -contains(".")) %>% 
   kable(digits = 2, caption = "Predicted Probabilities of Binay Milestone Scores") %>% 
   kable_styling(full_width = F) %>% 
@@ -190,13 +191,13 @@ bin_mean_pred_tbl %>%
 bin_mean_pred_tbl %>%
   mutate(
     outcome = case_when(
-      outcome == "any_cmp" ~ "Any Complication",
+      outcome == "any_cmp" ~ "Any complication",
       outcome == "readmit" ~ "Readmission",
-      outcome == "severe_cmp" ~ "Severe Complication",
+      outcome == "severe_cmp" ~ "Severe complication",
       outcome == "death" ~ "Death"
     ),
     outcome = factor(outcome, levels = c(
-      "Any Complication", "Readmission", "Severe Complication", "Death"
+      "Any complication", "Readmission", "Severe complication", "Death"
     )),
     binary_rating = ifelse(binary_rating == ">=8", "Proficient",
                            "Not Yet Proficient"),
@@ -240,7 +241,8 @@ geom_col(
   labs(
     # title = "Predicted probabilities of patient outcomes by milestone ratings",
        y = "Estimated probabilities of complications",
-       x = "") +
+       x = "",
+       caption = "* indicates the milestone rating coeffcient was statistically significant") +
   scale_y_continuous(labels = scales::percent,
                      limits = c(0,0.6),
                      n.breaks = 5) +
@@ -248,15 +250,17 @@ geom_col(
   visibly::theme_trueMinimal(center_axis_labels = T) +
   theme(axis.line.x = element_line(colour="black"),
         axis.line.y = element_line(colour="black"),
-        axis.text.x = element_text(size = 6),
+        axis.text.x = element_text(size = 8),
+        axis.text.y = element_text(size = 10),
         # axis.text.x = element_blank(),
         axis.ticks.x = element_blank(),
-        axis.title.y = element_text(angle = 90, vjust = 0.5, size = 10),
+        axis.title.y = element_text(angle = 90, vjust = 0.5, size = 13),
         axis.ticks.y=element_blank(),
-        strip.text.y = element_text(size = 13),
+        strip.text = element_text(size = 13),
         legend.position="bottom",
         legend.key.size = unit(0.5, "cm"),
-        legend.title = element_blank()) 
+        legend.title = element_blank(),
+        plot.caption = element_text(size = 10)) 
   
 if(including_case_vol == TRUE) {
   ggsave("~/Documents/Repo/Milestone_Medicare_Outcomes/images/prob_2by2_binary_rating_gray_include_case_vol.png")

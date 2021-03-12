@@ -23,11 +23,11 @@ This section summarize the major reports from this repo, and detailed discussion
 
 - 2. Fig3: Estimated Probability of Complications based on Graduating Milestone Proficiency
 
-![](images/prob_2by2_binary_rating_gray.png)
+![](images/prob_2by2_binary_rating_gray_include_no_case_vol.png)
 
 - 3. Fig4. Estimated Probability of Complications based on Presence of Assisting Surgeon in Relationship to Milestone Proficiency Status
 
-![with error bar](images/interaction_assist_surg_overall_rating.png)
+![with error bar](images/interaction_assist_surg_overall_rating_any_cmp.png)
 
 
 ### Tables
@@ -40,10 +40,11 @@ This section summarize the major reports from this repo, and detailed discussion
 
 - 2. example regression table
 
+[regression table for any complication](reports/any_cmp_regression_table_v1.docx)
 
 - 3. supplemental: Combined ORs Table of continuous and binary Milestone Ratings
 
-[summary OR table](reports/or_table_h_v1.docx)
+[summary OR table](reports/or_table_no_case_vol_v1.docx)
 
 *code used to reproduce the table is [2by2_plot.R](code/visual/2by2_plot.R)*
 
