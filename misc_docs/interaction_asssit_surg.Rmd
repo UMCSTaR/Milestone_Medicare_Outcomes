@@ -149,7 +149,7 @@ ggplot(data = p$data %>%
   scale_color_manual(values = c("gray40", "gray85"), aesthetics = c("fill")) +
   scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
   labs(y = "Probabilities of having any complications",
-       caption = "The interaction effect of overall Milestone ratings and presence of assistant surgeons (p value = 0.28)",
+       caption = "The interaction effect of overall Milestone ratings and presence of assistant surgeons (p value = 0.16)",
        color = "") +
   visibly::theme_trueMinimal(center_axis_labels = T) +
   theme(axis.line.x = element_line(colour="black"),
