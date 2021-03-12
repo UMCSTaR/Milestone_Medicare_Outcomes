@@ -70,12 +70,7 @@ bin_or %>%
 
   
   # slice(1, 14:16, 2:13) %>% 
-  mutate(Characteristic = case_when(
-    # Characteristic == "mean_ge_8" ~ "Overall Mean",
-    #                                 Characteristic == "prof_rating_ge8" ~ "Professional",
-    #                                 Characteristic == "operative_rating_ge8" ~ "Operative",
-    #                                 Characteristic == "leadership_rating_ge8" ~ "Leadership",
-                                    Characteristic == "flg_male" ~ "Male Gender",
+  mutate(Characteristic = case_when(Characteristic == "flg_male" ~ "Male Gender",
                                     Characteristic == "age_at_admit_scale" ~ "Mean Age on admission, yr",
                                     Characteristic == "race_white" ~ "Race - White",
                                     Characteristic == "SES" ~ "High SES",
@@ -95,6 +90,6 @@ bin_or %>%
                              "Any complication regression tables per Milestone rating")) %>% 
   theme_box() %>%
   autofit() %>% 
-  save_as_docx(path= "reports/sup_tbl_any_cmp.docx")
+  save_as_docx(path= "reports/any_cmp_regression_table.docx")
   
 
